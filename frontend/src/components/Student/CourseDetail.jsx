@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FiSearch, FiChevronDown, FiArrowLeft, FiBookOpen, FiClock, FiUser, FiPlay } from 'react-icons/fi';
 import axios from 'axios';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams ,useLocation} from 'react-router-dom';
 import {
   Container,
   Card,
@@ -25,7 +25,10 @@ const sortOptions = [
 export default function CourseDetail() {
   const navigate = useNavigate();
   const { courseId } = useParams();
+const searchParams = new URLSearchParams(location.search);
 
+const subjectId = searchParams.get('subjectId'); 
+const enrolled = searchParams.get('enrolled');  
   // State để lưu course detail
   const [course, setCourse] = useState(null);
 
@@ -143,7 +146,7 @@ export default function CourseDetail() {
         <Button 
           variant="outline-primary" 
           className="mb-4 shadow-sm" 
-          onClick={() => navigate(-1)}
+          onClick={() =>navigate(`/student/courses?subjectId=${course.subjectId}&enrolled=true`)}
         >
           <FiArrowLeft className="me-2" /> Back to Courses
         </Button>
