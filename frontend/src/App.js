@@ -15,7 +15,7 @@ import QuizList            from './components/Student/QuizList';
 import GradeOverview       from './components/Student/GradeOverview';
 import AppealListStudent   from './components/Student/AppealListStudent';
 import AppealFormStudent   from './components/Student/AppealFormStudent';
-
+import LessonDetailStudent from './components/Student/LessionDetailStudent';
 function App() {
   return (
     <Router>
@@ -64,6 +64,10 @@ function App() {
           path="/student/appeal/:submissionId"
           element={<AppealFormStudent />}
         />
+<Route
+path="/student/course/:courseId/module/:moduleId/lesson/:lessonId"
+element={<LessonDetailStudent />}
+/>
 
         {/* fallback: Page Not Found */}
         <Route

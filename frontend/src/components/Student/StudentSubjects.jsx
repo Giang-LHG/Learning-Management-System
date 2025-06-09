@@ -29,7 +29,9 @@ export default function StudentSubjects() {
   const DEFAULT_ID = '60a000000000000000000002';
 
   const [studentId, setStudentId] = useState(DEFAULT_ID);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [inputValue, setInputValue] = useState('');
+const [searchQuery, setSearchQuery] = useState('');
+
   const [sortBy, setSortBy] = useState('createdAt');
   const [order, setOrder] = useState('asc');
   const [subjects, setSubjects] = useState([]);
@@ -43,7 +45,7 @@ export default function StudentSubjects() {
   useEffect(() => {
     try {
       const u = JSON.parse(localStorage.getItem('user') || '{}');
-      if (u._id) setStudentId(u._id);
+     if (u._id) setStudentId(u._id);
     } catch {}
   }, []);
 
@@ -121,7 +123,10 @@ export default function StudentSubjects() {
   const goCourses = (id, flag) => {
     navigate(`/student/courses?subjectId=${id}&enrolled=${flag}`);
   };
-
+const handleSearch = () => {
+  // Thực hiện logic tìm kiếm với searchQuery
+  console.log("Searching for:", searchQuery);
+};
   const renderCards = (list, variant, btnVariant, flag) => (
     <Row xs={1} sm={2} md={3} lg={4} className="g-3">
       {list.map(sub => (
@@ -158,14 +163,23 @@ export default function StudentSubjects() {
       <Row className="align-items-center mb-3">
         <Col md={8}>
           <InputGroup>
-            <InputGroup.Text><FiSearch /></InputGroup.Text>
-            <Form.Control
-              placeholder="Search subjects..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              disabled={isSearchLoading}
-            />
-          </InputGroup>
+ 
+      <InputGroup.Text><FiSearch /></InputGroup.Text>
+     <Form.Control
+  placeholder="Search subjects..."
+  value={inputValue}
+  onChange={e => setInputValue(e.target.value)}
+  onKeyDown={e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      setSearchQuery(inputValue); // kích hoạt tìm kiếm thực sự
+    }
+  }}
+  disabled={isSearchLoading}
+/>
+
+    
+</InputGroup>
         </Col>
         <Col md={4}>
           <Form.Select 

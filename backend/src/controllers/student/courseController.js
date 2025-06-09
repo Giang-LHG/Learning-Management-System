@@ -36,13 +36,21 @@ exports.searchCourses = async (req, res) => {
         .status(400)
         .json({ success: false, message: 'Query parameter "q" is required' });
     }
+    
     const regex = new RegExp(q, 'i');
-    const courses = await Course.find({
+    let query = {
       $or: [
         { title: { $regex: regex } },
         { description: { $regex: regex } }
       ]
-    }).lean();
+    };
+    
+    // Filter by subjectId if provided
+    if (subjectId) {
+      query.subjectId = subjectId;
+    }
+    
+    const courses = await Course.find(query).lean();
     return res.json({ success: true, data: courses });
   } catch (err) {
     console.error('Error in searchCourses:', err);
@@ -51,25 +59,39 @@ exports.searchCourses = async (req, res) => {
 };
 
 exports.sortCourses = async (req, res) => {
-  try {
-    const { sortBy, order , subjectId} = req.query;
-
-    // Các trường được phép sort
-    const allowedSortFields = ['title', 'startDate', 'endDate', 'credits', 'createdAt'];
+ try {
+    const { sortBy, order, subjectId, studentId } = req.query;
+    
+    // 1. Xây dựng sortObj
     let sortObj = {};
+    const validSortFields = ['title', 'startDate', 'credits', 'createdAt'];
+    const field = validSortFields.includes(sortBy) ? sortBy : 'title';
+    const direction = order === 'desc' ? -1 : 1;
+    sortObj[field] = direction;
 
-    if (sortBy && allowedSortFields.includes(sortBy)) {
-      sortObj[sortBy] = order === 'desc' ? -1 : 1;
-    } else {
-      // Mặc định sort theo 'title' tăng dần
-      sortObj = { title: 1 };
+    // 2. Lấy courses đã sort
+    const filter = subjectId ? { subjectId } : {};
+    const courses = await Course.find(filter).sort(sortObj).lean();
+
+    // 3. Nếu có studentId hợp lệ → annotate
+    if (studentId && mongoose.Types.ObjectId.isValid(studentId)) {
+      const courseIds = courses.map(c => c._id);
+      const enrollments = await Enrollment.find({
+        studentId,
+        courseId: { $in: courseIds }
+      }).select('courseId -_id').lean();
+      const enrolledSet = new Set(enrollments.map(e => e.courseId.toString()));
+
+      const annotated = courses.map(c => ({
+        ...c,
+        enrolled: enrolledSet.has(c._id.toString())
+      }));
+      return res.json({ success: true, data: annotated });
     }
 
-    const courses = await Course.find({})
-      .sort(sortObj)
-      .lean();
-
+    // 4. Nếu không có studentId → trả về nguyên bản
     return res.json({ success: true, data: courses });
+
   } catch (err) {
     console.error('Error in sortCourses:', err);
     return res.status(500).json({ success: false, message: 'Error sorting courses' });
