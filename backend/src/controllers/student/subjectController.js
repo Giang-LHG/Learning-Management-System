@@ -1,7 +1,7 @@
 const Subject = require('../../models/Subject');
 const Enrollment = require('../../models/Enrollment');
 const Course = require('../../models/Course');
-
+const mongoose = require('mongoose');
 // Lấy tất cả subjects đã được duyệt
 exports.getAllSubjects = async (req, res) => {
   try {
@@ -35,22 +35,26 @@ exports.getSubjectsByStudent = async (req, res) => {
 };
 exports.searchSubjects = async (req, res) => {
   try {
-    const { q } = req.query;
-    if (!q || typeof q !== 'string') {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Query parameter "q" is required' });
+    const { q, sortBy, order } = req.query;
+    if (!q) {
+      return res.status(400).json({ success: false, message: '"q" is required' });
     }
     const regex = new RegExp(q, 'i');
+    // build sort object nếu có
+    const sortObj = {};
+    if (sortBy) sortObj[sortBy] = order === 'desc' ? -1 : 1;
+
     const subjects = await Subject.find({
       status: 'approved',
       name: { $regex: regex }
     })
-      .lean();
-    return res.json({ success: true, data: subjects });
+    .sort(sortObj)
+    .lean();
+
+    res.json({ success: true, data: subjects });
   } catch (err) {
-    console.error('Error in searchSubjects:', err);
-    return res.status(500).json({ success: false, message: 'Error searching subjects' });
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Error searching subjects' });
   }
 };
 exports.sortSubjects = async (req, res) => {
