@@ -11,5 +11,6 @@ router.get('/assignment/:assignmentId', submissionController.getSubmissionsByAss
 
 // (Tùy chọn) GET /api/submissions/student/:studentId
 router.get('/student/:studentId', submissionController.getSubmissionsByStudent);
-
+router.put('/resubmit/:submissionId',submissionController.resubmitSubmission);
+router.get('/student/:studentId/course/:courseId', submissionController.getSubmissionsByCourse);
 module.exports = router;

@@ -17,12 +17,18 @@ exports.getCoursesBySubject = async (req, res) => {
 
 // Lấy chi tiết course theo courseId (gồm cả module và lesson)
 exports.getCourseDetail = async (req, res) => {
-  try {
+try {
     const { courseId } = req.params;
-    const course = await Course.findById(courseId);
+    const course = await Course
+      .findById(courseId)
+      .populate('instructorId', 'profile.fullName')
+      .lean();
+
     if (!course) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
+
+    course.instructorName = course.instructorId?.profile?.fullName || 'Unknown';
     res.json({ success: true, data: course });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching course detail' });

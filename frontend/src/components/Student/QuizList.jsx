@@ -62,6 +62,7 @@ export default function QuizList() {
   // Fetch submission (if có) for this student
   const fetchSubmission = useCallback(async () => {
     try {
+      // FIX: Sử dụng đúng endpoint như bạn đã chỉ định
       const resp = await axios.get(
         `/api/student/submissions/assignment/${assignmentId}`
       );
@@ -144,8 +145,8 @@ export default function QuizList() {
 
     try {
       if (hasSubmitted && submission) {
-        // RESUBMIT - Update existing submission
-        let updatePayload = {};
+        // RESUBMIT - Update existing submission using correct endpoint
+        let resubmitPayload = {};
         
         if (assignment.type === "quiz") {
           // Chuyển answers thành mảng
@@ -153,15 +154,23 @@ export default function QuizList() {
             questionId: qId,
             selectedOption: sel,
           }));
-          updatePayload.answers = ansArr;
+          resubmitPayload.answers = ansArr;
         } else {
           // essay
-          updatePayload.content = essayContent;
+          resubmitPayload.content = essayContent;
         }
 
-        // Call API to update existing submission
-        await axios.put(`/api/student/submissions/${submission._id}`, updatePayload);
-        alert("Resubmission successful!");
+        // FIX: Sử dụng đúng endpoint resubmit
+        const response = await axios.put(
+          `/api/student/submissions/resubmit/${submission._id}`, 
+          resubmitPayload
+        );
+        
+        if (response.data.success) {
+          alert("Resubmission successful!");
+        } else {
+          alert(response.data.message || "Resubmission failed!");
+        }
         
       } else {
         // NEW SUBMISSION - Create new submission
@@ -182,8 +191,13 @@ export default function QuizList() {
           payload.content = essayContent;
         }
 
-        await axios.post("/api/student/submissions/submit", payload);
-        alert("Submission successful!");
+        const response = await axios.post("/api/student/submissions/submit", payload);
+        
+        if (response.data.success) {
+          alert("Submission successful!");
+        } else {
+          alert(response.data.message || "Submission failed!");
+        }
       }
       
       // Refresh lại submission
