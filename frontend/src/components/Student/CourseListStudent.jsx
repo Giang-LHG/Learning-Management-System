@@ -85,8 +85,8 @@ export default function CourseList() {
     let filtered = filterCourses(allCourses, searchQuery);
     let sorted = sortCourses(filtered, sortBy, order);
     
-    const enrolled = sorted.filter(course => course.enrolled);
-    const other = sorted.filter(course => !course.enrolled);
+    const enrolled = sorted.filter(course => course.enrolled === true);
+    const other = sorted.filter(course => course.enrolled === false);
     
     return { enrolled, other };
   }, [allCourses, searchQuery, sortBy, order]);
@@ -104,47 +104,35 @@ export default function CourseList() {
     return Math.ceil(courses.length / coursesPerPage);
   };
 
+  // Load courses data from single endpoint
   useEffect(() => {
     if (!subjectId) return;
+    
     setIsLoading(true);
-
     const cancel = axios.CancelToken.source();
     
-    // Get enrolled courses
-    const enrolledReq = axios.get(
+    // Single API call to get all courses with enrollment status
+    axios.get(
       `/api/student/courses/subject/${subjectId}/student/${studentId}`,
       { cancelToken: cancel.token }
-    );
-
-    // Get all courses for the subject
-    const allCoursesReq = axios.get(
-      `/api/student/courses/subject/${subjectId}`,
-      { cancelToken: cancel.token }
-    );
-
-    Promise.all([enrolledReq, allCoursesReq])
-      .then(([enrolledRes, allCoursesRes]) => {
-        if (enrolledRes.data.success && allCoursesRes.data.success) {
-          const enrolledSet = new Set(enrolledRes.data.data.map(c => c._id));
-          
-          // Annotate all courses with enrollment status
-          const annotatedCourses = allCoursesRes.data.data.map(course => ({
-            ...course,
-            enrolled: enrolledSet.has(course._id)
-          }));
-
-          setCourses(annotatedCourses);
-        } else {
-          setCourses([]);
-        }
-      })
-      .catch(err => {
-        if (!axios.isCancel(err)) {
-          console.error('Error loading courses:', err);
-          setCourses([]);
-        }
-      })
-      .finally(() => setIsLoading(false));
+    )
+    .then(response => {
+      if (response.data.success) {
+        // Backend already provides courses with enrolled field (true/false)
+        setCourses(response.data.data || []);
+      } else {
+        setCourses([]);
+      }
+    })
+    .catch(err => {
+      if (!axios.isCancel(err)) {
+        console.error('Error loading courses:', err);
+        setCourses([]);
+      }
+    })
+    .finally(() => {
+      setIsLoading(false);
+    });
 
     return () => cancel.cancel();
   }, [subjectId, studentId]);
@@ -154,22 +142,28 @@ export default function CourseList() {
     setCurrentPage(1);
   }, [activeTab, searchQuery, sortBy, order]);
 
-  const handleEnroll = async (id) => {
+  const handleEnroll = async (courseId) => {
     try {
       const { data } = await axios.post(
         '/api/student/enrollments/enroll',
-        { studentId, courseId: id }
+        { studentId, courseId }
       );
+      
       if (data.success) {
+        // Update local state to reflect enrollment
         setCourses(prev =>
-          prev.map(c => c._id === id ? { ...c, enrolled: true } : c)
+          prev.map(course => 
+            course._id === courseId 
+              ? { ...course, enrolled: true } 
+              : course
+          )
         );
       } else {
         alert('Enrollment failed.');
       }
     } catch (err) {
       console.error('Enroll error:', err);
-      alert('Error enrolling');
+      alert('Error enrolling in course');
     }
   };
 
@@ -353,8 +347,10 @@ export default function CourseList() {
 
           {/* Pagination Info */}
           <div className="text-center text-muted mt-2">
-            Showing {currentCourses.length} of {currentTabCourses.length} courses
-            {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+            <small>
+              Showing {currentCourses.length} of {currentTabCourses.length} courses
+              {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+            </small>
           </div>
         </>
       )}
