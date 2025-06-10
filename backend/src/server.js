@@ -2,12 +2,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const studentRoute = require('./routes/student/index.js');
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
-app.use(express.json());
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -22,9 +20,8 @@ mongoose.connect(process.env.MONGODB_URI, {
     });
 
 // Middleware
-app.use("/api/student/", studentRoute);
+
 
 const PORT = process.env.PORT || 8021;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-
+// server.js
