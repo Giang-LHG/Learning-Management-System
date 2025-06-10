@@ -32,7 +32,7 @@ export default function QuizList() {
 
   // Lấy studentId từ localStorage hoặc mặc định
   const DEFAULT_STUDENT_ID = "60a000000000000000000002";
-  const [studentId, setStudentId] = useState(DEFAULT_STUDENT_ID);
+  const [studentId, setStudentId] = useState("");
   
   useEffect(() => {
     try {
@@ -40,6 +40,8 @@ export default function QuizList() {
       if (stored) {
         const u = JSON.parse(stored);
         if (u && u._id) setStudentId(u._id);
+      }else{
+        setStudentId(DEFAULT_STUDENT_ID);
       }
     } catch (e) {
       console.warn("localStorage user parse error:", e);
@@ -68,8 +70,9 @@ export default function QuizList() {
       if (resp.data.success) {
         // Lọc ra submission đúng studentId
         const allSubs = resp.data.data;
+      
         const mySub = allSubs.find(
-          (s) => s.studentId.toString() === studentId
+          (s) => s.studentId._id.toString() === studentId.toString()
         );
         if (mySub) {
           setSubmission(mySub);
@@ -113,11 +116,10 @@ export default function QuizList() {
   }, [fetchAssignment]);
 
   useEffect(() => {
-    if (assignment) {
-      checkCanEdit();
-      fetchSubmission();
-    }
-  }, [assignment, fetchSubmission, checkCanEdit]);
+  if (!assignment || !studentId) return;
+  checkCanEdit();
+  fetchSubmission();
+}, [assignment, studentId, fetchSubmission, checkCanEdit]);
 
   // Handle chọn đáp án quiz
   const handleOptionChange = (questionId, optionKey) => {
