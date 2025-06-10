@@ -1,4 +1,3 @@
-// controllers/assignmentController.js
 const mongoose = require('mongoose');
 const Assignment = require('../../models/Assignment');
 const User = require('../../models/User'); 

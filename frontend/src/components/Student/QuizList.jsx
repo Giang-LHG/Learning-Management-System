@@ -1,4 +1,3 @@
-// src/components/QuizList.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
