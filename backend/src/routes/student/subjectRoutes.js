@@ -1,0 +1,14 @@
+const express = require('express');
+const router = express.Router();
+const subjectController = require('../../controllers/student/subjectController');
+
+// GET /api/student/subjects
+router.get('/', subjectController.getAllSubjects);
+
+
+// GET /api/student/subjects/search?q=keyword
+router.get('/search', subjectController.searchSubjects);
+router.get('/sort', subjectController.sortSubjects);
+// GET /api/student/subjects/by-student/:studentId
+router.get('/by-student/:studentId', subjectController.getSubjectsByStudent);
+module.exports = router;
