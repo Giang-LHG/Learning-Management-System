@@ -21,7 +21,22 @@ export default function AppealForm() {
   const [appealContent, setAppealContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const DEFAULT_STUDENTID = "60a000000000000000000002";
+ const [studentId, setStudentId] = useState(DEFAULT_STUDENTID);
 
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed._id) {
+          setStudentId(parsed._id);
+        }
+      }
+    } catch {
+      setStudentId(DEFAULT_STUDENTID);
+    }
+  }, []);
   // Fetch submission detail
   const fetchSubmission = useCallback(async () => {
     try {
@@ -43,29 +58,44 @@ export default function AppealForm() {
 
   // Handle appeal submit
   const handleSubmit = async () => {
-    if (!appealContent.trim()) {
-      alert("Please enter your appeal request.");
-      return;
-    }
-    try {
-      setSubmitting(true);
-      await axios.post("/api/student/appeals", {
-        submissionId,
-        content: appealContent.trim(),
-      });
-      alert("Appeal submitted successfully.");
-      if (submission && submission.assignment && submission.assignment.courseId) {
-        navigate(`/student/grades/${submission.assignment.courseId}`);
-      } else {
-        navigate(-1);
+  if (!appealContent.trim()) {
+    alert("Please enter your appeal request.");
+    return;
+  }
+
+
+  if (!studentId) {
+    alert("You must be logged in to submit an appeal.");
+    return;
+  }
+
+  try {
+    setSubmitting(true);
+
+    // POST to /api/student/submissions/:submissionId/appeals
+    const resp = await axios.post(
+      `/api/student/submissions/${submissionId}/appeals`,
+      {
+        studentId,                   // who is making the appeal
+        text: appealContent.trim() // your appeal comment
       }
-    } catch (err) {
-      console.error("Error submitting appeal:", err);
-      alert("Failed to submit appeal. Please try again.");
-    } finally {
-      setSubmitting(false);
+    );
+
+    if (resp.data.success) {
+      alert("Appeal submitted successfully.");
+      
+      
+    } else {
+      alert("Failed to submit appeal: " + resp.data.message);
     }
-  };
+  } catch (err) {
+    console.error("Error submitting appeal:", err);
+    alert("Server error, please try again.");
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   if (isLoading) {
     return (
@@ -120,6 +150,9 @@ export default function AppealForm() {
   }
 
   const { assignment, student, grade, answers, content } = submission;
+  
+  // Kiểm tra xem có điểm hay chưa
+  const hasGrade = grade?.score != null;
 
   return (
     <div style={{ 
@@ -174,24 +207,40 @@ export default function AppealForm() {
                 <h6 className="mb-3 text-muted">Your Answers:</h6>
                 {assignment.questions.map((q, idx) => {
                   const sel = answers.find(a => a.questionId === q.questionId)?.selectedOption;
-                  const isCorrect = sel === q.correctOption;
+                  const isCorrect = hasGrade && sel === q.correctOption;
+                  
                   return (
                     <div key={q.questionId} className="mb-4 p-3" style={{
-                      backgroundColor: isCorrect ? '#e8f5e8' : '#ffeaea',
+                      backgroundColor: hasGrade 
+                        ? (isCorrect ? '#e8f5e8' : '#ffeaea')
+                        : '#f8f9fa',
                       borderRadius: '12px',
-                      border: `2px solid ${isCorrect ? '#4caf50' : '#f44336'}`
+                      border: hasGrade 
+                        ? `2px solid ${isCorrect ? '#4caf50' : '#f44336'}`
+                        : '2px solid #e9ecef'
                     }}>
                       <div className="fw-bold mb-2">Question {idx + 1}: {q.text}</div>
                       <div className="mb-1">
                         <span className="text-muted">Your choice:</span> 
-                        <span className={`ms-2 ${isCorrect ? 'text-success' : 'text-danger'}`}>
+                        <span className={`ms-2 ${hasGrade ? (isCorrect ? 'text-success' : 'text-danger') : 'text-dark'}`}>
                           {sel || 'None'}
                         </span>
                       </div>
-                      <div>
-                        <span className="text-muted">Correct answer:</span> 
-                        <span className="ms-2 text-success fw-bold">{q.correctOption}</span>
-                      </div>
+                      
+                      {/* Chỉ hiển thị đáp án đúng khi đã có điểm */}
+                      {hasGrade && (
+                        <div>
+                          <span className="text-muted">Correct answer:</span> 
+                          <span className="ms-2 text-success fw-bold">{q.correctOption}</span>
+                        </div>
+                      )}
+                      
+                      {/* Thông báo khi chưa có điểm */}
+                      {!hasGrade && (
+                        <div className="text-muted fst-italic">
+                          Correct answer will be shown after grading
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -214,7 +263,7 @@ export default function AppealForm() {
 
             <div className="d-flex align-items-center">
               <h6 className="mb-0 me-3" style={{ color: '#1976D2' }}>Grade:</h6>
-              {grade?.score != null ? (
+              {hasGrade ? (
                 <div style={{
                   background: 'linear-gradient(45deg, #4caf50, #2e7d32)',
                   color: 'white',
