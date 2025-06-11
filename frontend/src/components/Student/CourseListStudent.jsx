@@ -149,22 +149,21 @@ export default function CourseList() {
         { studentId, courseId }
       );
       
-      if (data.success) {
-        // Update local state to reflect enrollment
-        setCourses(prev =>
-          prev.map(course => 
-            course._id === courseId 
-              ? { ...course, enrolled: true } 
-              : course
-          )
-        );
-      } else {
-        alert('Enrollment failed.');
-      }
-    } catch (err) {
-      console.error('Enroll error:', err);
-      alert('Error enrolling in course');
+       if (data.success) {
+      setCourses(prev =>
+        prev.map(c => c._id === id ? { ...c, enrolled: true } : c)
+      );
+    } else {
+      alert(data.message || 'Enrollment failed.');
     }
+  } catch (err) {
+    console.error('Enroll error:', err);
+    if (err.response?.data?.message) {
+      alert(err.response.data.message);
+    } else {
+      alert('Error enrolling');
+    }
+  }
   };
 
   const onSortChange = (value) => {
