@@ -24,7 +24,7 @@ exports.getAppealsByStudent = async (req, res) => {
     // 6. Project các trường cần thiết
     const results = await Submission.aggregate([
       // Chỉ lấy submission của student
-      { $match: { studentId: mongoose.Types.ObjectId(studentId) } },
+      { $match:  { studentId: new mongoose.Types.ObjectId(studentId) } },
       // Unwind mảng appeals
       { $unwind: { path: '$appeals' } },
       // Lookup assignment
