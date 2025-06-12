@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Assignment = require('../../models/Assignment');
 const Submission = require('../../models/Submission');
-
+const Course = require('../../models/Course');
 /**
  * POST /submissions/submit
  * Cho học sinh nộp bài (essay hoặc quiz).
@@ -164,35 +164,79 @@ exports.resubmitSubmission = async (req, res) => {
   }
 };
 exports.getSubmissionsByCourse = async (req, res) => {
-  try {
-    const { courseId ,studentId} = req.params;
+   try {
+    const { courseId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(courseId)) {
       return res.status(400).json({ success: false, message: 'Invalid courseId' });
     }
-   if (!mongoose.Types.ObjectId.isValid(studentId)) {
-      return res.status(400).json({ success: false, message: 'Invalid studentId' });
-    }
-    // 1. Lấy tất cả assignment thuộc courseId
+const courseRaw = await Course.findById(courseId).lean();
+
+    // 1. Fetch all assignment IDs for this course
     const assignments = await Assignment.find({ courseId }).select('_id').lean();
     const assignmentIds = assignments.map(a => a._id);
-
     if (!assignmentIds.length) {
       return res.json({ success: true, data: [] });
     }
 
-    // 2. Tìm tất cả submission có assignmentId nằm trong danh sách
-    const submissions = await Submission.find({ assignmentId: { $in: assignmentIds }, studentId:studentId })
-      .populate('assignmentId')  // nếu cần thông tin assignment
-      .populate('studentId', 'name profile.email') // nếu cần thông tin sinh viên
-      .lean();
-const formatted = submissions.map(s => ({
-  ...s,
-  assignment: s.assignmentId, // alias rõ ràng
-  student: s.studentId
-}));
-res.json({ success: true, data: formatted });
+    // 2. Fetch submissions, with full assignment populated
+ const submissionsRaw = await Submission.find({
+  assignmentId: { $in: assignmentIds }
+})
+  .populate('assignmentId', 'title dueDate type questions')
+  .populate('studentId', 'name profile.email')
+  .lean();
+
+// 3. Remap each submission
+const submissions = submissionsRaw.map(sub => {
+  const { assignmentId, studentId: popStudent, ...rest } = sub;
+  return {
+    ...rest,
+    student: popStudent,     
+    assignment: assignmentId
+  };
+});
     
+    const now = new Date();
+
+    // 3. Auto-grade any quiz submissions past dueDate without a grade
+    await Promise.all(submissions.map(async s => {
+      const asg = s.assignment;
+      if (
+        asg.type === 'quiz' &&
+        now > new Date(asg.dueDate) &&
+        (s.grade.score === null || s.grade.score === undefined)
+      ) {
+        // build answer map
+        const answersMap = new Map(
+          (s.answers || []).map(a => [a.questionId.toString(), a.selectedOption])
+        );
+        const totalQs = asg.questions.length || 1;
+        let correctCount = 0;
+        asg.questions.forEach(q => {
+          if (answersMap.get(q.questionId.toString()) === q.correctOption) {
+            correctCount++;
+          }
+        });
+        // scale to 10
+        const score = Math.round((correctCount / totalQs) * 10 * 100) / 100; 
+        const gradedAt = now;
+
+        // persist grade
+        await Submission.findByIdAndUpdate(s._id, {
+          'grade.score': score,
+          'grade.gradedAt': gradedAt,
+          'grade.graderId':  new mongoose.Types.ObjectId(courseRaw.instructorId)
+        });
+
+        // update in-memory for response
+        s.grade.score    = score;
+        s.grade.gradedAt = gradedAt;
+      }
+    }));
+
+    // 4. Return
+    res.json({ success: true, data: submissions });
   } catch (err) {
     console.error('Error fetching submissions by course:', err);
     res.status(500).json({ success: false, message: 'Error fetching submissions' });
