@@ -1,86 +1,50 @@
+// src/App.js
 import React from 'react';
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate
-} from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Provider } from 'react-redux';
+import store from './store/store';
+import MainLayout from './layouts/MainLayout.jsx';
+import AuthLayout from './layouts/AuthLayout.jsx';
+import LoginPage from './pages/auth/LoginPage.jsx';
+import RegisterPage from './pages/auth/RegisterPage.jsx';
+import VerifyEmailPage from './pages/auth/VerifyEmailPage.jsx';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage.jsx';
+import DashboardPage from './pages/DashboardPage.jsx';
+import UserManagementPage from './pages/UserManagementPage.jsx';
+import SubjectManagerPage from './pages/SubjectManagerPage.jsx';
+import AnalyticsDashboard from './pages/AnalyticsDashboard.jsx';
+import ReportGeneratorPage from './pages/ReportGeneratorPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
+import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
+// import './styles/theme.css';
 
-import StudentSubjects     from './components/Student/StudentSubjects';
-import CourseListStudent   from './components/Student/CourseListStudent';
-import CourseDetail        from './components/Student/CourseDetail';
-import ModuleDetailStudent from './components/Student/ModuleDetailStudent';
-import AssignmentList      from './components/Student/AssignmentList';
-import QuizList            from './components/Student/QuizList';
-import GradeOverview       from './components/Student/GradeOverview';
-import AppealListStudent   from './components/Student/AppealListStudent';
-import AppealFormStudent   from './components/Student/AppealFormStudent';
-import LessonDetailStudent from './components/Student/LessionDetailStudent';
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Root → redirect to subjects */}
-        <Route path="/" element={<Navigate to="/student/subjects" replace />} />
-
-        {/* Subjects */}
-        <Route path="/student/subjects" element={<StudentSubjects />} />
-
-        {/* Courses under a subject (via query param subjectId or enrolled flag) */}
-        <Route path="/student/courses" element={<CourseListStudent />} />
-
-        {/* Single course detail */}
-        <Route path="/student/course/:courseId" element={<CourseDetail />} />
-
-        {/* Module detail within a course */}
-        <Route
-          path="/student/course/:courseId/module/:moduleId"
-          element={<ModuleDetailStudent />}
-        />
-
-        {/* Assignments list for one course */}
-        <Route
-          path="/student/assignments/:courseId"
-          element={<AssignmentList />}
-        />
-
-        {/* Quiz list for one assignment */}
-        <Route
-          path="/student/quiz/:assignmentId"
-          element={<QuizList />}
-        />
-
-        {/* Grade overview for one course */}
-        <Route
-          path="/student/grades/:courseId"
-          element={<GradeOverview />}
-        />
-
-        {/* Appeals list */}
-        <Route path="/student/appeals" element={<AppealListStudent />} />
-
-        {/* Single appeal form */}
-        <Route
-          path="/student/appeal/:submissionId"
-          element={<AppealFormStudent />}
-        />
-<Route
-path="/student/course/:courseId/module/:moduleId/lesson/:lessonId"
-element={<LessonDetailStudent />}
-/>
-
-        {/* fallback: Page Not Found */}
-        <Route
-          path="*"
-          element={
-            <div className="p-6">
-              <h2>Page not found</h2>
-              <p><a href="/student/subjects">Go to subjects</a></p>
-            </div>
-          }
-        />
-      </Routes>
-    </Router>
+    <Provider store={store}>
+      <QueryClientProvider client={queryClient}>
+        <Routes>
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+          </Route>
+          
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/users" element={<UserManagementPage />} />
+            <Route path="/subjects" element={<SubjectManagerPage />} />
+            <Route path="/analytics" element={<AnalyticsDashboard />} />
+            <Route path="/reports" element={<ReportGeneratorPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/change-password" element={<ChangePasswordPage />} />
+          </Route>
+        </Routes>
+      </QueryClientProvider>
+    </Provider>
   );
 }
 
