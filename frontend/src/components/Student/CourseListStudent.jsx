@@ -151,7 +151,7 @@ export default function CourseList() {
       
        if (data.success) {
       setCourses(prev =>
-        prev.map(c => c._id === id ? { ...c, enrolled: true } : c)
+        prev.map(c => c._id === courseId ? { ...c, enrolled: true } : c)
       );
     } else {
       alert(data.message || 'Enrollment failed.');

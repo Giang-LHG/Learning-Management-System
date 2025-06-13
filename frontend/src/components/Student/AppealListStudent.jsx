@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { 
@@ -11,19 +12,21 @@ import {
   Badge, 
   Spinner,
   InputGroup,
-  Collapse
+  Collapse,
+  Alert
 } from "react-bootstrap";
 import { 
   FiArrowLeft, 
   FiSearch, 
   FiChevronDown, 
-  FiChevronUp,
   FiFileText, 
   FiClock, 
   FiCheckCircle, 
   FiXCircle,
   FiUser,
-  FiMessageCircle
+  FiMessageCircle,
+  FiChevronUp,
+  FiSend
 } from "react-icons/fi";
 
 const sortOptions = [
@@ -68,44 +71,6 @@ const getGradeColor = (score) => {
   return "text-danger";
 };
 
-// Comment component for better organization
-const CommentItem = ({ comment, index, isLast }) => {
-  const commentDate = new Date(comment.createdAt || comment.timestamp);
-  const isValidDate = !isNaN(commentDate.getTime());
-  
-  return (
-    <div className={`comment-item ${!isLast ? 'mb-3' : ''}`}>
-      <div className="d-flex align-items-start">
-        <div className="comment-avatar me-3">
-          <FiUser size={16} />
-        </div>
-        <div className="flex-grow-1">
-          <div className="d-flex align-items-center justify-content-between mb-1">
-            <span className="comment-author fw-semibold">
-              {comment.author || comment.authorName || 'System'}
-            </span>
-            {isValidDate && (
-              <small className="text-muted">
-                {commentDate.toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'short', 
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </small>
-            )}
-          </div>
-          <p className="mb-0 comment-text">
-            {comment.text || comment.content || comment.message}
-          </p>
-        </div>
-      </div>
-      {!isLast && <hr className="my-3 opacity-25" />}
-    </div>
-  );
-};
-
 export default function AppealList() {
   const navigate = useNavigate();
 
@@ -132,20 +97,13 @@ export default function AppealList() {
   const [sortBy, setSortBy] = useState("appealCreatedAt");
   const [order, setOrder] = useState("desc");
   const [isLoading, setIsLoading] = useState(true);
-  const [expandedComments, setExpandedComments] = useState(new Set());
-
-  // Toggle comments expansion
-  const toggleComments = (appealId) => {
-    setExpandedComments(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(appealId)) {
-        newSet.delete(appealId);
-      } else {
-        newSet.add(appealId);
-      }
-      return newSet;
-    });
-  };
+  
+  // Comment-related state
+  const [expandedAppeal, setExpandedAppeal] = useState(null);
+  const [commentTexts, setCommentTexts] = useState({});
+  const [submittingComment, setSubmittingComment] = useState({});
+  const [commentErrors, setCommentErrors] = useState({});
+  const [commentSuccess, setCommentSuccess] = useState({});
 
   // Fetch appeals
   const fetchAppeals = useCallback(async () => {
@@ -214,6 +172,74 @@ export default function AppealList() {
     const [field, ord] = value.split(":");
     setSortBy(field);
     setOrder(ord);
+  };
+
+  // Toggle appeal expansion
+  const toggleAppealExpansion = (appealId) => {
+    setExpandedAppeal(expandedAppeal === appealId ? null : appealId);
+    // Clear any existing success/error messages when toggling
+    setCommentErrors(prev => ({ ...prev, [appealId]: null }));
+    setCommentSuccess(prev => ({ ...prev, [appealId]: null }));
+  };
+
+  // Handle comment text change
+  const handleCommentChange = (appealId, text) => {
+    setCommentTexts(prev => ({ ...prev, [appealId]: text }));
+    // Clear error/success messages when user starts typing
+    if (commentErrors[appealId]) {
+      setCommentErrors(prev => ({ ...prev, [appealId]: null }));
+    }
+    if (commentSuccess[appealId]) {
+      setCommentSuccess(prev => ({ ...prev, [appealId]: null }));
+    }
+  };
+
+  // Submit comment
+  const submitComment = async (appeal) => {
+    const { appealId, submissionId } = appeal;
+    const commentText = commentTexts[appealId]?.trim();
+
+    if (!commentText) {
+      setCommentErrors(prev => ({ ...prev, [appealId]: "Comment cannot be empty" }));
+      return;
+    }
+
+    try {
+      setSubmittingComment(prev => ({ ...prev, [appealId]: true }));
+      setCommentErrors(prev => ({ ...prev, [appealId]: null }));
+
+      const response = await axios.post(
+        `/api/student/appeals/${submissionId}/appeals/${appealId}/comments`,
+        {
+          userId: studentId,
+          text: commentText
+        }
+      );
+
+      if (response.data.success) {
+        // Clear the comment text
+        setCommentTexts(prev => ({ ...prev, [appealId]: "" }));
+        
+        // Show success message
+        setCommentSuccess(prev => ({ ...prev, [appealId]: "Comment added successfully!" }));
+        
+        // Refresh appeals to get updated comments
+        await fetchAppeals();
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setCommentSuccess(prev => ({ ...prev, [appealId]: null }));
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      setCommentErrors(prev => ({ 
+        ...prev, 
+        [appealId]: error.response?.data?.message || "Failed to add comment. Please try again." 
+      }));
+    } finally {
+      setSubmittingComment(prev => ({ ...prev, [appealId]: false }));
+    }
   };
 
   const customStyles = `
@@ -305,68 +331,62 @@ export default function AppealList() {
       margin-top: 16px !important;
     }
     
-    .comment-toggle {
-      background: none !important;
-      border: none !important;
-      color: #1e7ff5 !important;
-      padding: 0 !important;
-      font-size: 14px !important;
-      font-weight: 500 !important;
-      text-decoration: none !important;
-      transition: all 0.2s ease !important;
-    }
-    
-    .comment-toggle:hover {
-      color: #1565d8 !important;
-      text-decoration: underline !important;
+    .comments-expanded {
+      background-color: #ffffff !important;
+      border-top: 1px solid #dee2e6 !important;
+      padding: 20px !important;
+      margin: 0 -20px -20px -20px !important;
     }
     
     .comment-item {
-      animation: fadeIn 0.3s ease-in-out;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .comment-avatar {
-      width: 32px !important;
-      height: 32px !important;
-      background-color: #e9ecef !important;
-      border-radius: 50% !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      color: #6c757d !important;
-      flex-shrink: 0 !important;
-    }
-    
-    .comment-author {
-      color: #495057 !important;
-      font-size: 14px !important;
-    }
-    
-    .comment-text {
-      color: #6c757d !important;
-      font-size: 14px !important;
-      line-height: 1.5 !important;
-    }
-    
-    .comments-header {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      margin-bottom: 12px !important;
-    }
-    
-    .comments-count {
-      background-color: #1e7ff5 !important;
-      color: white !important;
-      font-size: 12px !important;
-      padding: 2px 8px !important;
+      background-color: #f8f9fa !important;
       border-radius: 12px !important;
+      padding: 12px 16px !important;
+      margin-bottom: 12px !important;
+      border-left: 4px solid #1e7ff5 !important;
+    }
+    
+    .comment-form {
+      background-color: #f8f9fa !important;
+      border-radius: 12px !important;
+      padding: 16px !important;
+      margin-top: 16px !important;
+    }
+    
+    .btn-expand {
+      background: none !important;
+      border: none !important;
+      color: #1e7ff5 !important;
       font-weight: 500 !important;
+      padding: 8px 12px !important;
+      border-radius: 8px !important;
+      transition: all 0.2s ease !important;
+    }
+    
+    .btn-expand:hover {
+      background-color: rgba(30, 127, 245, 0.1) !important;
+      color: #1565d8 !important;
+    }
+    
+    .btn-send {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+      border: none !important;
+      border-radius: 8px !important;
+      padding: 8px 16px !important;
+      font-weight: 500 !important;
+      transition: all 0.3s ease !important;
+    }
+    
+    .btn-send:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4) !important;
+    }
+    
+    .btn-send:disabled {
+      background: #6c757d !important;
+      opacity: 0.65 !important;
+      transform: none !important;
+      box-shadow: none !important;
     }
   `;
 
@@ -561,70 +581,119 @@ export default function AppealList() {
                       </Row>
                       
                       <div className="comment-section">
-                        <div className="comments-header">
-                          <div className="d-flex align-items-center">
-                            <FiMessageCircle className="me-2 text-muted" size={16} />
-                            <strong className="text-dark me-2">Comments</strong>
-                            <span className="comments-count">
-                              {appeal.appealComments?.length || 0}
+                        <div className="d-flex justify-content-between align-items-center">
+                          <p className="mb-0">
+                            <strong className="text-dark">Latest Comment:</strong>{" "}
+                            <span className="text-muted">
+                              {appeal.appealComments.length
+                                ? appeal.appealComments[appeal.appealComments.length - 1].text
+                                : "No comments available"}
                             </span>
-                          </div>
-                          {appeal.appealComments?.length > 0 && (
-                            <button
-                              className="comment-toggle d-flex align-items-center"
-                              onClick={() => toggleComments(appeal.appealId)}
-                            >
-                              {expandedComments.has(appeal.appealId) ? (
-                                <>
-                                  <span className="me-1">Hide all</span>
-                                  <FiChevronUp size={16} />
-                                </>
-                              ) : (
-                                <>
-                                  <span className="me-1">Show all</span>
-                                  <FiChevronDown size={16} />
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </div>
-                        
-                        {appeal.appealComments?.length > 0 ? (
-                          <>
-                            {/* Latest comment (always visible) */}
-                            <CommentItem 
-                              comment={appeal.appealComments[appeal.appealComments.length - 1]}
-                              index={appeal.appealComments.length - 1}
-                              isLast={!expandedComments.has(appeal.appealId) || appeal.appealComments.length === 1}
-                            />
-                            
-                            {/* All other comments (collapsible) */}
-                            <Collapse in={expandedComments.has(appeal.appealId)}>
-                              <div>
-                                {appeal.appealComments.length > 1 && (
-                                  <div className="mt-3">
-                                    <small className="text-muted fw-semibold">Previous Comments:</small>
-                                    <div className="mt-2">
-                                      {appeal.appealComments.slice(0, -1).map((comment, idx) => (
-                                        <CommentItem 
-                                          key={idx}
-                                          comment={comment}
-                                          index={idx}
-                                          isLast={idx === appeal.appealComments.length - 2}
-                                        />
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </Collapse>
-                          </>
-                        ) : (
-                          <p className="mb-0 text-muted fst-italic">
-                            No comments available
                           </p>
-                        )}
+                          <Button
+                            className="btn-expand d-flex align-items-center"
+                            onClick={() => toggleAppealExpansion(appeal.appealId)}
+                          >
+                            <FiMessageCircle className="me-2" size={16} />
+                            {appeal.appealComments.length} Comments
+                            {expandedAppeal === appeal.appealId ? (
+                              <FiChevronUp className="ms-2" size={16} />
+                            ) : (
+                              <FiChevronDown className="ms-2" size={16} />
+                            )}
+                          </Button>
+                        </div>
                       </div>
+
+                      {/* Expanded Comments Section */}
+                      <Collapse in={expandedAppeal === appeal.appealId}>
+                        <div className="comments-expanded">
+                          <h6 className="fw-bold mb-3">All Comments</h6>
+                          
+                          {/* Comments List */}
+                          {appeal.appealComments.length === 0 ? (
+                            <p className="text-muted fst-italic">No comments yet. Be the first to add one!</p>
+                          ) : (
+                            appeal.appealComments.map((comment, commentIndex) => (
+                              <div key={commentIndex} className="comment-item">
+                                <div className="d-flex justify-content-between align-items-start mb-2">
+                                  <div className="d-flex align-items-center">
+                                    <FiUser size={16} className="text-muted me-2" />
+                                    <small className="fw-semibold">
+                                      {comment.userId === studentId ? "You" : `User ${comment.by.slice(-4)}`}
+                                    </small>
+                                  </div>
+                                  {comment.createdAt && (
+                                    <small className="text-muted">
+                                      {new Date(comment.createdAt).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </small>
+                                  )}
+                                </div>
+                                <p className="mb-0">{comment.text}</p>
+                              </div>
+                            ))
+                          )}
+
+                          {/* Add Comment Form */}
+                          <div className="comment-form">
+                            <h6 className="fw-bold mb-3">Add a Comment</h6>
+                            
+                            {/* Success Alert */}
+                            {commentSuccess[appeal.appealId] && (
+                              <Alert variant="success" className="mb-3">
+                                {commentSuccess[appeal.appealId]}
+                              </Alert>
+                            )}
+                            
+                            {/* Error Alert */}
+                            {commentErrors[appeal.appealId] && (
+                              <Alert variant="danger" className="mb-3">
+                                {commentErrors[appeal.appealId]}
+                              </Alert>
+                            )}
+
+                            <Form.Group className="mb-3">
+                              <Form.Control
+                                as="textarea"
+                                rows={3}
+                                placeholder="Enter your comment here..."
+                                value={commentTexts[appeal.appealId] || ""}
+                                onChange={(e) => handleCommentChange(appeal.appealId, e.target.value)}
+                                style={{ borderRadius: '12px' }}
+                              />
+                            </Form.Group>
+                            
+                            <div className="d-flex justify-content-end">
+                              <Button
+                                className="btn-send d-flex align-items-center"
+                                onClick={() => submitComment(appeal)}
+                                disabled={
+                                  submittingComment[appeal.appealId] || 
+                                  !commentTexts[appeal.appealId]?.trim()
+                                }
+                              >
+                                {submittingComment[appeal.appealId] ? (
+                                  <>
+                                    <Spinner animation="border" size="sm" className="me-2" />
+                                    Sending...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FiSend className="me-2" size={16} />
+                                    Send Comment
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </Collapse>
                     </Card.Body>
                   </Card>
                 ))}

@@ -120,7 +120,7 @@ exports.addAppealComment = async (req, res) => {
 
     // 2. Build the comment object
     const comment = {
-      by: mongoose.Types.ObjectId(userId),
+      by: new mongoose.Types.ObjectId(userId),
       text: text.trim(),
       at: new Date()
     };
