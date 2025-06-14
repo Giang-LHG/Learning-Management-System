@@ -37,7 +37,19 @@ exports.enrollCourse = async (req, res) => {
         .status(400)
         .json({ success: false, message: 'Subject not found or not approved' });
     }
-
+    
+const siblingCourses = await Course.find({ subjectId: subject._id })
+  .select('_id')
+  .lean();
+const siblingIds = siblingCourses.map(c => c._id);
+const hasEnrolledSibling = await Enrollment.exists({
+  studentId,
+  courseId: { $in: siblingIds }
+});
+if (hasEnrolledSibling) {
+  const newEnrollment = await Enrollment.create({ studentId, courseId, enrolledAt: new Date() });
+  return res.status(201).json({ success: true, data: newEnrollment });
+}
     const prereqSubjectIds = subject.prerequisites || [];
 
     // 5. Nếu không có prerequisites, cho enroll luôn
