@@ -57,31 +57,34 @@ exports.submitAssignment = async (req, res) => {
  */
 exports.getSubmissionsByAssignment = async (req, res) => {
  try {
-    const { assignmentId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
-      return res.status(400).json({ success: false, message: 'Invalid assignmentId' });
-    }
+  const { assignmentId } = req.params;
 
-    // 1. Lấy term của assignment
-    const asg = await Assignment.findById(assignmentId).select('term').lean();
-    if (!asg) {
-      return res.status(404).json({ success: false, message: 'Assignment not found' });
-    }
-    const { term: assignmentTerm } = asg;
-
-    // 2. Tìm submissions có cùng assignmentId và cùng term
-    const submissions = await Submission.find({
-      assignmentId,
-      term: assignmentTerm
-    })
-      .populate('studentId', 'profile.fullName email') // lấy thông tin student
-      .lean();
-
-    return res.status(200).json({ success: true, data: submissions });
-  } catch (err) {
-    console.error('Error in getSubmissionsByAssignment:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+  if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
+    return res.status(400).json({ success: false, message: 'Invalid assignmentId' });
   }
+
+  // 1. Lấy mảng term của assignment
+  const asg = await Assignment.findById(assignmentId).select('term').lean();
+  if (!asg || !asg.term || !asg.term.length) {
+    return res.status(404).json({ success: false, message: 'Assignment not found or no term info' });
+  }
+
+  // 👉 Lấy term mới nhất (phần tử cuối cùng trong mảng)
+  const latestTerm = asg.term[asg.term.length - 1];
+
+  // 2. Tìm submissions có cùng assignmentId và cùng term mới nhất
+  const submissions = await Submission.find({
+    assignmentId,
+    term: latestTerm
+  })
+    .populate('studentId', 'profile.fullName email') // lấy thông tin student
+    .lean();
+
+  return res.status(200).json({ success: true, data: submissions });
+} catch (err) {
+  console.error('Error in getSubmissionsByAssignment:', err);
+  return res.status(500).json({ success: false, message: 'Server error' });
+}
 };
 
 /**

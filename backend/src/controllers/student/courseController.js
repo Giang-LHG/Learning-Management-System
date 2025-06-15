@@ -151,7 +151,7 @@ exports.getCoursesBySubjectForStudent = async (req, res) => {
 
     // 5. Lấy term gần nhất
     const latestTerm = enrolls[0].term;
-
+console.log(latestTerm);
     // 6. Tạo set các courseId đã enroll (bất kể term)
     const enrolledSet = new Set(enrolls.map(e => e.courseId.toString()));
 
@@ -164,16 +164,19 @@ exports.getCoursesBySubjectForStudent = async (req, res) => {
       const isEnrolled = enrolledSet.has(c._id.toString());
       const item = { ...c, enrolled: isEnrolled };
 
-      if (c.term === latestTerm) {
-        sameTerm.push(item);
-      } else if (isEnrolled) {
-        // Đã enroll nhưng ở term khác
-        otherTerms.push(item);
-      } else {
-        // Chưa enroll bao giờ
-        noneEnrolled.push(item);
-      }
+    if (Array.isArray(c.term) && c.term.length > 0) {
+  const courseLatestTerm = c.term[c.term.length - 1];
+  if (courseLatestTerm === latestTerm) {
+    sameTerm.push(item);
+  } else if (isEnrolled) {
+    otherTerms.push(item);  // Đã enroll nhưng ở term khác
+  } else {
+    noneEnrolled.push(item); // Chưa enroll bao giờ
+  }
+  
+}
     }
+   
 
     return res.json({
       success: true,

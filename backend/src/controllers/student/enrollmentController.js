@@ -23,7 +23,7 @@ exports.enrollCourse = async (req, res) => {
 if (!course) {
   return res.status(404).json({ success: false, message: 'Course not found' });
 }
-const courseTerm = course.term;
+const courseTerm = course.term[course.term.length - 1];
 
 // Chỉ đánh giá là “already” khi có cùng courseId và cùng term
 const already = await Enrollment.findOne({
@@ -95,7 +95,7 @@ if (hasEnrolledSibling) {
       }
 
       // 6.2. Xác định term của enrollment đó
-      const prereqTerm = latestEnroll.term;
+      const prereqTerm = latestEnroll.term[latestEnroll.term.length - 1];
 
       // 6.3. Lấy tất cả assignment trong term đó
       //      và thuộc subject này

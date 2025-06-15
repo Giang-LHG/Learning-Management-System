@@ -7,32 +7,35 @@ const User = require('../../models/User');
  * Trả về danh sách tất cả Assignment theo courseId
  */
 exports.getAssignmentsByCourse = async (req, res) => {
-   try {
-    const { courseId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(courseId)) {
-      return res.status(400).json({ success: false, message: 'Invalid courseId' });
-    }
+  try {
+  const { courseId } = req.params;
 
-    // 1. Lấy thông tin course để biết term
-    const course = await Course.findById(courseId).select('term').lean();
-    if (!course) {
-      return res.status(404).json({ success: false, message: 'Course not found' });
-    }
-    const { term } = course;
-
-    // 2. Tìm tất cả assignment của course đúng term, sắp xếp theo dueDate
-    const assignments = await Assignment.find({ 
-        courseId, 
-        term       // chỉ lấy bài tập cùng term với course
-      })
-      .sort({ dueDate: 1 })
-      .lean();
-
-    return res.status(200).json({ success: true, data: assignments });
-  } catch (err) {
-    console.error('Error in getAssignmentsByCourse:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+  if (!mongoose.Types.ObjectId.isValid(courseId)) {
+    return res.status(400).json({ success: false, message: 'Invalid courseId' });
   }
+
+  // 1. Lấy thông tin course để biết term
+  const course = await Course.findById(courseId).select('term').lean();
+  if (!course || !Array.isArray(course.term) || course.term.length === 0) {
+    return res.status(404).json({ success: false, message: 'Course not found or term missing' });
+  }
+
+  const latestTerm = course.term[course.term.length - 1]; // term mới nhất
+
+  // 2. Tìm tất cả assignment của course đúng term mới nhất
+  const assignments = await Assignment.find({ 
+      courseId,
+      term: latestTerm  // do Assignment.term là mảng, cần dùng $in nếu cần khớp phần tử
+    })
+    .sort({ dueDate: 1 })
+    .lean();
+
+  return res.status(200).json({ success: true, data: assignments });
+
+} catch (err) {
+  console.error('Error in getAssignmentsByCourse:', err);
+  return res.status(500).json({ success: false, message: 'Server error' });
+}
 };
 
 /**
