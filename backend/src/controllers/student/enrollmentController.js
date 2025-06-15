@@ -24,7 +24,33 @@ if (!course) {
   return res.status(404).json({ success: false, message: 'Course not found' });
 }
 const courseTerm = course.term[course.term.length - 1];
+const now = Date.now();
+const startMs = course.startDate ? new Date(course.startDate).getTime() : null;
+const endMs   = course.endDate   ? new Date(course.endDate).getTime()   : null;
 
+if (course.startDate && isNaN(startMs)) {
+  return res
+    .status(500)
+    .json({ success: false, message: 'Invalid startDate format' });
+}
+
+if (course.endDate && isNaN(endMs)) {
+  return res
+    .status(500)
+    .json({ success: false, message: 'Invalid endDate format' });
+}
+
+if (startMs !== null && now < startMs) {
+  return res
+    .status(400)
+    .json({ success: false, message: `This course will open on ${new Date(startMs).toLocaleString()}.` });
+}
+
+if (endMs !== null && now > endMs) {
+  return res
+    .status(400)
+    .json({ success: false, message: `This course closed on ${new Date(endMs).toLocaleString()}.` });
+}
 // Chỉ đánh giá là “already” khi có cùng courseId và cùng term
 const already = await Enrollment.findOne({
   studentId,
@@ -95,13 +121,14 @@ if (hasEnrolledSibling) {
       }
 
       // 6.2. Xác định term của enrollment đó
-      const prereqTerm = latestEnroll.term[latestEnroll.term.length - 1];
+      const prereqTerm = latestEnroll.term;
 
-      // 6.3. Lấy tất cả assignment trong term đó
-      //      và thuộc subject này
-      const assignments = await Assignment.find({ term: prereqTerm })
-        .select(' _id courseId')
-        .lean();
+  // 6.3. Lấy tất cả assignment trong term đó
+const assignments = await Assignment.find({
+  term: { $in: [prereqTerm] }  // <-- dùng $in để match phần tử trong mảng
+})
+  .select('_id courseId')
+  .lean();
 
       const filteredAids = [];
       for (let a of assignments) {
@@ -116,24 +143,23 @@ if (hasEnrolledSibling) {
       }
 
       // 6.4. Với mỗi assignmentId, kiểm tra submission có graded không
-      for (let aid of filteredAids) {
-        const sub = await Submission.findOne({
-          assignmentId: aid,
-          studentId,
-          term: prereqTerm   // chỉ lấy submission cùng term
-        })
-          .select('grade.score')
-          .lean();
+    for (let aid of filteredAids) {
+  const sub = await Submission.findOne({
+    assignmentId: aid,
+    studentId,
+    term: prereqTerm   // đây vẫn là string
+  })
+    .select('grade.score')
+    .lean();
 
-        if (!sub || sub.grade.score == null) {
-          const ms = await Subject.findById(prereqSubjId).select('name').lean();
-          return res.status(400).json({
-            success: false,
-            message: `You must submit and have all assignments for "${ms.name}" (semester ${prereqTerm}) graded before registering.`
-          });
-        }
-      
-      }
+  if (!sub || sub.grade.score == null) {
+    const ms = await Subject.findById(prereqSubjId).select('name').lean();
+    return res.status(400).json({
+      success: false,
+      message: `Bạn phải nộp và được chấm hết tất cả assignments của môn "${ms.name}" (học kỳ ${prereqTerm}) trước khi đăng ký.`
+    });
+  }
+}
     }
   
 
