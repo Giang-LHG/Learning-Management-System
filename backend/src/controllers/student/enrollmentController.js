@@ -19,13 +19,23 @@ exports.enrollCourse = async (req, res) => {
     }
 
     // 2. Kiểm tra course tồn tại
-    const course = await Course.findById(courseId).lean();
-    if (!course) {
-      return res.status(404).json({ success: false, message: 'Course not found' });
-    }
+   const course = await Course.findById(courseId).lean();
+if (!course) {
+  return res.status(404).json({ success: false, message: 'Course not found' });
+}
+const courseTerm = course.term;
+
+// Chỉ đánh giá là “already” khi có cùng courseId và cùng term
+const already = await Enrollment.findOne({
+  studentId,
+  courseId,
+  term: courseTerm
+}).lean();
+
+
 
     // 3. Kiểm tra xem học sinh đã enroll chưa
-    const already = await Enrollment.findOne({ studentId, courseId }).lean();
+  
     if (already) {
       return res.status(400).json({ success: false, message: 'Already enrolled in this course' });
     }
@@ -47,75 +57,88 @@ const hasEnrolledSibling = await Enrollment.exists({
   courseId: { $in: siblingIds }
 });
 if (hasEnrolledSibling) {
-  const newEnrollment = await Enrollment.create({ studentId, courseId, enrolledAt: new Date() });
+  const newEnrollment = await Enrollment.create({ studentId, courseId, enrolledAt: new Date(), term: courseTerm });
   return res.status(201).json({ success: true, data: newEnrollment });
 }
     const prereqSubjectIds = subject.prerequisites || [];
 
     // 5. Nếu không có prerequisites, cho enroll luôn
     if (!prereqSubjectIds.length) {
-      const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date() });
+      const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(), term: courseTerm });
       await newEnrollment.save();
       return res.status(201).json({ success: true, data: newEnrollment });
     }
 
-    // 6. Với mỗi subjectId trong prerequisites, cần kiểm tra:
-    //    - Tất cả các course thuộc subject đó,
-    //    - Với mỗi course, student phải có submit và graded cho tất cả assignment của course.
-
+    
+      // 6. Với mỗi subjectId trong danh sách prerequisites
     for (let prereqSubjId of prereqSubjectIds) {
-      // 6.1. Lấy tất cả courses trong subject prerequisite
-      const prereqCourses = await Course.find({ subjectId: prereqSubjId }).select('_id').lean();
-      if (!prereqCourses.length) {
-        // Nếu không có khóa nào thuộc subject prerequisite, coi như điều kiện chưa thỏa
-        const missingSubj = await Subject.findById(prereqSubjId).select('name').lean();
+      // 6.1. Tìm tất cả các enrollment của sinh viên
+      //      và chọn enrollment gần nhất mà thuộc subject này
+      const enrolls = await Enrollment.find({ studentId })
+        .sort({ enrolledAt: -1 })
+        .lean();
+
+      let latestEnroll = null;
+      for (let e of enrolls) {
+        const c = await Course.findById(e.courseId).select('subjectId term').lean();
+        if (c && c.subjectId.toString() === prereqSubjId.toString()) {
+          latestEnroll = e;
+          break;
+        }
+      }
+      if (!latestEnroll) {
+        const ms = await Subject.findById(prereqSubjId).select('name').lean();
         return res.status(400).json({
           success: false,
-          message: `Must complete any course(s) in prerequisite subject: ${missingSubj.name}`
+          message: `Bạn phải đăng ký ít nhất một khóa trong môn "${ms.name}" trước khi đăng ký khóa mới.`
         });
       }
 
-      // 6.2. Với mỗi khóa trong prereqCourses
-      for (let prereqCourse of prereqCourses) {
-        const pid = prereqCourse._id;
+      // 6.2. Xác định term của enrollment đó
+      const prereqTerm = latestEnroll.term;
 
-        // Lấy tất cả assignmentId của khóa đó
-        const assignments = await Assignment.find({ courseId: pid }).select('_id').lean();
-        const assignmentIds = assignments.map(a => a._id);
+      // 6.3. Lấy tất cả assignment trong term đó
+      //      và thuộc subject này
+      const assignments = await Assignment.find({ term: prereqTerm })
+        .select(' _id courseId')
+        .lean();
 
-        // Nếu khóa không có assignment nào, coi như học chỉ cần enroll/hoàn thành khóa?
-        // Nhưng yêu cầu là “nộp bài và có hết điểm” – nếu không có assignment, bỏ qua khóa đó.
-        if (!assignmentIds.length) {
-          continue;
-        }
-
-        // 6.3. Với mỗi assignment trong assignmentIds, kiểm tra submission
-        for (let aid of assignmentIds) {
-          const submission = await Submission.findOne({
-            assignmentId: aid,
-            studentId
-          })
-            .select('grade.score')
-            .lean();
-
-          if (
-            !submission || // chưa nộp
-            submission.grade.score === null || // đã nộp nhưng chưa chấm
-            submission.grade.score === undefined
-          ) {
-            // Lấy tên subject để thông báo (lấy lần đầu)
-            const missingSubject = await Subject.findById(prereqSubjId).select('name').lean();
-            return res.status(400).json({
-              success: false,
-              message: `You must submit and get graded for all assignments in subject "${missingSubject.name}" before enrolling.`
-            });
-          }
+      const filteredAids = [];
+      for (let a of assignments) {
+        const c = await Course.findById(a.courseId).select('subjectId').lean();
+        if (c && c.subjectId.toString() === prereqSubjId.toString()) {
+          filteredAids.push(a._id);
         }
       }
+      if (!filteredAids.length) {
+        // nếu không có assignment nào cần kiểm tra  bỏ qua subject này
+        continue;
+      }
+
+      // 6.4. Với mỗi assignmentId, kiểm tra submission có graded không
+      for (let aid of filteredAids) {
+        const sub = await Submission.findOne({
+          assignmentId: aid,
+          studentId,
+          term: prereqTerm   // chỉ lấy submission cùng term
+        })
+          .select('grade.score')
+          .lean();
+
+        if (!sub || sub.grade.score == null) {
+          const ms = await Subject.findById(prereqSubjId).select('name').lean();
+          return res.status(400).json({
+            success: false,
+            message: `You must submit and have all assignments for "${ms.name}" (semester ${prereqTerm}) graded before registering.`
+          });
+        }
+      
+      }
     }
+  
 
     // 7. Nếu đã vượt qua tất cả điều kiện prerequisite, tạo enrollment
-    const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date() });
+    const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(),term:course.term });
     await newEnrollment.save();
     return res.status(201).json({ success: true, data: newEnrollment });
   } catch (err) {

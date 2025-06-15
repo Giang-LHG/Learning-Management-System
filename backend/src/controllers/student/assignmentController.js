@@ -1,19 +1,30 @@
 const mongoose = require('mongoose');
 const Assignment = require('../../models/Assignment');
+const Course = require('../../models/Course');
 const User = require('../../models/User'); 
 /**
  * GET /assignments/course/:courseId
  * Trả về danh sách tất cả Assignment theo courseId
  */
 exports.getAssignmentsByCourse = async (req, res) => {
-  try {
+   try {
     const { courseId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(courseId)) {
       return res.status(400).json({ success: false, message: 'Invalid courseId' });
     }
 
-    // Tìm tất cả assignment của course, sắp xếp theo dueDate
-    const assignments = await Assignment.find({ courseId })
+    // 1. Lấy thông tin course để biết term
+    const course = await Course.findById(courseId).select('term').lean();
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    const { term } = course;
+
+    // 2. Tìm tất cả assignment của course đúng term, sắp xếp theo dueDate
+    const assignments = await Assignment.find({ 
+        courseId, 
+        term       // chỉ lấy bài tập cùng term với course
+      })
       .sort({ dueDate: 1 })
       .lean();
 

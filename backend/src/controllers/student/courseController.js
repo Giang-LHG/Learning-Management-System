@@ -104,7 +104,7 @@ exports.sortCourses = async (req, res) => {
   }
 };
 exports.getCoursesBySubjectForStudent = async (req, res) => {
-  try {
+ try {
     const { subjectId, studentId } = req.params;
 
     // 1. Validate ObjectId
@@ -118,32 +118,67 @@ exports.getCoursesBySubjectForStudent = async (req, res) => {
     }
 
     // 2. Lấy tất cả courses của subject
-    const courses = await Course.find({ subjectId }).lean();
-
-    // Nếu không có course nào, trả về mảng rỗng
+    const courses = await Course.find({ subjectId })
+      .select('_id title term')
+      .lean();
     if (!courses.length) {
-      return res.json({ success: true, data: [] });
+      return res.json({
+        success: true,
+        data: { sameTerm: [], otherTerms: [], noneEnrolled: [] }
+      });
     }
+    const courseIds = courses.map(c => c._id.toString());
 
-    // 3. Lấy tất cả enrollment của student cho các course này
-    const courseIds = courses.map((c) => c._id);
-    const enrollments = await Enrollment.find({
+    // 3. Lấy tất cả enrollments của student cho những course này
+    const enrolls = await Enrollment.find({
       studentId,
-      courseId: { $in: courseIds },
+      courseId: { $in: courseIds }
     })
-      .select('courseId -_id')
+      .sort({ enrolledAt: -1 })  // mới nhất trước
       .lean();
 
-    // 4. Tạo một Set chứa các courseId mà student đã enroll
-    const enrolledSet = new Set(enrollments.map((e) => e.courseId.toString()));
+    // 4. Nếu chưa enroll khóa nào
+    if (!enrolls.length) {
+      return res.json({
+        success: true,
+        data: {
+          sameTerm: [],
+          otherTerms: [],
+          noneEnrolled: courses.map(c => ({ ...c, enrolled: false }))
+        }
+      });
+    }
 
-    // 5. Annotate mỗi course với trường `enrolled: true|false`
-    const annotated = courses.map((c) => ({
-      ...c,
-      enrolled: enrolledSet.has(c._id.toString()),
-    }));
+    // 5. Lấy term gần nhất
+    const latestTerm = enrolls[0].term;
 
-    return res.json({ success: true, data: annotated });
+    // 6. Tạo set các courseId đã enroll (bất kể term)
+    const enrolledSet = new Set(enrolls.map(e => e.courseId.toString()));
+
+    // 7. Phân nhóm courses theo term và trạng thái enroll
+    const sameTerm = [];
+    const otherTerms = [];
+    const noneEnrolled = [];
+
+    for (let c of courses) {
+      const isEnrolled = enrolledSet.has(c._id.toString());
+      const item = { ...c, enrolled: isEnrolled };
+
+      if (c.term === latestTerm) {
+        sameTerm.push(item);
+      } else if (isEnrolled) {
+        // Đã enroll nhưng ở term khác
+        otherTerms.push(item);
+      } else {
+        // Chưa enroll bao giờ
+        noneEnrolled.push(item);
+      }
+    }
+
+    return res.json({
+      success: true,
+      data: { sameTerm, otherTerms, noneEnrolled }
+    });
   } catch (err) {
     console.error('Error in getCoursesBySubjectForStudent:', err);
     return res

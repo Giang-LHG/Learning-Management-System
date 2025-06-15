@@ -14,15 +14,23 @@ exports.getAllSubjects = async (req, res) => {
 
 // Lấy tất cả subjects mà student đã enroll
 exports.getSubjectsByStudent = async (req, res) => {
-  try {
-    const { studentId } = req.params;
+ try {
+    const { studentId,term } = req.params;
+   
+    // 1. Lấy enrollments của student, nếu có term thì filter
+    const filter = { studentId };
+    if (term) filter.term = term;
 
-    const enrollments = await Enrollment.find({ studentId }).select('courseId');
-    const courseIds = enrollments.map(e => e.courseId);
+    const enrollments = await Enrollment.find(filter).select('courseId term');
+    const courseIds   = enrollments.map(e => e.courseId);
 
-    const courses = await Course.find({ _id: { $in: courseIds } }).select('subjectId');
+    // 2. Lấy courses chỉ trong những courseId trên
+    const courses = await Course.find({ _id: { $in: courseIds } })
+                                .select('subjectId term');
+    // 3. Lấy unique subjectId
     const subjectIds = [...new Set(courses.map(c => c.subjectId.toString()))];
 
+    // 4. Lấy subject documents
     const subjects = await Subject.find({
       _id: { $in: subjectIds },
       status: 'approved'
@@ -30,6 +38,7 @@ exports.getSubjectsByStudent = async (req, res) => {
 
     res.json({ success: true, data: subjects });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ success: false, message: 'Error fetching subjects by student' });
   }
 };
@@ -80,5 +89,46 @@ exports.sortSubjects = async (req, res) => {
   } catch (err) {
     console.error('Error in sortSubjects:', err);
     return res.status(500).json({ success: false, message: 'Error sorting subjects' });
+  }
+};
+exports.getPreviousSubjectsByStudent = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+
+    // 1. Lấy và populate tất cả enrollments của student
+    const enrolls = await Enrollment.find({ studentId })
+      .populate({
+        path: 'courseId',
+        select: 'term subjectId'
+      })
+      .lean();
+
+    // 2. Lọc chỉ những enrollments có enrollment.term khác với course.term
+    const mismatched = enrolls.filter(enr =>
+      enr.courseId &&                         // đảm bảo course tồn tại
+      enr.term !== enr.courseId.term
+    );
+
+    // 3. Gom unique subjectId từ những course đã lọc ra
+    const subjectIdSet = new Set(
+      mismatched
+        .map(enr => enr.courseId.subjectId && enr.courseId.subjectId.toString())
+        .filter(id => id)
+    );
+    const subjectIds = Array.from(subjectIdSet).map(id => mongoose.Types.ObjectId(id));
+
+    // 4. Lấy về các Subject đã approved
+    const subjects = await Subject.find({
+      _id: { $in: subjectIds },
+      status: 'approved'
+    });
+
+    return res.json({ success: true, data: subjects });
+
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Error fetching previous subjects' });
   }
 };

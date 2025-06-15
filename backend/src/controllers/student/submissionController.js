@@ -38,6 +38,7 @@ exports.submitAssignment = async (req, res) => {
       assignmentId,
       studentId,
       submittedAt: new Date(),
+      term: assignment.term,
       content: content || '',
       answers: answers || [] // chỉ dùng khi type === 'quiz'
     });
@@ -55,13 +56,24 @@ exports.submitAssignment = async (req, res) => {
  * Trả về tất cả submissions cho một assignment (để instructor xem)
  */
 exports.getSubmissionsByAssignment = async (req, res) => {
-  try {
+ try {
     const { assignmentId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
       return res.status(400).json({ success: false, message: 'Invalid assignmentId' });
     }
 
-    const submissions = await Submission.find({ assignmentId })
+    // 1. Lấy term của assignment
+    const asg = await Assignment.findById(assignmentId).select('term').lean();
+    if (!asg) {
+      return res.status(404).json({ success: false, message: 'Assignment not found' });
+    }
+    const { term: assignmentTerm } = asg;
+
+    // 2. Tìm submissions có cùng assignmentId và cùng term
+    const submissions = await Submission.find({
+      assignmentId,
+      term: assignmentTerm
+    })
       .populate('studentId', 'profile.fullName email') // lấy thông tin student
       .lean();
 
