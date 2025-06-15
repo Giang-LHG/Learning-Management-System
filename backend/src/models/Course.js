@@ -71,6 +71,11 @@ const CourseSchema = new Schema(
       type: Number,
       default: 0
     }
+    ,term:{
+      type:String,
+      required:true,
+      trim:true
+    }
     // timestamps tự động tạo createdAt / updatedAt
   },
   { timestamps: true }

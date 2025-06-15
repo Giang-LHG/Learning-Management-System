@@ -69,6 +69,11 @@ const AssignmentSchema = new Schema(
       type: [QuestionSchema],
       default: undefined // Chỉ sử dụng khi type === 'quiz'
     }
+     ,term:{
+      type:String,
+      required:true,
+      trim:true
+    }
     // timestamps tự động tạo createdAt / updatedAt
   },
   { timestamps: true }
