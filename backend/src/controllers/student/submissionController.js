@@ -38,7 +38,7 @@ exports.submitAssignment = async (req, res) => {
       assignmentId,
       studentId,
       submittedAt: new Date(),
-      term: assignment.term,
+      term: assignment.term[assignment.term.length-1],
       content: content || '',
       answers: answers || [] // chỉ dùng khi type === 'quiz'
     });
@@ -249,9 +249,24 @@ const submissions = submissionsRaw.map(sub => {
         s.grade.gradedAt = gradedAt;
       }
     }));
+const courseTerms = Array.isArray(courseRaw.term) ? courseRaw.term : [];
+    const latestCourseTerm = courseTerms.length
+      ? courseTerms[courseTerms.length - 1]
+      : null;
 
+    const onTermSubmissions = [];
+    const preTermSubmissions = [];
+
+    for (let s of submissions) {
+      // mỗi submission lưu trường `term`
+      if (s.term === latestCourseTerm) {
+        onTermSubmissions.push(s);
+      } else {
+        preTermSubmissions.push(s);
+      }
+    }
     // 4. Return
-    res.json({ success: true, data: submissions });
+    res.json({ success: true, data: onTermSubmissions, preTermSubmissions });
   } catch (err) {
     console.error('Error fetching submissions by course:', err);
     res.status(500).json({ success: false, message: 'Error fetching submissions' });
