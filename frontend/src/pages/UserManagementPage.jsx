@@ -10,7 +10,7 @@ const UserManagementPage = () => {
       key: 'id',
     },
     {
-      title: 'Tên',
+      title: 'Name',
       dataIndex: 'name',
       key: 'name',
     },
@@ -20,20 +20,20 @@ const UserManagementPage = () => {
       key: 'email',
     },
     {
-      title: 'Vai trò',
+      title: 'Role',
       dataIndex: 'role',
       key: 'role',
     },
     {
-      title: 'Thao tác',
+      title: 'Actions',
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
           <Button type="primary" icon={<EditOutlined />} size="small">
-            Sửa
+            Edit
           </Button>
           <Button type="primary" danger icon={<DeleteOutlined />} size="small">
-            Xóa
+            Delete
           </Button>
         </Space>
       ),
@@ -58,8 +58,8 @@ const UserManagementPage = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
-        <Button type="primary">Thêm người dùng</Button>
+        <h1 className="text-2xl font-bold">User Management</h1>
+        <Button type="primary">Add User</Button>
       </div>
       <Table columns={columns} dataSource={data} rowKey="id" />
     </div>

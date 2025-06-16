@@ -23,21 +23,21 @@ ChartJS.register(BarElement, ArcElement, CategoryScale, LinearScale, Tooltip, Le
 const DashboardPage = () => {
   const metrics = [
     { 
-      title: 'Tổng người dùng', 
+      title: 'Total Users', 
       value: 1240, 
       icon: <UserOutlined className="text-2xl text-blue-500" />,
       change: '+12%',
       color: '#1890ff'
     },
     { 
-      title: 'Môn học', 
+      title: 'Courses', 
       value: 56, 
       icon: <BookOutlined className="text-2xl text-green-500" />,
       change: '+5%',
       color: '#52c41a'
     },
     { 
-      title: 'Hoạt động hôm nay', 
+      title: 'Today\'s Activities', 
       value: 89, 
       icon: <ThunderboltOutlined className="text-2xl text-orange-500" />,
       change: '+3.2%',
@@ -46,10 +46,10 @@ const DashboardPage = () => {
   ];
 
   const barData = {
-    labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [
       {
-        label: 'Lượt truy cập',
+        label: 'Visits',
         data: [150, 230, 180, 290, 200, 250, 300],
         backgroundColor: 'rgba(24, 144, 255, 0.6)',
         borderRadius: 4,
@@ -58,7 +58,7 @@ const DashboardPage = () => {
   };
 
   const doughnutData = {
-    labels: ['Hoạt động', 'Không hoạt động', 'Bị chặn'],
+    labels: ['Active', 'Inactive', 'Blocked'],
     datasets: [
       {
         data: [300, 50, 100],
@@ -80,7 +80,7 @@ const DashboardPage = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">Tổng quan hệ thống</h1>
+      <h1 className="text-2xl font-bold mb-6">System Overview</h1>
       
       {/* Metrics Cards */}
       <Row gutter={[16, 16]} className="mb-6">
@@ -107,7 +107,7 @@ const DashboardPage = () => {
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
           <Card 
-            title="Lượt truy cập trong 7 ngày" 
+            title="Visits in the Last 7 Days" 
             className="h-full shadow-sm"
           >
             <div className="h-[300px]">
@@ -117,7 +117,7 @@ const DashboardPage = () => {
         </Col>
         <Col xs={24} lg={8}>
           <Card 
-            title="Trạng thái người dùng" 
+            title="User Status" 
             className="h-full shadow-sm"
           >
             <div className="h-[300px]">
@@ -131,7 +131,7 @@ const DashboardPage = () => {
       <Row gutter={[16, 16]} className="mt-6">
         <Col xs={24}>
           <Card 
-            title="Hoạt động gần đây" 
+            title="Recent Activity" 
             className="shadow-sm"
           >
             <div className="space-y-4">
@@ -142,11 +142,11 @@ const DashboardPage = () => {
                       <UserOutlined className="text-blue-500" />
                     </div>
                     <div className="ml-4">
-                      <p className="font-medium">Người dùng #{item}</p>
-                      <p className="text-sm text-gray-500">Đã thực hiện một hành động</p>
+                      <p className="font-medium">User #{item}</p>
+                      <p className="text-sm text-gray-500">Performed an action</p>
                     </div>
                   </div>
-                  <span className="text-sm text-gray-500">2 giờ trước</span>
+                  <span className="text-sm text-gray-500">2 hours ago</span>
                 </div>
               ))}
             </div>

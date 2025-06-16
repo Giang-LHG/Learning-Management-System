@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Outlet } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { Layout, Menu, Avatar, Button, Badge } from 'antd';
 import { 
   DashboardOutlined, 
@@ -31,17 +30,15 @@ const MainLayout = () => {
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
-  // Menu items với highlight tự động theo route hiện tại
   const menuItems = [
     { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
-    { key: '/users', icon: <UserOutlined />, label: 'Quản lý Người dùng' },
-    { key: '/subjects', icon: <BookOutlined />, label: 'Quản lý Môn học' },
-    { key: '/analytics', icon: <PieChartOutlined />, label: 'Báo cáo & Phân tích' },
-    { key: '/reports', icon: <FileTextOutlined />, label: 'Tạo báo cáo' },
-    { key: '/profile', icon: <SettingOutlined />, label: 'Cài đặt' },
+    { key: '/users', icon: <UserOutlined />, label: 'User Management' },
+    { key: '/subjects', icon: <BookOutlined />, label: 'Subject Management' },
+    { key: '/analytics', icon: <PieChartOutlined />, label: 'Analytics' },
+    { key: '/reports', icon: <FileTextOutlined />, label: 'Reports' },
+    { key: '/profile', icon: <SettingOutlined />, label: 'Settings' },
   ];
 
-  // Tự động chọn menu item dựa trên URL hiện tại
   const [selectedKeys, setSelectedKeys] = useState(['/']);
   useEffect(() => {
     setSelectedKeys([location.pathname]);
@@ -86,7 +83,7 @@ const MainLayout = () => {
             color: '#fff',
             margin: 0
           }}>
-            {collapsed ? 'EAP' : 'EDUADMIN PRO'}
+            {collapsed ? 'LMS' : 'TEACHLY'}
           </h1>
         </div>
         
@@ -108,7 +105,6 @@ const MainLayout = () => {
         transition: 'all 0.2s',
         marginLeft: broken ? 0 : collapsed ? 80 : 250
       }}>
-        {/* Header đã được sửa không dùng Tailwind */}
         <Header style={{
           backgroundColor: theme === 'light' ? '#fff' : '#1f2937',
           boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',

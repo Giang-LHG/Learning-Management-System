@@ -25,27 +25,27 @@ const Sidebar = ({ collapsed }) => {
     {
       key: '/users',
       icon: <UserOutlined />,
-      label: 'Quản lý Người dùng',
+      label: 'User Management',
     },
     {
       key: '/subjects',
       icon: <BookOutlined />,
-      label: 'Quản lý Môn học',
+      label: 'Subject Management',
     },
     {
       key: '/analytics',
       icon: <PieChartOutlined />,
-      label: 'Báo cáo & Phân tích',
+      label: 'Reports & Analytics',
     },
     {
       key: '/reports',
       icon: <FileTextOutlined />,
-      label: 'Tạo báo cáo',
+      label: 'Generate Report',
     },
     {
       key: '/settings',
       icon: <SettingOutlined />,
-      label: 'Cài đặt',
+      label: 'Settings',
     },
   ];
 
@@ -62,7 +62,7 @@ const Sidebar = ({ collapsed }) => {
         onClick={() => navigate('/')}
       >
         <h1 className="text-xl font-bold text-white">
-          {collapsed ? 'EAP' : 'EDUADMIN PRO'}
+          {collapsed ? 'LMS' : 'TEACHLY'}
         </h1>
       </div>
 
@@ -82,4 +82,4 @@ const Sidebar = ({ collapsed }) => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;

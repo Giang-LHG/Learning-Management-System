@@ -9,16 +9,16 @@ const BreadcrumbNav = () => {
   
   const breadcrumbNameMap = {
     '/': 'Dashboard',
-    '/users': 'Quản lý người dùng',
-    '/subjects': 'Quản lý môn học',
-    '/analytics': 'Phân tích',
-    '/reports': 'Báo cáo',
-    '/profile': 'Hồ sơ',
+    '/users': 'User Management',
+    '/subjects': 'Subject Management',
+    '/analytics': 'Analytics',
+    '/reports': 'Reports',
+    '/profile': 'Profile',
   };
   
   const items = [
     {
-      title: 'Trang chủ',
+      title: 'Home',
       key: 'home',
     },
     ...pathSnippets.map((_, index) => {

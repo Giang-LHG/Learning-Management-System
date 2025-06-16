@@ -1,7 +1,6 @@
-// src/pages/SubjectManagerPage.jsx
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Table, Button, Input, Tag, Modal } from 'antd';
+import { Table, Button, Input, Modal } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import CreateSubjectForm from '../components/subjects/CreateSubjectForm';
 import StatusBadge from '../components/subjects/StatusBadge';
@@ -20,7 +19,7 @@ const SubjectManagerPage = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const queryClient = useQueryClient();
-  
+
   const { data: subjects, isLoading } = useQuery({
     queryKey: ['subjects'],
     queryFn: fetchSubjects
@@ -37,7 +36,6 @@ const SubjectManagerPage = () => {
   const { values, handleChange } = useAutoSave({
     initialValues: { title: '', description: '' },
     onSave: (values) => {
-      // Auto save draft logic
       console.log('Auto saving draft:', values);
     },
     interval: 120000
@@ -56,18 +54,18 @@ const SubjectManagerPage = () => {
 
   const columns = [
     {
-      title: 'Tên môn học',
+      title: 'Subject Name',
       dataIndex: 'name',
       key: 'name',
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
-      title: 'Mã môn',
+      title: 'Subject Code',
       dataIndex: 'code',
       key: 'code',
     },
     {
-      title: 'Trạng thái',
+      title: 'Status',
       dataIndex: 'status',
       key: 'status',
       render: (status) => <StatusBadge status={status} color={statusColors[status]} />,
@@ -79,17 +77,17 @@ const SubjectManagerPage = () => {
       onFilter: (value, record) => record.status === value,
     },
     {
-      title: 'Hành động',
+      title: 'Actions',
       key: 'action',
       render: (_, record) => (
         <div className="flex space-x-2">
-          <Button size="small">Sửa</Button>
+          <Button size="small">Edit</Button>
           <Button 
             size="small" 
             danger
             onClick={() => handleDelete(record)}
           >
-            Xóa
+            Delete
           </Button>
         </div>
       ),
@@ -103,17 +101,17 @@ const SubjectManagerPage = () => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-semibold">Quản lý Môn học</h1>
+        <h1 className="text-xl font-semibold">Subject Management</h1>
         <div className="flex space-x-4">
           <Input.Search 
-            placeholder="Tìm kiếm môn học..." 
+            placeholder="Search subjects..." 
             allowClear
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64"
           />
           <CreateSubjectForm>
             <Button type="primary" icon={<PlusOutlined />}>
-              Tạo môn học
+              Create Subject
             </Button>
           </CreateSubjectForm>
         </div>

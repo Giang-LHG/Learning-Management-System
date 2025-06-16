@@ -9,13 +9,13 @@ const ChangePasswordPage = () => {
     setLoading(true);
     const { currentPassword, newPassword, confirmPassword } = values;
 
-    // Giả lập gọi API đổi mật khẩu
+    // Simulate API call for password change
     setTimeout(() => {
       if (currentPassword === 'oldpass123') {
-        message.success('Đổi mật khẩu thành công!');
+        message.success('Password changed successfully!');
         form.resetFields();
       } else {
-        message.error('Mật khẩu hiện tại không đúng!');
+        message.error('Current password is incorrect!');
       }
       setLoading(false);
     }, 1000);
@@ -23,7 +23,7 @@ const ChangePasswordPage = () => {
 
   return (
     <Card
-      title="🔐 Đổi mật khẩu"
+      title="🔐 Change Password"
       style={{ maxWidth: 500, margin: '2rem auto' }}
     >
       <Form
@@ -32,36 +32,36 @@ const ChangePasswordPage = () => {
         onFinish={handleChangePassword}
       >
         <Form.Item
-          label="Mật khẩu hiện tại"
+          label="Current Password"
           name="currentPassword"
-          rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại!' }]}
+          rules={[{ required: true, message: 'Please enter your current password!' }]}
         >
           <Input.Password />
         </Form.Item>
 
         <Form.Item
-          label="Mật khẩu mới"
+          label="New Password"
           name="newPassword"
           rules={[
-            { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
-            { min: 6, message: 'Mật khẩu phải ít nhất 6 ký tự' }
+            { required: true, message: 'Please enter a new password!' },
+            { min: 6, message: 'Password must be at least 6 characters long' }
           ]}
         >
           <Input.Password />
         </Form.Item>
 
         <Form.Item
-          label="Xác nhận mật khẩu mới"
+          label="Confirm New Password"
           name="confirmPassword"
           dependencies={['newPassword']}
           rules={[
-            { required: true, message: 'Vui lòng xác nhận mật khẩu mới!' },
+            { required: true, message: 'Please confirm your new password!' },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue('newPassword') === value) {
                   return Promise.resolve();
                 }
-                return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                return Promise.reject(new Error('Passwords do not match!'));
               },
             }),
           ]}
@@ -71,7 +71,7 @@ const ChangePasswordPage = () => {
 
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading}>
-            Đổi mật khẩu
+            Change Password
           </Button>
         </Form.Item>
       </Form>

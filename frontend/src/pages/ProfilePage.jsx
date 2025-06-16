@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Input, Button, Avatar, message, Card } from 'antd';
 
 const initialProfile = {
-  name: 'Nguyễn Văn A',
+  name: 'Nguyen Van A',
   email: 'nguyenvana@example.com',
   phone: '0901234567',
   avatarUrl: 'https://i.pravatar.cc/150?img=3',
@@ -17,14 +17,14 @@ const ProfilePage = () => {
     setLoading(true);
     setTimeout(() => {
       setProfile({ ...profile, ...values });
-      message.success('Cập nhật hồ sơ thành công!');
+      message.success('Profile updated successfully!');
       setLoading(false);
     }, 1000);
   };
 
   return (
     <Card
-      title="👤 Hồ sơ cá nhân"
+      title="👤 Personal Profile"
       style={{ maxWidth: 600, margin: '2rem auto' }}
     >
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
@@ -37,21 +37,29 @@ const ProfilePage = () => {
         initialValues={profile}
         onFinish={handleUpdate}
       >
-        <Form.Item label="Họ tên" name="name" rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}>
+        <Form.Item
+          label="Full Name"
+          name="name"
+          rules={[{ required: true, message: 'Please enter your full name!' }]}
+        >
           <Input />
         </Form.Item>
 
-        <Form.Item label="Email" name="email" rules={[{ type: 'email', message: 'Email không hợp lệ!' }]}>
+        <Form.Item
+          label="Email"
+          name="email"
+          rules={[{ type: 'email', message: 'Invalid email address!' }]}
+        >
           <Input />
         </Form.Item>
 
-        <Form.Item label="Số điện thoại" name="phone">
+        <Form.Item label="Phone Number" name="phone">
           <Input />
         </Form.Item>
 
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading}>
-            Cập nhật hồ sơ
+            Update Profile
           </Button>
         </Form.Item>
       </Form>
