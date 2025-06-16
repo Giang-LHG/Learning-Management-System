@@ -1,82 +1,217 @@
 import React, { useState } from 'react';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { Button, message } from 'antd';
-import { MailOutlined } from '@ant-design/icons';
-import LoginForm from '../../components/auth/LoginForm';
 
 const ResetPasswordSchema = Yup.object().shape({
-  email: Yup.string().email('Email không hợp lệ').required('Bắt buộc'),
+  email: Yup.string().email('Invalid email address').required('Email is required'),
 });
 
 const ResetPasswordPage = () => {
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      // Giả lập gửi email đặt lại mật khẩu
+      // Simulate sending reset email
       setTimeout(() => {
-        message.success('Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn.');
+        setEmailSent(true);
         setLoading(false);
-      }, 1000);
+      }, 1500);
     } catch (err) {
-      message.error('Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại sau.');
+      alert('Failed to send reset email. Please try again later.');
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-white">
-        Đặt lại mật khẩu
-      </h2>
-      <p className="text-gray-600 dark:text-gray-300 mb-6 text-center">
-        Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn một liên kết để đặt lại mật khẩu.
-      </p>
-      <Formik
-        initialValues={{ email: '' }}
-        validationSchema={ResetPasswordSchema}
-        onSubmit={handleSubmit}
-      >
-        {({ errors, touched, handleChange, handleBlur, handleSubmit }) => (
-          <LoginForm onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MailOutlined className="text-gray-500" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className={`pl-10 w-full px-3 py-2 border ${
-                    touched.email && errors.email ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white`}
-                  placeholder="Email của bạn"
-                />
-              </div>
-              {touched.email && errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
+    <div className="d-flex justify-content-center align-items-center min-vh-100" 
+         style={{
+           background: 'linear-gradient(135deg, #f8f9fc, #e6f0ff)',
+           fontFamily: "'Inter', 'Segoe UI', sans-serif"
+         }}>
+      <div className="card shadow-lg border-0" 
+           style={{ 
+             width: '100%', 
+             maxWidth: '500px', 
+             borderRadius: '20px',
+             overflow: 'hidden',
+             transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+             transform: isHovered ? 'translateY(-5px)' : 'none',
+             boxShadow: isHovered ? '0 20px 40px rgba(0, 0, 150, 0.15)' : '0 10px 30px rgba(0, 0, 150, 0.1)'
+           }}
+           onMouseEnter={() => setIsHovered(true)}
+           onMouseLeave={() => setIsHovered(false)}>
+        
+        {/* Card Header */}
+        <div className="card-header text-center py-4" 
+             style={{
+               background: 'linear-gradient(135deg, #4e73df, #224abe)',
+               border: 'none'
+             }}>
+          <div className="d-flex justify-content-center mb-3">
+            <div className="bg-white rounded-circle d-flex align-items-center justify-content-center" 
+                 style={{ 
+                   width: '80px', 
+                   height: '80px', 
+                   boxShadow: '0 5px 15px rgba(0,0,0,0.1)'
+                 }}>
+              <i className="bi bi-key" style={{ fontSize: '36px', color: '#4e73df' }}></i>
             </div>
-
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              className="w-full mt-2 h-10 bg-blue-600 hover:bg-blue-700"
+          </div>
+          <h2 className="text-white fw-bold mb-1">Reset Your Password</h2>
+          <p className="text-white mb-0 opacity-85">Enter your email to reset your password</p>
+        </div>
+        
+        {/* Card Body */}
+        <div className="card-body p-4 p-lg-5">
+          {emailSent ? (
+            <div className="text-center py-4">
+              <div className="d-flex justify-content-center mb-4">
+                <div className="bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                     style={{ 
+                       width: '100px', 
+                       height: '100px', 
+                       border: '2px dashed #4e73df'
+                     }}>
+                  <i className="bi bi-envelope-check" style={{ fontSize: '48px', color: '#4e73df' }}></i>
+                </div>
+              </div>
+              <h3 className="fw-bold mb-3">Check Your Email</h3>
+              <p className="text-muted mb-4">
+                We've sent a password reset link to your email address. 
+                Please check your inbox and follow the instructions to reset your password.
+              </p>
+              <p className="text-muted small mb-4">
+                Didn't receive the email? Check your spam folder or 
+                <button 
+                  className="btn btn-link p-0 ms-1" 
+                  onClick={() => setEmailSent(false)}
+                  style={{ color: '#4e73df' }}
+                >
+                  resend
+                </button>.
+              </p>
+              <a 
+                href="/login" 
+                className="btn btn-outline-primary w-100 py-2 fw-medium"
+                style={{
+                  borderRadius: '10px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <i className="bi bi-arrow-left me-2"></i>Back to Login
+              </a>
+            </div>
+          ) : (
+            <Formik
+              initialValues={{ email: '' }}
+              validationSchema={ResetPasswordSchema}
+              onSubmit={handleSubmit}
             >
-              Gửi email đặt lại mật khẩu
-            </Button>
-          </LoginForm>
-        )}
-      </Formik>
+              {({ errors, touched, handleChange, handleBlur, handleSubmit }) => (
+                <form onSubmit={handleSubmit}>
+                  {/* Email Field */}
+                  <div className="mb-4">
+                    <label htmlFor="email" className="form-label fw-medium text-dark mb-2">
+                      <i className="bi bi-envelope me-2"></i>Email Address
+                    </label>
+                    <div className="input-group">
+                      {/* <span className="input-group-text">
+                        <i className="bi bi-envelope"></i>
+                      </span> */}
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={`form-control ${touched.email && errors.email ? 'is-invalid' : ''}`}
+                        placeholder="your.email@example.com"
+                        style={{
+                          padding: '14px 16px',
+                          borderRadius: '10px',
+                          border: '1px solid #e1e5f1',
+                          transition: 'all 0.3s'
+                        }}
+                      />
+                      {touched.email && errors.email && (
+                        <div className="invalid-feedback d-block mt-2">
+                          <i className="bi bi-exclamation-circle me-2"></i>{errors.email}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn w-100 py-3 fw-bold mt-2 border-0"
+                    style={{
+                      background: 'linear-gradient(135deg, #4e73df, #224abe)',
+                      color: 'white',
+                      borderRadius: '12px',
+                      transition: 'all 0.3s',
+                      boxShadow: '0 6px 15px rgba(78, 115, 223, 0.3)',
+                      fontSize: '1.05rem',
+                      letterSpacing: '0.5px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'linear-gradient(135deg, #3a5ccc, #1a3cb0)';
+                      e.target.style.transform = 'translateY(-2px)';
+                      e.target.style.boxShadow = '0 8px 20px rgba(78, 115, 223, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'linear-gradient(135deg, #4e73df, #224abe)';
+                      e.target.style.transform = 'translateY(0)';
+                      e.target.style.boxShadow = '0 6px 15px rgba(78, 115, 223, 0.3)';
+                    }}
+                  >
+                    {loading ? (
+                      <span>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Sending Email...
+                      </span>
+                    ) : (
+                      <span>
+                        <i className="bi bi-send me-2"></i>Send Reset Link
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Back to Login */}
+                  <div className="text-center mt-4 pt-2">
+                    <p className="mb-0 text-muted">
+                      Remembered your password? 
+                      <a 
+                        href="/login" 
+                        className="ms-2 fw-medium text-decoration-none"
+                        style={{ color: '#4e73df' }}
+                      >
+                        Sign in
+                      </a>
+                    </p>
+                  </div>
+                </form>
+              )}
+            </Formik>
+          )}
+        </div>
+        
+        {/* Card Footer */}
+        <div className="card-footer text-center py-3" 
+             style={{ 
+               backgroundColor: '#f8f9fc', 
+               borderTop: '1px solid rgba(225, 229, 241, 0.5)',
+               fontSize: '0.85rem'
+             }}>
+          <p className="mb-0 text-muted">
+            &copy; {new Date().getFullYear()} Security System. All rights reserved.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
