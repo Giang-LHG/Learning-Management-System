@@ -254,6 +254,7 @@ export default function CourseList() {
       );
     } else if (isFromOtherTerms) {
       return (
+         <>
         <Button
           variant="warning"
           size="sm"
@@ -261,6 +262,13 @@ export default function CourseList() {
         >
           Re-Enroll
         </Button>
+           <Button
+          variant="success"
+          size="sm"
+          onClick={() => navigate(`/student/course/${course._id}`)}
+        >
+          Detail
+        </Button> </>
       );
     } else {
       // Course from noneEnrolled
@@ -392,7 +400,7 @@ export default function CourseList() {
                         
                         {c.term && (
                           <Card.Text className="text-muted mb-2">
-                            <strong>Term:</strong> {c.term}
+                            <strong>Term:</strong> {c.term[c.term.length - 1]}
                           </Card.Text>
                         )}
                         

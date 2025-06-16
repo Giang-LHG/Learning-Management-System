@@ -216,3 +216,43 @@ exports.searchEnrollments = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error searching enrollments' });
   }
 };
+exports.getEnrollments = async (req, res) => {
+  try {
+    const { studentId, courseId } = req.query;
+
+    // 1. Validate studentId
+    if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Query parameter "studentId" is required and must be a valid ObjectId.'
+      });
+    }
+
+    // 2. Build filter
+    const filter = { studentId: new mongoose.Types.ObjectId(studentId) };
+    if (courseId) {
+      if (!mongoose.Types.ObjectId.isValid(courseId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'If provided, "courseId" must be a valid ObjectId.'
+        });
+      }
+      filter.courseId = new mongoose.Types.ObjectId(courseId);
+    }
+
+    // 3. Query enrollments, populate course term, sort by date desc
+    const enrollments = await Enrollment.find(filter)
+      .populate('courseId', 'term')   // chỉ lấy trường `term` từ Course
+      .sort({ enrolledAt: -1 })
+      .lean();
+
+    // 4. Return
+    return res.json({ success: true, data: enrollments });
+  } catch (err) {
+    console.error('Error in getEnrollments:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching enrollments.'
+    });
+  }
+};
