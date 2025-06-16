@@ -400,7 +400,7 @@ export default function AppealList() {
             <Col>
               <Button 
                 className="btn-back d-flex align-items-center"
-                onClick={() => navigate(-1)}
+                onClick={() => navigate("/student/subjects")}
               >
                 <FiArrowLeft className="me-2" size={18} />
                 Back to Courses

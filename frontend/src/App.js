@@ -16,69 +16,43 @@ import GradeOverview       from './components/Student/GradeOverview';
 import AppealListStudent   from './components/Student/AppealListStudent';
 import AppealFormStudent   from './components/Student/AppealFormStudent';
 import LessonDetailStudent from './components/Student/LessionDetailStudent';
+import SidebarStudent     from './Layouts/Student/SideBarStudent';
 function App() {
   return (
-    <Router>
+     <Router>
       <Routes>
-        {/* Root → redirect to subjects */}
+        {/* Tất cả /student sẽ dùng SidebarLayout */}
+        <Route path="/student" element={<SidebarStudent />}>
+          {/* Root của /student → redirect về /student/subjects */}
+          <Route index element={<Navigate to="subjects" replace />} />
+
+          <Route path="subjects" element={<StudentSubjects />} />
+          <Route path="courses" element={<CourseListStudent />} />
+          <Route path="course/:courseId" element={<CourseDetail />} />
+          <Route path="course/:courseId/module/:moduleId" element={<ModuleDetailStudent />} />
+          <Route path="course/:courseId/module/:moduleId/lesson/:lessonId" element={<LessonDetailStudent />} />
+          <Route path="assignments/:courseId" element={<AssignmentList />} />
+          <Route path="quiz/:assignmentId" element={<QuizList />} />
+          <Route path="grades/:courseId" element={<GradeOverview />} />
+          <Route path="appeals" element={<AppealListStudent />} />
+          <Route path="appeal/:submissionId" element={<AppealFormStudent />} />
+
+          {/* fallback trong /student */}
+          <Route
+            path="*"
+            element={
+              <div className="p-6">
+                <h2>Page not found</h2>
+                <p><a href="/student/subjects">Go to subjects</a></p>
+              </div>
+            }
+          />
+        </Route>
+
+     
+
+        {/* Nếu root gốc, redirect luôn sang /student/subjects */}
         <Route path="/" element={<Navigate to="/student/subjects" replace />} />
-
-        {/* Subjects */}
-        <Route path="/student/subjects" element={<StudentSubjects />} />
-
-        {/* Courses under a subject (via query param subjectId or enrolled flag) */}
-        <Route path="/student/courses" element={<CourseListStudent />} />
-
-        {/* Single course detail */}
-        <Route path="/student/course/:courseId" element={<CourseDetail />} />
-
-        {/* Module detail within a course */}
-        <Route
-          path="/student/course/:courseId/module/:moduleId"
-          element={<ModuleDetailStudent />}
-        />
-
-        {/* Assignments list for one course */}
-        <Route
-          path="/student/assignments/:courseId"
-          element={<AssignmentList />}
-        />
-
-        {/* Quiz list for one assignment */}
-        <Route
-          path="/student/quiz/:assignmentId"
-          element={<QuizList />}
-        />
-
-        {/* Grade overview for one course */}
-        <Route
-          path="/student/grades/:courseId"
-          element={<GradeOverview />}
-        />
-
-        {/* Appeals list */}
-        <Route path="/student/appeals" element={<AppealListStudent />} />
-
-        {/* Single appeal form */}
-        <Route
-          path="/student/appeal/:submissionId"
-          element={<AppealFormStudent />}
-        />
-<Route
-path="/student/course/:courseId/module/:moduleId/lesson/:lessonId"
-element={<LessonDetailStudent />}
-/>
-
-        {/* fallback: Page Not Found */}
-        <Route
-          path="*"
-          element={
-            <div className="p-6">
-              <h2>Page not found</h2>
-              <p><a href="/student/subjects">Go to subjects</a></p>
-            </div>
-          }
-        />
       </Routes>
     </Router>
   );
