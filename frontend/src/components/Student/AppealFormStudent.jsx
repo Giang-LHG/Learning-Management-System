@@ -21,8 +21,8 @@ export default function AppealForm() {
   const [appealContent, setAppealContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const DEFAULT_STUDENTID = "60a000000000000000000002";
- const [studentId, setStudentId] = useState(DEFAULT_STUDENTID);
+
+ const [studentId, setStudentId] = useState("");
 
   useEffect(() => {
     try {
@@ -34,7 +34,7 @@ export default function AppealForm() {
         }
       }
     } catch {
-      setStudentId(DEFAULT_STUDENTID);
+      console.warn("Error parsing user from localStorage");
     }
   }, []);
   // Fetch submission detail

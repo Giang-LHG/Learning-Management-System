@@ -26,9 +26,9 @@ function useDebounce(value, delay) {
 
 export default function StudentSubjects() {
   const navigate = useNavigate();
-  const DEFAULT_ID = '60a000000000000000000002';
+  
 
-  const [studentId, setStudentId] = useState(DEFAULT_ID);
+  const [studentId, setStudentId] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('current'); // 'current' or 'previous'
@@ -47,9 +47,9 @@ export default function StudentSubjects() {
 
   useEffect(() => {
     try {
-      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      const u = JSON.parse(localStorage.getItem('user') );
      if (u._id) setStudentId(u._id);
-    } catch {}
+    } catch { console.warn("Error parsing user from localStorage:", e);}
   }, []);
 
   // Load previous subjects

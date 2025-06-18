@@ -23,9 +23,9 @@ export default function CourseList() {
   const params = new URLSearchParams(search);
   const subjectId = params.get('subjectId');
 
-  const DEFAULT_STUDENT_ID = '60a000000000000000000002';
+
   const [studentId] = useState(
-    () => JSON.parse(localStorage.getItem('user') || `{"_id":"${DEFAULT_STUDENT_ID}"}`)._id
+    () => JSON.parse(localStorage.getItem('user') )._id
   );
 
   const [searchQuery, setSearchQuery] = useState('');

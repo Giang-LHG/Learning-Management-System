@@ -50,8 +50,10 @@ export default function CourseDetail() {
         const { _id } = JSON.parse(stored);
         return _id;
       }
-    } catch {}
-    return '60a000000000000000000002'; // default
+    } catch {
+     console.warn("Error parsing user from localStorage:", e);
+    }
+   
   };
 
   // 2) Fetch course detail (và modules)

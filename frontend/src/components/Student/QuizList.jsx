@@ -31,7 +31,7 @@ export default function QuizList() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Lấy studentId từ localStorage hoặc mặc định
-  const DEFAULT_STUDENT_ID = "60a000000000000000000002";
+
   const [studentId, setStudentId] = useState("");
   
   useEffect(() => {
@@ -40,8 +40,6 @@ export default function QuizList() {
       if (stored) {
         const u = JSON.parse(stored);
         if (u && u._id) setStudentId(u._id);
-      }else{
-        setStudentId(DEFAULT_STUDENT_ID);
       }
     } catch (e) {
       console.warn("localStorage user parse error:", e);

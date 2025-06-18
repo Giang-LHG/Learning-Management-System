@@ -75,8 +75,8 @@ export default function AppealList() {
   const navigate = useNavigate();
 
   // Get studentId from localStorage or use default
-  const DEFAULT_STUDENT_ID = "60a000000000000000000002";
-  const [studentId, setStudentId] = useState(DEFAULT_STUDENT_ID);
+
+  const [studentId, setStudentId] = useState("");
   
   useEffect(() => {
     try {

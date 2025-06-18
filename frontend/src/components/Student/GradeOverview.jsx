@@ -43,8 +43,8 @@ const getTermColor = (term) => {
 export default function GradeOverview() {
   const navigate = useNavigate();
   const { courseId } = useParams(); 
-  const DEFAULT_STUDENT_ID = "60a000000000000000000002";
-  const [studentId, setStudentId] = useState(DEFAULT_STUDENT_ID);
+ 
+  const [studentId, setStudentId] = useState('');
    
   useEffect(() => {
     try {
