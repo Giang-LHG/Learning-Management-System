@@ -180,7 +180,7 @@ exports.resubmitSubmission = async (req, res) => {
 };
 exports.getSubmissionsByCourse = async (req, res) => {
    try {
-    const { courseId } = req.params;
+    const { courseId,studentId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(courseId)) {
       return res.status(400).json({ success: false, message: 'Invalid courseId' });
@@ -196,7 +196,8 @@ const courseRaw = await Course.findById(courseId).lean();
 
     // 2. Fetch submissions, with full assignment populated
  const submissionsRaw = await Submission.find({
-  assignmentId: { $in: assignmentIds }
+  assignmentId: { $in: assignmentIds },
+  studentId:{$in:studentId}
 })
   .populate('assignmentId', 'title dueDate type questions')
   .populate('studentId', 'name profile.email')
