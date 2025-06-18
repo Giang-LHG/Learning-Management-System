@@ -17,6 +17,7 @@ import AnalyticsDashboard from './pages/AnalyticsDashboard.jsx';
 import ReportGeneratorPage from './pages/ReportGeneratorPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
+import HomePage from './pages/home/HomePage.jsx';
 // import './styles/theme.css';
 
 const queryClient = new QueryClient();
@@ -26,15 +27,16 @@ function App() {
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <Routes>
+          <Route path="/" element={<HomePage />} />
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/signup" element={<RegisterPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
           </Route>
           
           <Route element={<MainLayout />}>
-            <Route path="/" element={<DashboardPage />} />
+            <Route path="/admin" element={<DashboardPage />} />
             <Route path="/users" element={<UserManagementPage />} />
             <Route path="/subjects" element={<SubjectManagerPage />} />
             <Route path="/analytics" element={<AnalyticsDashboard />} />
