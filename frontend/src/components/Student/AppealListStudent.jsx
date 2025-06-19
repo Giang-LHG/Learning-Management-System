@@ -1,57 +1,83 @@
 import React, { useState, useEffect, useCallback } from "react";
+
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { FiArrowLeft, FiSearch, FiChevronDown, FiFileText, FiClock, FiCheckCircle, FiXCircle } from "react-icons/fi";
-import { motion } from "framer-motion";
+import { 
+  Container, 
+  Row, 
+  Col, 
+  Card, 
+  Button, 
+  Form, 
+  Badge, 
+  Spinner,
+  InputGroup,
+  Collapse,
+  Alert
+} from "react-bootstrap";
+import { 
+  FiArrowLeft, 
+  FiSearch, 
+  FiChevronDown, 
+  FiFileText, 
+  FiClock, 
+  FiCheckCircle, 
+  FiXCircle,
+  FiUser,
+  FiMessageCircle,
+  FiChevronUp,
+  FiSend
+} from "react-icons/fi";
 
 const sortOptions = [
-  { label: "Newest First",    value: "appealCreatedAt:desc" },
-  { label: "Oldest First",    value: "appealCreatedAt:asc" },
-  { label: "Subject A→Z",     value: "subjectName:asc" },
-  { label: "Subject Z→A",     value: "subjectName:desc" },
-  { label: "Course A→Z",      value: "courseTitle:asc" },
-  { label: "Course Z→A",      value: "courseTitle:desc" }
+  { label: "Newest First", value: "appealCreatedAt:desc" },
+  { label: "Oldest First", value: "appealCreatedAt:asc" },
+  { label: "Subject A→Z", value: "subjectName:asc" },
+  { label: "Subject Z→A", value: "subjectName:desc" },
+  { label: "Course A→Z", value: "courseTitle:asc" },
+  { label: "Course Z→A", value: "courseTitle:desc" }
 ];
 
 const getStatusIcon = (status) => {
   switch (status) {
     case "open":
-      return <FiClock className="w-4 h-4 text-blue-500" />;
+      return <FiClock className="me-1" size={14} />;
     case "resolved":
-      return <FiCheckCircle className="w-4 h-4 text-green-500" />;
+      return <FiCheckCircle className="me-1" size={14} />;
     case "rejected":
-      return <FiXCircle className="w-4 h-4 text-red-500" />;
+      return <FiXCircle className="me-1" size={14} />;
     default:
-      return <FiFileText className="w-4 h-4 text-gray-500" />;
+      return <FiFileText className="me-1" size={14} />;
   }
 };
 
-const getStatusColor = (status) => {
+const getStatusVariant = (status) => {
   switch (status) {
     case "open":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "primary";
     case "resolved":
-      return "bg-green-100 text-green-800 border-green-200";
+      return "success";
     case "rejected":
-      return "bg-red-100 text-red-800 border-red-200";
+      return "danger";
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "secondary";
   }
 };
 
 const getGradeColor = (score) => {
-  if (score == null) return "text-gray-500";
-  if (score >= 8) return "text-green-600";
-  if (score >= 6) return "text-yellow-600";
-  return "text-red-600";
+  if (score == null) return "text-muted";
+  if (score >= 8) return "text-success";
+  if (score >= 6) return "text-warning";
+  return "text-danger";
 };
 
 export default function AppealList() {
   const navigate = useNavigate();
 
-  // Lấy studentId từ localStorage hoặc mặc định
-  const DEFAULT_STUDENT_ID = "60a000000000000000000002";
-  const [studentId, setStudentId] = useState(DEFAULT_STUDENT_ID);
+  // Get studentId from localStorage or use default
+
+  const [studentId, setStudentId] = useState("");
+  
   useEffect(() => {
     try {
       const stored = localStorage.getItem("user");
@@ -65,14 +91,21 @@ export default function AppealList() {
   }, []);
 
   // State
-  const [appeals, setAppeals] = useState([]);   // Gốc
-  const [filtered, setFiltered] = useState([]); // Sau filter+sort
+  const [appeals, setAppeals] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("appealCreatedAt");
   const [order, setOrder] = useState("desc");
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Comment-related state
+  const [expandedAppeal, setExpandedAppeal] = useState(null);
+  const [commentTexts, setCommentTexts] = useState({});
+  const [submittingComment, setSubmittingComment] = useState({});
+  const [commentErrors, setCommentErrors] = useState({});
+  const [commentSuccess, setCommentSuccess] = useState({});
 
-  // 1. Fetch appeals của student
+  // Fetch appeals
   const fetchAppeals = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -92,20 +125,19 @@ export default function AppealList() {
     fetchAppeals();
   }, [fetchAppeals]);
 
-  // 2. Filter + Sort
+  // Filter + Sort
   useEffect(() => {
     let temp = [...appeals];
 
-    // 2.1. Filter theo searchQuery: tìm trong subjectName || courseTitle
+    // Filter
     if (searchQuery.trim()) {
       const regex = new RegExp(searchQuery, "i");
       temp = temp.filter(
-        (a) =>
-          regex.test(a.subjectName) || regex.test(a.courseTitle)
+        (a) => regex.test(a.subjectName) || regex.test(a.courseTitle)
       );
     }
 
-    // 2.2. Sort
+    // Sort
     temp.sort((a, b) => {
       let fieldA, fieldB;
 
@@ -135,210 +167,541 @@ export default function AppealList() {
     setFiltered(temp);
   }, [appeals, searchQuery, sortBy, order]);
 
-  // 3. Handle sort change
+  // Handle sort change
   const handleSortChange = (value) => {
     const [field, ord] = value.split(":");
     setSortBy(field);
     setOrder(ord);
   };
 
+  // Toggle appeal expansion
+  const toggleAppealExpansion = (appealId) => {
+    setExpandedAppeal(expandedAppeal === appealId ? null : appealId);
+    // Clear any existing success/error messages when toggling
+    setCommentErrors(prev => ({ ...prev, [appealId]: null }));
+    setCommentSuccess(prev => ({ ...prev, [appealId]: null }));
+  };
+
+  // Handle comment text change
+  const handleCommentChange = (appealId, text) => {
+    setCommentTexts(prev => ({ ...prev, [appealId]: text }));
+    // Clear error/success messages when user starts typing
+    if (commentErrors[appealId]) {
+      setCommentErrors(prev => ({ ...prev, [appealId]: null }));
+    }
+    if (commentSuccess[appealId]) {
+      setCommentSuccess(prev => ({ ...prev, [appealId]: null }));
+    }
+  };
+
+  // Submit comment
+  const submitComment = async (appeal) => {
+    const { appealId, submissionId } = appeal;
+    const commentText = commentTexts[appealId]?.trim();
+
+    if (!commentText) {
+      setCommentErrors(prev => ({ ...prev, [appealId]: "Comment cannot be empty" }));
+      return;
+    }
+
+    try {
+      setSubmittingComment(prev => ({ ...prev, [appealId]: true }));
+      setCommentErrors(prev => ({ ...prev, [appealId]: null }));
+
+      const response = await axios.post(
+        `/api/student/appeals/${submissionId}/appeals/${appealId}/comments`,
+        {
+          userId: studentId,
+          text: commentText
+        }
+      );
+
+      if (response.data.success) {
+        // Clear the comment text
+        setCommentTexts(prev => ({ ...prev, [appealId]: "" }));
+        
+        // Show success message
+        setCommentSuccess(prev => ({ ...prev, [appealId]: "Comment added successfully!" }));
+        
+        // Refresh appeals to get updated comments
+        await fetchAppeals();
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setCommentSuccess(prev => ({ ...prev, [appealId]: null }));
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      setCommentErrors(prev => ({ 
+        ...prev, 
+        [appealId]: error.response?.data?.message || "Failed to add comment. Please try again." 
+      }));
+    } finally {
+      setSubmittingComment(prev => ({ ...prev, [appealId]: false }));
+    }
+  };
+
+  const customStyles = `
+    .bg-primary-gradient {
+      background: linear-gradient(135deg, #1e7ff5 0%, #1565d8 100%) !important;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+      transition: all 0.3s ease;
+    }
+    
+    .search-input {
+      border-radius: 12px !important;
+      border: 1px solid #dee2e6 !important;
+      padding: 12px 16px !important;
+      font-size: 16px !important;
+    }
+    
+    .search-input:focus {
+      border-color: #1e7ff5 !important;
+      box-shadow: 0 0 0 0.2rem rgba(30, 127, 245, 0.25) !important;
+    }
+    
+    .select-custom {
+      border-radius: 12px !important;
+      border: 1px solid #dee2e6 !important;
+      padding: 12px 16px !important;
+      font-size: 16px !important;
+    }
+    
+    .select-custom:focus {
+      border-color: #1e7ff5 !important;
+      box-shadow: 0 0 0 0.2rem rgba(30, 127, 245, 0.25) !important;
+    }
+    
+    .btn-back {
+      background: linear-gradient(135deg, #1e7ff5 0%, #1565d8 100%) !important;
+      border: none !important;
+      border-radius: 12px !important;
+      padding: 12px 24px !important;
+      font-weight: 500 !important;
+      transition: all 0.3s ease !important;
+    }
+    
+    .btn-back:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(30, 127, 245, 0.4) !important;
+    }
+    
+    .stats-card {
+      border-radius: 16px !important;
+      border: none !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
+      transition: all 0.3s ease !important;
+    }
+    
+    .stats-card:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+    
+    .appeal-card {
+      border-radius: 16px !important;
+      border: none !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
+      transition: all 0.3s ease !important;
+      overflow: hidden !important;
+    }
+    
+    .module-icon {
+      width: 40px !important;
+      height: 40px !important;
+      background: linear-gradient(135deg, #1e7ff5 0%, #1565d8 100%) !important;
+      border-radius: 12px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      color: white !important;
+      font-weight: bold !important;
+      font-size: 16px !important;
+    }
+    
+    .comment-section {
+      background-color: #f8f9fa !important;
+      border-radius: 12px !important;
+      padding: 16px !important;
+      margin-top: 16px !important;
+    }
+    
+    .comments-expanded {
+      background-color: #ffffff !important;
+      border-top: 1px solid #dee2e6 !important;
+      padding: 20px !important;
+      margin: 0 -20px -20px -20px !important;
+    }
+    
+    .comment-item {
+      background-color: #f8f9fa !important;
+      border-radius: 12px !important;
+      padding: 12px 16px !important;
+      margin-bottom: 12px !important;
+      border-left: 4px solid #1e7ff5 !important;
+    }
+    
+    .comment-form {
+      background-color: #f8f9fa !important;
+      border-radius: 12px !important;
+      padding: 16px !important;
+      margin-top: 16px !important;
+    }
+    
+    .btn-expand {
+      background: none !important;
+      border: none !important;
+      color: #1e7ff5 !important;
+      font-weight: 500 !important;
+      padding: 8px 12px !important;
+      border-radius: 8px !important;
+      transition: all 0.2s ease !important;
+    }
+    
+    .btn-expand:hover {
+      background-color: rgba(30, 127, 245, 0.1) !important;
+      color: #1565d8 !important;
+    }
+    
+    .btn-send {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+      border: none !important;
+      border-radius: 8px !important;
+      padding: 8px 16px !important;
+      font-weight: 500 !important;
+      transition: all 0.3s ease !important;
+    }
+    
+    .btn-send:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4) !important;
+    }
+    
+    .btn-send:disabled {
+      background: #6c757d !important;
+      opacity: 0.65 !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+  `;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Button */}
-        <motion.button
-          onClick={() => navigate(-1)}
-          className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl px-6 py-3 mb-8 hover:from-indigo-700 hover:to-purple-700 shadow-lg transition-all duration-300 transform hover:scale-105"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <FiArrowLeft size={20} />
-          <span className="ml-2 font-medium">Back to Dashboard</span>
-        </motion.button>
-
-        {/* Header */}
-        <motion.div
-          className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 mb-8 shadow-xl"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="flex items-center">
-            <div className="bg-white/20 rounded-full p-3 mr-4">
-              <FiFileText className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">
-                My Appeals
-              </h1>
-              <p className="text-blue-100 text-lg">
-                Track and manage your grade appeals
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Search + Sort */}
-        <motion.div
-          className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 space-y-4 lg:space-y-0 lg:space-x-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          {/* Search Input */}
-          <div className="relative flex-1 w-full lg:max-w-2xl">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <FiSearch className="text-gray-400" size={20} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search by subject or course name..."
-              className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-lg transition-all duration-300"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          {/* Sort Dropdown */}
-          <div className="relative w-full lg:w-72">
-            <select
-              className="w-full appearance-none bg-white border border-gray-200 rounded-xl px-4 py-4 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-lg transition-all duration-300"
-              value={`${sortBy}:${order}`}
-              onChange={(e) => handleSortChange(e.target.value)}
-            >
-              {sortOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 transform -translate-y-1/2 text-gray-400" />
-          </div>
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center">
-              <div className="bg-blue-100 rounded-full p-3 mr-4">
-                <FiFileText className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Appeals</p>
-                <p className="text-2xl font-bold text-gray-900">{appeals.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center">
-              <div className="bg-yellow-100 rounded-full p-3 mr-4">
-                <FiClock className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {appeals.filter(a => a.appealStatus === "open").length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center">
-              <div className="bg-green-100 rounded-full p-3 mr-4">
-                <FiCheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Resolved</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {appeals.filter(a => a.appealStatus === "resolved").length}
-                </p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Appeal List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            <span className="ml-4 text-gray-600 text-lg">Loading appeals...</span>
-          </div>
-        ) : filtered.length === 0 ? (
-          <motion.div
-            className="text-center py-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-          >
-            <FiFileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-xl">No appeals found.</p>
-            <p className="text-gray-500 mt-2">Try adjusting your search criteria.</p>
-          </motion.div>
-        ) : (
-          <div className="space-y-6">
-            {filtered.map((a, index) => (
-              <motion.div
-                key={a.appealId}
-                className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                whileHover={{ scale: 1.02, y: -5 }}
+    <>
+      <style>{customStyles}</style>
+      <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+        <Container fluid className="py-4">
+          {/* Back Button */}
+          <Row className="mb-4">
+            <Col>
+              <Button 
+                className="btn-back d-flex align-items-center"
+                onClick={() => navigate("/student/subjects")}
               >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center mb-2">
-                      <h3 className="text-xl font-bold text-gray-900 mr-3">
-                        {a.subjectName}
-                      </h3>
-                      <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(a.appealStatus)}`}>
-                        {getStatusIcon(a.appealStatus)}
-                        <span className="ml-1 capitalize">{a.appealStatus}</span>
+                <FiArrowLeft className="me-2" size={18} />
+                Back to Courses
+              </Button>
+            </Col>
+          </Row>
+
+          {/* Header */}
+          <Row className="mb-4">
+            <Col>
+              <Card className="bg-primary-gradient text-white border-0" style={{ borderRadius: '20px' }}>
+                <Card.Body className="p-4">
+                  <div className="d-flex align-items-center">
+                    <div className="module-icon me-3">
+                      <FiFileText size={20} />
+                    </div>
+                    <div>
+                      <h2 className="mb-2 fw-bold" style={{ fontSize: '32px' }}>
+                        My Appeals
+                      </h2>
+                      <p className="mb-0 opacity-75" style={{ fontSize: '18px' }}>
+                        Track and manage your grade appeals
+                      </p>
+                    </div>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+
+          {/* Search and Sort */}
+          <Row className="mb-4">
+            <Col lg={8} className="mb-3 mb-lg-0">
+              <InputGroup>
+                <InputGroup.Text style={{ backgroundColor: 'white', border: '1px solid #dee2e6', borderRadius: '12px 0 0 12px' }}>
+                  <FiSearch size={18} className="text-muted" />
+                </InputGroup.Text>
+                <Form.Control
+                  type="text"
+                  placeholder="Search modules by title..."
+                  className="search-input"
+                  style={{ borderLeft: 'none', borderRadius: '0 12px 12px 0' }}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </InputGroup>
+            </Col>
+            <Col lg={4}>
+              <Form.Select
+                className="select-custom"
+                value={`${sortBy}:${order}`}
+                onChange={(e) => handleSortChange(e.target.value)}
+              >
+                {sortOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </Form.Select>
+            </Col>
+          </Row>
+
+          {/* Stats */}
+          <Row className="mb-4">
+            <Col md={4} className="mb-3">
+              <Card className="stats-card h-100">
+                <Card.Body className="d-flex align-items-center">
+                  <div className="module-icon me-3">
+                    <FiFileText size={18} />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-muted small">Total Appeals</p>
+                    <h4 className="mb-0 fw-bold">{appeals.length}</h4>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={4} className="mb-3">
+              <Card className="stats-card h-100">
+                <Card.Body className="d-flex align-items-center">
+                  <div className="module-icon me-3" style={{ background: 'linear-gradient(135deg, #ffc107 0%, #ff8f00 100%)' }}>
+                    <FiClock size={18} />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-muted small">Pending</p>
+                    <h4 className="mb-0 fw-bold">
+                      {appeals.filter(a => a.appealStatus === "open").length}
+                    </h4>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={4} className="mb-3">
+              <Card className="stats-card h-100">
+                <Card.Body className="d-flex align-items-center">
+                  <div className="module-icon me-3" style={{ background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)' }}>
+                    <FiCheckCircle size={18} />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-muted small">Resolved</p>
+                    <h4 className="mb-0 fw-bold">
+                      {appeals.filter(a => a.appealStatus === "resolved").length}
+                    </h4>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+
+          {/* Appeals List */}
+          {isLoading ? (
+            <Row>
+              <Col className="text-center py-5">
+                <Spinner animation="border" variant="primary" className="me-3" />
+                <span className="text-muted fs-5">Loading appeals...</span>
+              </Col>
+            </Row>
+          ) : filtered.length === 0 ? (
+            <Row>
+              <Col className="text-center py-5">
+                <FiFileText size={64} className="text-muted mb-3" />
+                <h5 className="text-muted">No appeals found.</h5>
+                <p className="text-muted">Try adjusting your search criteria.</p>
+              </Col>
+            </Row>
+          ) : (
+            <Row>
+              <Col>
+                {filtered.map((appeal, index) => (
+                  <Card key={appeal.appealId} className="appeal-card card-hover mb-4">
+                    <Card.Body className="p-4">
+                      <Row className="align-items-start">
+                        <Col lg={8} className="mb-3 mb-lg-0">
+                          <div className="d-flex align-items-start mb-3">
+                            <div className="module-icon me-3 flex-shrink-0">
+                              {appeal.subjectName.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-grow-1">
+                              <div className="d-flex align-items-center mb-2">
+                                <h5 className="mb-0 me-3 fw-bold">
+                                  {appeal.subjectName}
+                                </h5>
+                                <Badge 
+                                  bg={getStatusVariant(appeal.appealStatus)}
+                                  className="d-flex align-items-center"
+                                >
+                                  {getStatusIcon(appeal.appealStatus)}
+                                  <span className="text-capitalize">{appeal.appealStatus}</span>
+                                </Badge>
+                              </div>
+                              <p className="mb-0 text-muted">
+                                <strong>Course:</strong> {appeal.courseTitle}
+                              </p>
+                            </div>
+                          </div>
+                        </Col>
+                        <Col lg={4} className="text-lg-end">
+                          <div className="mb-2">
+                            <small className="text-muted">
+                              {new Date(appeal.appealCreatedAt).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'short', 
+                                day: 'numeric' 
+                              })}
+                            </small>
+                          </div>
+                          <div className="d-flex align-items-center justify-content-lg-end">
+                            <span className="me-2 text-muted small">Grade:</span>
+                            {appeal.gradeScore != null ? (
+                              <span className={`fw-bold fs-5 ${getGradeColor(appeal.gradeScore)}`}>
+                                {appeal.gradeScore}/10
+                              </span>
+                            ) : (
+                              <span className="text-muted fst-italic">Not graded</span>
+                            )}
+                          </div>
+                        </Col>
+                      </Row>
+                      
+                      <div className="comment-section">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <p className="mb-0">
+                            <strong className="text-dark">Latest Comment:</strong>{" "}
+                            <span className="text-muted">
+                              {appeal.appealComments.length
+                                ? appeal.appealComments[appeal.appealComments.length - 1].text
+                                : "No comments available"}
+                            </span>
+                          </p>
+                          <Button
+                            className="btn-expand d-flex align-items-center"
+                            onClick={() => toggleAppealExpansion(appeal.appealId)}
+                          >
+                            <FiMessageCircle className="me-2" size={16} />
+                            {appeal.appealComments.length} Comments
+                            {expandedAppeal === appeal.appealId ? (
+                              <FiChevronUp className="ms-2" size={16} />
+                            ) : (
+                              <FiChevronDown className="ms-2" size={16} />
+                            )}
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <p className="text-gray-600 text-lg mb-2">
-                      <span className="font-medium">Course:</span> {a.courseTitle}
-                    </p>
-                  </div>
-                  <div className="flex flex-col lg:items-end space-y-2">
-                    <span className="text-sm text-gray-500">
-                      {new Date(a.appealCreatedAt).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
-                    </span>
-                    <div className="flex items-center">
-                      <span className="text-sm text-gray-600 mr-2">Grade:</span>
-                      {a.gradeScore != null ? (
-                        <span className={`text-xl font-bold ${getGradeColor(a.gradeScore)}`}>
-                          {a.gradeScore}/10
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 italic">Not graded</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-gray-700 leading-relaxed">
-                    <span className="font-semibold text-gray-900">Latest Comment:</span>{" "}
-                    {a.appealComments.length
-                      ? a.appealComments[a.appealComments.length - 1].text
-                      : "No comments available"}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
+
+                      {/* Expanded Comments Section */}
+                      <Collapse in={expandedAppeal === appeal.appealId}>
+                        <div className="comments-expanded">
+                          <h6 className="fw-bold mb-3">All Comments</h6>
+                          
+                          {/* Comments List */}
+                          {appeal.appealComments.length === 0 ? (
+                            <p className="text-muted fst-italic">No comments yet. Be the first to add one!</p>
+                          ) : (
+                            appeal.appealComments.map((comment, commentIndex) => (
+                              <div key={commentIndex} className="comment-item">
+                                <div className="d-flex justify-content-between align-items-start mb-2">
+                                  <div className="d-flex align-items-center">
+                                    <FiUser size={16} className="text-muted me-2" />
+                                    <small className="fw-semibold">
+                                      {comment.userId === studentId ? "You" : `User ${comment.by.slice(-4)}`}
+                                    </small>
+                                  </div>
+                                  {comment.createdAt && (
+                                    <small className="text-muted">
+                                      {new Date(comment.createdAt).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </small>
+                                  )}
+                                </div>
+                                <p className="mb-0">{comment.text}</p>
+                              </div>
+                            ))
+                          )}
+
+                          {/* Add Comment Form */}
+                          <div className="comment-form">
+                            <h6 className="fw-bold mb-3">Add a Comment</h6>
+                            
+                            {/* Success Alert */}
+                            {commentSuccess[appeal.appealId] && (
+                              <Alert variant="success" className="mb-3">
+                                {commentSuccess[appeal.appealId]}
+                              </Alert>
+                            )}
+                            
+                            {/* Error Alert */}
+                            {commentErrors[appeal.appealId] && (
+                              <Alert variant="danger" className="mb-3">
+                                {commentErrors[appeal.appealId]}
+                              </Alert>
+                            )}
+
+                            <Form.Group className="mb-3">
+                              <Form.Control
+                                as="textarea"
+                                rows={3}
+                                placeholder="Enter your comment here..."
+                                value={commentTexts[appeal.appealId] || ""}
+                                onChange={(e) => handleCommentChange(appeal.appealId, e.target.value)}
+                                style={{ borderRadius: '12px' }}
+                              />
+                            </Form.Group>
+                            
+                            <div className="d-flex justify-content-end">
+                              <Button
+                                className="btn-send d-flex align-items-center"
+                                onClick={() => submitComment(appeal)}
+                                disabled={
+                                  submittingComment[appeal.appealId] || 
+                                  !commentTexts[appeal.appealId]?.trim()
+                                }
+                              >
+                                {submittingComment[appeal.appealId] ? (
+                                  <>
+                                    <Spinner animation="border" size="sm" className="me-2" />
+                                    Sending...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FiSend className="me-2" size={16} />
+                                    Send Comment
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </Collapse>
+                    </Card.Body>
+                  </Card>
+                ))}
+              </Col>
+            </Row>
+          )}
+        </Container>
       </div>
-    </div>
+    </>
   );
 }

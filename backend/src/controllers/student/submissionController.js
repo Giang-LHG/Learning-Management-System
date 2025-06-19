@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Assignment = require('../../models/Assignment');
 const Submission = require('../../models/Submission');
-
+const Course = require('../../models/Course');
 /**
  * POST /submissions/submit
  * Cho học sinh nộp bài (essay hoặc quiz).
@@ -38,6 +38,7 @@ exports.submitAssignment = async (req, res) => {
       assignmentId,
       studentId,
       submittedAt: new Date(),
+      term: assignment.term[assignment.term.length-1],
       content: content || '',
       answers: answers || [] // chỉ dùng khi type === 'quiz'
     });
@@ -55,21 +56,35 @@ exports.submitAssignment = async (req, res) => {
  * Trả về tất cả submissions cho một assignment (để instructor xem)
  */
 exports.getSubmissionsByAssignment = async (req, res) => {
-  try {
-    const { assignmentId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
-      return res.status(400).json({ success: false, message: 'Invalid assignmentId' });
-    }
+ try {
+  const { assignmentId } = req.params;
 
-    const submissions = await Submission.find({ assignmentId })
-      .populate('studentId', 'profile.fullName email') // lấy thông tin student
-      .lean();
-
-    return res.status(200).json({ success: true, data: submissions });
-  } catch (err) {
-    console.error('Error in getSubmissionsByAssignment:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+  if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
+    return res.status(400).json({ success: false, message: 'Invalid assignmentId' });
   }
+
+  // 1. Lấy mảng term của assignment
+  const asg = await Assignment.findById(assignmentId).select('term').lean();
+  if (!asg || !asg.term || !asg.term.length) {
+    return res.status(404).json({ success: false, message: 'Assignment not found or no term info' });
+  }
+
+  // 👉 Lấy term mới nhất (phần tử cuối cùng trong mảng)
+  const latestTerm = asg.term[asg.term.length - 1];
+
+  // 2. Tìm submissions có cùng assignmentId và cùng term mới nhất
+  const submissions = await Submission.find({
+    assignmentId,
+    term: latestTerm
+  })
+    .populate('studentId', 'profile.fullName email') // lấy thông tin student
+    .lean();
+
+  return res.status(200).json({ success: true, data: submissions });
+} catch (err) {
+  console.error('Error in getSubmissionsByAssignment:', err);
+  return res.status(500).json({ success: false, message: 'Server error' });
+}
 };
 
 /**
@@ -164,35 +179,95 @@ exports.resubmitSubmission = async (req, res) => {
   }
 };
 exports.getSubmissionsByCourse = async (req, res) => {
-  try {
-    const { courseId ,studentId} = req.params;
+   try {
+    const { courseId,studentId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(courseId)) {
       return res.status(400).json({ success: false, message: 'Invalid courseId' });
     }
-   if (!mongoose.Types.ObjectId.isValid(studentId)) {
-      return res.status(400).json({ success: false, message: 'Invalid studentId' });
-    }
-    // 1. Lấy tất cả assignment thuộc courseId
+const courseRaw = await Course.findById(courseId).lean();
+
+    // 1. Fetch all assignment IDs for this course
     const assignments = await Assignment.find({ courseId }).select('_id').lean();
     const assignmentIds = assignments.map(a => a._id);
-
     if (!assignmentIds.length) {
       return res.json({ success: true, data: [] });
     }
 
-    // 2. Tìm tất cả submission có assignmentId nằm trong danh sách
-    const submissions = await Submission.find({ assignmentId: { $in: assignmentIds }, studentId:studentId })
-      .populate('assignmentId')  // nếu cần thông tin assignment
-      .populate('studentId', 'name profile.email') // nếu cần thông tin sinh viên
-      .lean();
-const formatted = submissions.map(s => ({
-  ...s,
-  assignment: s.assignmentId, // alias rõ ràng
-  student: s.studentId
-}));
-res.json({ success: true, data: formatted });
+    // 2. Fetch submissions, with full assignment populated
+ const submissionsRaw = await Submission.find({
+  assignmentId: { $in: assignmentIds },
+  studentId:{$in:studentId}
+})
+  .populate('assignmentId', 'title dueDate type questions')
+  .populate('studentId', 'name profile.email')
+  .lean();
+
+// 3. Remap each submission
+const submissions = submissionsRaw.map(sub => {
+  const { assignmentId, studentId: popStudent, ...rest } = sub;
+  return {
+    ...rest,
+    student: popStudent,     
+    assignment: assignmentId
+  };
+});
     
+    const now = new Date();
+
+    // 3. Auto-grade any quiz submissions past dueDate without a grade
+    await Promise.all(submissions.map(async s => {
+      const asg = s.assignment;
+      if (
+        asg.type === 'quiz' &&
+        now > new Date(asg.dueDate) &&
+        (s.grade.score === null || s.grade.score === undefined)
+      ) {
+        // build answer map
+        const answersMap = new Map(
+          (s.answers || []).map(a => [a.questionId.toString(), a.selectedOption])
+        );
+        const totalQs = asg.questions.length || 1;
+        let correctCount = 0;
+        asg.questions.forEach(q => {
+          if (answersMap.get(q.questionId.toString()) === q.correctOption) {
+            correctCount++;
+          }
+        });
+        // scale to 10
+        const score = Math.round((correctCount / totalQs) * 10 * 100) / 100; 
+        const gradedAt = now;
+
+        // persist grade
+        await Submission.findByIdAndUpdate(s._id, {
+          'grade.score': score,
+          'grade.gradedAt': gradedAt,
+          'grade.graderId':  new mongoose.Types.ObjectId(courseRaw.instructorId)
+        });
+
+        // update in-memory for response
+        s.grade.score    = score;
+        s.grade.gradedAt = gradedAt;
+      }
+    }));
+const courseTerms = Array.isArray(courseRaw.term) ? courseRaw.term : [];
+    const latestCourseTerm = courseTerms.length
+      ? courseTerms[courseTerms.length - 1]
+      : null;
+
+    const onTermSubmissions = [];
+    const preTermSubmissions = [];
+
+    for (let s of submissions) {
+      // mỗi submission lưu trường `term`
+      if (s.term === latestCourseTerm) {
+        onTermSubmissions.push(s);
+      } else {
+        preTermSubmissions.push(s);
+      }
+    }
+    // 4. Return
+    res.json({ success: true, data: onTermSubmissions, preTermSubmissions });
   } catch (err) {
     console.error('Error fetching submissions by course:', err);
     res.status(500).json({ success: false, message: 'Error fetching submissions' });

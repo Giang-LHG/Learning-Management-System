@@ -23,6 +23,11 @@ const EnrollmentSchema = new Schema(
       enum: ['active', 'completed', 'dropped'],
       default: 'active'
     }
+     ,term:{
+      type:String,
+      required:true,
+      trim:true
+    }
   },
   { timestamps: false }
   // Không cần timestamps vì chỉ lưu enrolledAt, status; nếu muốn thêm createdAt/updatedAt thì set { timestamps: true }.
