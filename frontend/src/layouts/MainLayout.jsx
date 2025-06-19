@@ -31,7 +31,7 @@ const MainLayout = () => {
   };
 
   const menuItems = [
-    { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
+    { key: '/admin', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: '/users', icon: <UserOutlined />, label: 'User Management' },
     { key: '/subjects', icon: <BookOutlined />, label: 'Subject Management' },
     { key: '/analytics', icon: <PieChartOutlined />, label: 'Analytics' },

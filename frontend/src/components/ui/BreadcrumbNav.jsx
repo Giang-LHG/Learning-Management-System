@@ -8,7 +8,7 @@ const BreadcrumbNav = () => {
   const pathSnippets = location.pathname.split('/').filter(i => i);
   
   const breadcrumbNameMap = {
-    '/': 'Dashboard',
+    '/admin': 'Dashboard',
     '/users': 'User Management',
     '/subjects': 'Subject Management',
     '/analytics': 'Analytics',

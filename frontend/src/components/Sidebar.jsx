@@ -18,7 +18,7 @@ const Sidebar = ({ collapsed }) => {
 
   const menuItems = [
     {
-      key: '/',
+      key: '/admin',
       icon: <DashboardOutlined />,
       label: 'Dashboard',
     },
