@@ -17,6 +17,7 @@ import AppealListStudent   from './components/Student/AppealListStudent';
 import AppealFormStudent   from './components/Student/AppealFormStudent';
 import LessonDetailStudent from './components/Student/LessionDetailStudent';
 import SidebarStudent     from './Layouts/Student/SideBarStudent';
+import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 function App() {
   return (
      <Router>
@@ -53,6 +54,7 @@ function App() {
 
         {/* Nếu root gốc, redirect luôn sang /student/subjects */}
         <Route path="/" element={<Navigate to="/student/subjects" replace />} />
+        <Route path="/parent/dashboard" element={<ParentStatsDashboard />} />
       </Routes>
     </Router>
   );
