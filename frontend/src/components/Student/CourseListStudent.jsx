@@ -23,21 +23,27 @@ export default function CourseList() {
   const params = new URLSearchParams(search);
   const subjectId = params.get('subjectId');
 
-  const DEFAULT_STUDENT_ID = '60a000000000000000000002';
+
   const [studentId] = useState(
-    () => JSON.parse(localStorage.getItem('user') || `{"_id":"${DEFAULT_STUDENT_ID}"}`)._id
+    () => JSON.parse(localStorage.getItem('user') )._id
   );
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('title');
   const [order, setOrder] = useState('asc');
-  const [allCourses, setCourses] = useState([]);
+  
+  // Updated state to handle the 3 types of courses
+  const [coursesData, setCoursesData] = useState({
+    sameTerm: [],
+    otherTerms: [],
+    noneEnrolled: []
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('enrolled');
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [coursesPerPage] = useState(8); // 8 courses per page
+  const [coursesPerPage] = useState(8);
 
   // Function to sort courses locally
   const sortCourses = (coursesToSort, sortField, sortOrder) => {
@@ -53,6 +59,9 @@ export default function CourseList() {
         aValue = Number(aValue) || 0;
         bValue = Number(bValue) || 0;
       } else if (sortField === 'title') {
+        aValue = String(aValue || '').toLowerCase();
+        bValue = String(bValue || '').toLowerCase();
+      } else if (sortField === 'term') {
         aValue = String(aValue || '').toLowerCase();
         bValue = String(bValue || '').toLowerCase();
       }
@@ -76,20 +85,28 @@ export default function CourseList() {
     const searchTerm = query.toLowerCase();
     return coursesToFilter.filter(course => 
       course.title?.toLowerCase().includes(searchTerm) ||
-      course.description?.toLowerCase().includes(searchTerm)
+      course.description?.toLowerCase().includes(searchTerm) ||
+      course.term?.toLowerCase().includes(searchTerm)
     );
   };
 
-  // Process courses (filter + sort + separate enrolled/other)
+  // Process courses (filter + sort + organize by tabs)
   const processedCourses = useMemo(() => {
-    let filtered = filterCourses(allCourses, searchQuery);
-    let sorted = sortCourses(filtered, sortBy, order);
+    // Combine sameTerm and otherTerms for "enrolled" tab
+    const allEnrolled = [...coursesData.sameTerm, ...coursesData.otherTerms];
     
-    const enrolled = sorted.filter(course => course.enrolled === true);
-    const other = sorted.filter(course => course.enrolled === false);
+    // Filter and sort each category
+    const filteredEnrolled = filterCourses(allEnrolled, searchQuery);
+    const filteredOther = filterCourses(coursesData.noneEnrolled, searchQuery);
     
-    return { enrolled, other };
-  }, [allCourses, searchQuery, sortBy, order]);
+    const sortedEnrolled = sortCourses(filteredEnrolled, sortBy, order);
+    const sortedOther = sortCourses(filteredOther, sortBy, order);
+    
+    return {
+      enrolled: sortedEnrolled,
+      other: sortedOther
+    };
+  }, [coursesData, searchQuery, sortBy, order]);
 
   // Get current courses for active tab with pagination
   const getCurrentCourses = () => {
@@ -104,30 +121,40 @@ export default function CourseList() {
     return Math.ceil(courses.length / coursesPerPage);
   };
 
-  // Load courses data from single endpoint
+  // Load courses data from API
   useEffect(() => {
     if (!subjectId) return;
     
     setIsLoading(true);
     const cancel = axios.CancelToken.source();
     
-    // Single API call to get all courses with enrollment status
     axios.get(
       `/api/student/courses/subject/${subjectId}/student/${studentId}`,
       { cancelToken: cancel.token }
     )
     .then(response => {
       if (response.data.success) {
-        // Backend already provides courses with enrolled field (true/false)
-        setCourses(response.data.data || []);
+        setCoursesData(response.data.data || {
+          sameTerm: [],
+          otherTerms: [],
+          noneEnrolled: []
+        });
       } else {
-        setCourses([]);
+        setCoursesData({
+          sameTerm: [],
+          otherTerms: [],
+          noneEnrolled: []
+        });
       }
     })
     .catch(err => {
       if (!axios.isCancel(err)) {
         console.error('Error loading courses:', err);
-        setCourses([]);
+        setCoursesData({
+          sameTerm: [],
+          otherTerms: [],
+          noneEnrolled: []
+        });
       }
     })
     .finally(() => {
@@ -149,21 +176,112 @@ export default function CourseList() {
         { studentId, courseId }
       );
       
-       if (data.success) {
-      setCourses(prev =>
-        prev.map(c => c._id === id ? { ...c, enrolled: true } : c)
+      if (data.success) {
+        // Move course from noneEnrolled to sameTerm (assuming it gets enrolled in current term)
+        setCoursesData(prev => {
+          const courseToMove = prev.noneEnrolled.find(c => c._id === courseId);
+          if (courseToMove) {
+            return {
+              ...prev,
+              sameTerm: [...prev.sameTerm, { ...courseToMove, enrolled: true }],
+              noneEnrolled: prev.noneEnrolled.filter(c => c._id !== courseId)
+            };
+          }
+          return prev;
+        });
+      } else {
+        alert(data.message || 'Enrollment failed.');
+      }
+    } catch (err) {
+      console.error('Enroll error:', err);
+      if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      } else {
+        alert('Error enrolling');
+      }
+    }
+  };
+
+  const handleReEnroll = async (courseId) => {
+    try {
+      const { data } = await axios.post(
+        '/api/student/enrollments/enroll',
+        { studentId, courseId }
+      );
+      
+      if (data.success) {
+        // Move course from otherTerms to sameTerm
+        setCoursesData(prev => {
+          const courseToMove = prev.otherTerms.find(c => c._id === courseId);
+          if (courseToMove) {
+            return {
+              ...prev,
+              sameTerm: [...prev.sameTerm, { ...courseToMove, enrolled: true }],
+              otherTerms: prev.otherTerms.filter(c => c._id !== courseId)
+            };
+          }
+          return prev;
+        });
+      } else {
+        alert(data.message || 'Re-enrollment failed.');
+      }
+    } catch (err) {
+      console.error('Re-enroll error:', err);
+      if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      } else {
+        alert('Error re-enrolling');
+      }
+    }
+  };
+
+  // Helper function to determine course type and get appropriate button
+  const getCourseButton = (course) => {
+    // Check if course is from sameTerm (current term enrolled)
+    const isFromSameTerm = coursesData.sameTerm.find(c => c._id === course._id);
+    // Check if course is from otherTerms (previously enrolled)
+    const isFromOtherTerms = coursesData.otherTerms.find(c => c._id === course._id);
+    
+    if (isFromSameTerm) {
+      return (
+        <Button
+          variant="success"
+          size="sm"
+          onClick={() => navigate(`/student/course/${course._id}`)}
+        >
+          Detail
+        </Button>
+      );
+    } else if (isFromOtherTerms) {
+      return (
+         <>
+        <Button
+          variant="warning"
+          size="sm"
+          onClick={() => handleReEnroll(course._id)}
+        >
+          Re-Enroll
+        </Button>
+           <Button
+          variant="success"
+          size="sm"
+          onClick={() => navigate(`/student/course/${course._id}`)}
+        >
+          Detail
+        </Button> </>
       );
     } else {
-      alert(data.message || 'Enrollment failed.');
+      // Course from noneEnrolled
+      return (
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => handleEnroll(course._id)}
+        >
+          Enroll
+        </Button>
+      );
     }
-  } catch (err) {
-    console.error('Enroll error:', err);
-    if (err.response?.data?.message) {
-      alert(err.response.data.message);
-    } else {
-      alert('Error enrolling');
-    }
-  }
   };
 
   const onSortChange = (value) => {
@@ -207,8 +325,8 @@ export default function CourseList() {
             <Form.Select value={`${sortBy}:${order}`} onChange={e => onSortChange(e.target.value)}>
               <option value="title:asc">Title A→Z</option>
               <option value="title:desc">Title Z→A</option>
-              <option value="startDate:asc">Start Date ↑</option>
-              <option value="startDate:desc">Start Date ↓</option>
+              <option value="term:asc">Term ↑</option>
+              <option value="term:desc">Term ↓</option>
               <option value="credits:asc">Credits ↑</option>
               <option value="credits:desc">Credits ↓</option>
             </Form.Select>
@@ -227,7 +345,7 @@ export default function CourseList() {
           </Nav.Item>
           <Nav.Item>
             <Nav.Link eventKey="other">
-              Other Courses ({processedCourses.other.length})
+              Available Courses ({processedCourses.other.length})
             </Nav.Link>
           </Nav.Item>
         </Nav>
@@ -247,54 +365,72 @@ export default function CourseList() {
         <div className="text-center py-5">
           <Spinner animation="border" />
         </div>
-      ) : allCourses.length === 0 ? (
+      ) : (coursesData.sameTerm.length + coursesData.otherTerms.length + coursesData.noneEnrolled.length) === 0 ? (
         <p>No courses available for this subject.</p>
       ) : currentTabCourses.length === 0 ? (
         <p>No courses found in this category.</p>
       ) : (
         <>
           <Row xs={1} sm={2} md={3} lg={4} className="g-3 mb-4">
-            {currentCourses.map(c => (
-              <Col key={c._id}>
-                <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-                  <Card border={c.enrolled ? 'success' : 'secondary'} className="h-100">
-                    <Card.Body className="d-flex flex-column">
-                      <Card.Title>{c.title}</Card.Title>
-                      <Card.Text className="text-muted mb-2">
-                        Credits: {c.credits || 'N/A'}
-                      </Card.Text>
-                      <Card.Text className="text-muted mb-2">
-                        Description: {c.description || 'N/A'}
-                      </Card.Text>
-                      {c.startDate && (
-                        <Card.Text className="text-muted small">
-                          Start: {new Date(c.startDate).toLocaleDateString()}
-                        </Card.Text>
-                      )}
-                      <div className="mt-auto d-flex justify-content-between">
-                        {c.enrolled ? (
-                          <Button
-                            variant="success"
-                            size="sm"
-                            onClick={() => navigate(`/student/course/${c._id}`)}
-                          >
-                            Detail
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => handleEnroll(c._id)}
-                          >
-                            Enroll
-                          </Button>
+            {currentCourses.map(c => {
+              // Determine course status for styling
+              const isFromSameTerm = coursesData.sameTerm.find(course => course._id === c._id);
+              const isFromOtherTerms = coursesData.otherTerms.find(course => course._id === c._id);
+              
+              let borderVariant = 'secondary';
+              let statusBadge = null;
+              
+              if (isFromSameTerm) {
+                borderVariant = 'success';
+                statusBadge = <small className="text-success">Current Term</small>;
+              } else if (isFromOtherTerms) {
+                borderVariant = 'warning';
+                statusBadge = <small className="text-warning">Previously Enrolled</small>;
+              }
+
+              return (
+                <Col key={c._id}>
+                  <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+                    <Card border={borderVariant} className="h-100">
+                      <Card.Body className="d-flex flex-column">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <Card.Title className="mb-1">{c.title}</Card.Title>
+                          {statusBadge}
+                        </div>
+                        
+                        {c.term && (
+                          <Card.Text className="text-muted mb-2">
+                            <strong>Term:</strong> {c.term[c.term.length - 1]}
+                          </Card.Text>
                         )}
-                      </div>
-                    </Card.Body>
-                  </Card>
-                </motion.div>
-              </Col>
-            ))}
+                        
+                        {c.credits && (
+                          <Card.Text className="text-muted mb-2">
+                            <strong>Credits:</strong> {c.credits}
+                          </Card.Text>
+                        )}
+                        
+                        {c.description && (
+                          <Card.Text className="text-muted mb-2">
+                            <strong>Description:</strong> {c.description}
+                          </Card.Text>
+                        )}
+                        
+                        {c.startDate && (
+                          <Card.Text className="text-muted small">
+                            <strong>Start:</strong> {new Date(c.startDate).toLocaleDateString()}
+                          </Card.Text>
+                        )}
+                        
+                        <div className="mt-auto d-flex justify-content-between">
+                          {getCourseButton(c)}
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </motion.div>
+                </Col>
+              );
+            })}
           </Row>
 
           {/* Pagination */}

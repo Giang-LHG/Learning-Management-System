@@ -104,7 +104,7 @@ exports.sortCourses = async (req, res) => {
   }
 };
 exports.getCoursesBySubjectForStudent = async (req, res) => {
-  try {
+ try {
     const { subjectId, studentId } = req.params;
 
     // 1. Validate ObjectId
@@ -118,32 +118,112 @@ exports.getCoursesBySubjectForStudent = async (req, res) => {
     }
 
     // 2. Lấy tất cả courses của subject
-    const courses = await Course.find({ subjectId }).lean();
-
-    // Nếu không có course nào, trả về mảng rỗng
+    const courses = await Course.find({ subjectId })
+      .select('_id title term')
+      .lean();
     if (!courses.length) {
-      return res.json({ success: true, data: [] });
+      return res.json({
+        success: true,
+        data: { sameTerm: [], otherTerms: [], noneEnrolled: [] }
+      });
+    }
+    const courseIds = courses.map(c => c._id.toString());
+
+    //  Lấy tất cả enrollments của student cho những course này
+   const allEnrolls = await Enrollment.find({
+  studentId,
+  courseId: { $in: courseIds }
+})
+  .sort({ enrolledAt: -1 })
+  .lean();
+
+//  Dùng map để giữ mỗi courseId chỉ một record đầu tiên (mới nhất)
+const latestByCourse = {};
+for (let e of allEnrolls) {
+  const key = e.courseId.toString();
+  if (!latestByCourse[key]) {
+    latestByCourse[key] = e;  // lần đầu gặp là mới nhất
+  }
+}
+
+// 3. Chuyển map thành mảng dedupe xong
+const enrolls = Object.values(latestByCourse);
+    // 4. Nếu chưa enroll khóa nào
+    if (!enrolls.length) {
+      return res.json({
+        success: true,
+        data: {
+          sameTerm: [],
+          otherTerms: [],
+          noneEnrolled: courses.map(c => ({ ...c, enrolled: false }))
+        }
+      });
     }
 
-    // 3. Lấy tất cả enrollment của student cho các course này
-    const courseIds = courses.map((c) => c._id);
-    const enrollments = await Enrollment.find({
-      studentId,
-      courseId: { $in: courseIds },
-    })
-      .select('courseId -_id')
-      .lean();
+    // 5. Lấy term gần nhất
+    const latestTerm = enrolls[0].term;
+console.log(latestTerm);
+    // 6. Tạo set các courseId đã enroll (bất kể term)
+    const enrolledSet = new Set(enrolls.map(e => e.courseId.toString()));
 
-    // 4. Tạo một Set chứa các courseId mà student đã enroll
-    const enrolledSet = new Set(enrollments.map((e) => e.courseId.toString()));
+    // 7. Phân nhóm courses theo term và trạng thái enroll
+   const sameTerm     = [];
+const otherTerms   = [];
+const noneEnrolled = [];
 
-    // 5. Annotate mỗi course với trường `enrolled: true|false`
-    const annotated = courses.map((c) => ({
-      ...c,
-      enrolled: enrolledSet.has(c._id.toString()),
-    }));
+// 1. Mình build nhanh lookup courseId → course object
+const courseById = courses.reduce((map, c) => {
+  map[c._id.toString()] = c;
+  return map;
+}, {});
 
-    return res.json({ success: true, data: annotated });
+// 2. Duyệt từng enrollment
+for (let e of enrolls) {
+  const cid      = e.courseId.toString();
+  const lastTerm = e.term;               // lấy term của enrollment này
+  const course   = courseById[cid];      // tìm course tương ứng
+
+  if (!course) continue;  // nếu course không tìm thấy thì bỏ qua
+
+  const item = { 
+    ...course, 
+    enrolled: true, 
+    termEnrolled: lastTerm 
+  };
+
+  // Lấy kỳ cuối cùng mà course được mở
+  const courseLastTerm = Array.isArray(course.term) && course.term.length
+    ? course.term[course.term.length - 1]
+    : null;
+
+  if (courseLastTerm && courseLastTerm.toString() === lastTerm.toString()) {
+    // nếu kỳ mở cuối của course khớp với kỳ student đã enroll
+    sameTerm.push(item);
+  } else {
+    // nếu student đã enroll nhưng kỳ mở cuối không khớp → otherTerms
+    otherTerms.push(item);
+  }
+
+  // Xóa đi để sau này còn biết course nào chưa enroll
+  delete courseById[cid];
+}
+
+// 3. Phần còn lại trong courseById là những course chưa bao giờ enroll
+for (let cid in courseById) {
+  noneEnrolled.push({
+    ...courseById[cid],
+    enrolled: false
+  });
+}
+
+return res.json({
+  success: true,
+  data: {
+    sameTerm,
+    otherTerms,
+    noneEnrolled
+  }
+});
   } catch (err) {
     console.error('Error in getCoursesBySubjectForStudent:', err);
     return res

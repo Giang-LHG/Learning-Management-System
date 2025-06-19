@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Assignment = require('../../models/Assignment');
+const Course = require('../../models/Course');
 const User = require('../../models/User'); 
 /**
  * GET /assignments/course/:courseId
@@ -7,21 +8,34 @@ const User = require('../../models/User');
  */
 exports.getAssignmentsByCourse = async (req, res) => {
   try {
-    const { courseId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(courseId)) {
-      return res.status(400).json({ success: false, message: 'Invalid courseId' });
-    }
+  const { courseId } = req.params;
 
-    // Tìm tất cả assignment của course, sắp xếp theo dueDate
-    const assignments = await Assignment.find({ courseId })
-      .sort({ dueDate: 1 })
-      .lean();
-
-    return res.status(200).json({ success: true, data: assignments });
-  } catch (err) {
-    console.error('Error in getAssignmentsByCourse:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+  if (!mongoose.Types.ObjectId.isValid(courseId)) {
+    return res.status(400).json({ success: false, message: 'Invalid courseId' });
   }
+
+  // 1. Lấy thông tin course để biết term
+  const course = await Course.findById(courseId).select('term').lean();
+  if (!course || !Array.isArray(course.term) || course.term.length === 0) {
+    return res.status(404).json({ success: false, message: 'Course not found or term missing' });
+  }
+
+  const latestTerm = course.term[course.term.length - 1]; // term mới nhất
+
+  // 2. Tìm tất cả assignment của course đúng term mới nhất
+  const assignments = await Assignment.find({ 
+      courseId,
+      term: latestTerm  // do Assignment.term là mảng, cần dùng $in nếu cần khớp phần tử
+    })
+    .sort({ dueDate: 1 })
+    .lean();
+
+  return res.status(200).json({ success: true, data: assignments });
+
+} catch (err) {
+  console.error('Error in getAssignmentsByCourse:', err);
+  return res.status(500).json({ success: false, message: 'Server error' });
+}
 };
 
 /**

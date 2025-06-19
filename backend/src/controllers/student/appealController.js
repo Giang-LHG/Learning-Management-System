@@ -24,7 +24,7 @@ exports.getAppealsByStudent = async (req, res) => {
     // 6. Project các trường cần thiết
     const results = await Submission.aggregate([
       // Chỉ lấy submission của student
-      { $match: { studentId: mongoose.Types.ObjectId(studentId) } },
+      { $match:  { studentId: new mongoose.Types.ObjectId(studentId) } },
       // Unwind mảng appeals
       { $unwind: { path: '$appeals' } },
       // Lookup assignment
@@ -96,6 +96,71 @@ exports.getAppealsByStudent = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Error retrieving appeals'
+    });
+  }
+};
+exports.addAppealComment = async (req, res) => {
+  try {
+    const { submissionId, appealId } = req.params;
+    const { userId, text } = req.body;
+
+    // 1. Validate IDs and input
+    if (!mongoose.Types.ObjectId.isValid(submissionId)) {
+      return res.status(400).json({ success: false, message: 'Invalid submissionId' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(appealId)) {
+      return res.status(400).json({ success: false, message: 'Invalid appealId' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ success: false, message: 'Invalid userId' });
+    }
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ success: false, message: 'Comment text is required' });
+    }
+
+    // 2. Build the comment object
+    const comment = {
+      by: new mongoose.Types.ObjectId(userId),
+      text: text.trim(),
+      at: new Date()
+    };
+
+    // 3. Use positional filtered update to push into the correct appeal
+    const updated = await Submission.findOneAndUpdate(
+      {
+        _id: submissionId,
+        'appeals.appealId': appealId
+      },
+      {
+        $push: {
+          'appeals.$.comments': comment
+        }
+      },
+      {
+        new: true,              // return the updated document
+        projection: { appeals: 1 } // only need appeals back
+      }
+    ).lean();
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Submission or appeal not found'
+      });
+    }
+
+    // 4. Extract the newly‐updated appeal from the array
+    const theAppeal = updated.appeals.find(a => a.appealId.toString() === appealId);
+
+    return res.status(201).json({
+      success: true,
+      data: theAppeal
+    });
+  } catch (err) {
+    console.error('Error adding appeal comment:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
     });
   }
 };

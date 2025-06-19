@@ -1,6 +1,5 @@
-// src/App.js
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom'; // Added Navigate import
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider } from 'react-redux';
 import store from './store/store';
@@ -25,7 +24,7 @@ import ReportGeneratorPage from './pages/ReportGeneratorPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
 
-// --- Pages/Components for Student (từ App1) ---
+// --- Pages/Components for Student ---
 import StudentSubjects from './components/Student/StudentSubjects';
 import CourseListStudent from './components/Student/CourseListStudent';
 import CourseDetail from './components/Student/CourseDetail';
@@ -36,8 +35,8 @@ import QuizList from './components/Student/QuizList';
 import GradeOverview from './components/Student/GradeOverview';
 import AppealListStudent from './components/Student/AppealListStudent';
 import AppealFormStudent from './components/Student/AppealFormStudent';
-
-// import './styles/theme.css';
+import SidebarStudent from './layouts/Student/SideBarStudent.js'; 
+import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 
 const queryClient = new QueryClient();
 
@@ -57,31 +56,44 @@ function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
           </Route>
           
-          {/* Authenticated Routes with Main Layout (for Admin, Student, etc.) */}
+          {/* Authenticated Routes with Main Layout */}
           <Route element={<MainLayout />}>
-            {/* Admin Routes */}
             <Route path="/admin" element={<DashboardPage />} />
             <Route path="/users" element={<UserManagementPage />} />
             <Route path="/subjects" element={<SubjectManagerPage />} />
             <Route path="/analytics" element={<AnalyticsDashboard />} />
             <Route path="/reports" element={<ReportGeneratorPage />} />
-            
-            {/* General Authenticated Routes */}
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/change-password" element={<ChangePasswordPage />} />
-
-            {/* --- Student Routes (đã được thêm vào) --- */}
-            <Route path="/student/subjects" element={<StudentSubjects />} />
-            <Route path="/student/courses" element={<CourseListStudent />} />
-            <Route path="/student/course/:courseId" element={<CourseDetail />} />
-            <Route path="/student/course/:courseId/module/:moduleId" element={<ModuleDetailStudent />} />
-            <Route path="/student/course/:courseId/module/:moduleId/lesson/:lessonId" element={<LessonDetailStudent />} />
-            <Route path="/student/assignments/:courseId" element={<AssignmentList />} />
-            <Route path="/student/quiz/:assignmentId" element={<QuizList />} />
-            <Route path="/student/grades/:courseId" element={<GradeOverview />} />
-            <Route path="/student/appeals" element={<AppealListStudent />} />
-            <Route path="/student/appeal/:submissionId" element={<AppealFormStudent />} />
           </Route>
+
+          {/* Student Routes with Sidebar Layout */}
+          <Route path="/student" element={<SidebarStudent />}>
+            <Route index element={<Navigate to="subjects" replace />} />
+            <Route path="subjects" element={<StudentSubjects />} />
+            <Route path="courses" element={<CourseListStudent />} />
+            <Route path="course/:courseId" element={<CourseDetail />} />
+            <Route path="course/:courseId/module/:moduleId" element={<ModuleDetailStudent />} />
+            <Route path="course/:courseId/module/:moduleId/lesson/:lessonId" element={<LessonDetailStudent />} />
+            <Route path="assignments/:courseId" element={<AssignmentList />} />
+            <Route path="quiz/:assignmentId" element={<QuizList />} />
+            <Route path="grades/:courseId" element={<GradeOverview />} />
+            <Route path="appeals" element={<AppealListStudent />} />
+            <Route path="appeal/:submissionId" element={<AppealFormStudent />} />
+            
+            <Route
+              path="*"
+              element={
+                <div className="p-6">
+                  <h2>Page not found</h2>
+                  <p><a href="/student/subjects">Go to subjects</a></p>
+                </div>
+              }
+            />
+          </Route>
+
+          {/* Parent Dashboard */}
+          <Route path="/parent/dashboard" element={<ParentStatsDashboard />} />
 
           {/* Fallback Route for Page Not Found */}
           <Route
@@ -96,7 +108,7 @@ function App() {
         </Routes>
       </QueryClientProvider>
     </Provider>
-  );
+  )
 }
 
 export default App;

@@ -106,6 +106,11 @@ const SubmissionSchema = new Schema(
       type: [AppealSchema],
       default: []
     }
+     ,term:{
+      type:String,
+      required:true,
+      trim:true
+    }
     // Không bật timestamps vì đã có submittedAt / grade.gradedAt / appeal.createdAt
   },
   { timestamps: false }

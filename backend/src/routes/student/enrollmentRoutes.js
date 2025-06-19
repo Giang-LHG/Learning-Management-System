@@ -7,4 +7,5 @@ const enrollmentController = require('../../controllers/student/enrollmentContro
 // Body: { studentId, courseId }
 router.post('/enroll', enrollmentController.enrollCourse);
 router.get('/enrollments/search', enrollmentController.searchEnrollments);
+router.get('/', enrollmentController.getEnrollments);
 module.exports = router;

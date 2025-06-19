@@ -31,7 +31,7 @@ export default function QuizList() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Lấy studentId từ localStorage hoặc mặc định
-  const DEFAULT_STUDENT_ID = "60a000000000000000000002";
+
   const [studentId, setStudentId] = useState("");
   
   useEffect(() => {
@@ -40,8 +40,6 @@ export default function QuizList() {
       if (stored) {
         const u = JSON.parse(stored);
         if (u && u._id) setStudentId(u._id);
-      }else{
-        setStudentId(DEFAULT_STUDENT_ID);
       }
     } catch (e) {
       console.warn("localStorage user parse error:", e);
@@ -261,7 +259,7 @@ export default function QuizList() {
             <strong>Last submitted:</strong> {new Date(submission.submittedAt).toLocaleString()}
             {submission.grade?.score != null && (
               <span className="ms-3">
-                <strong>Grade:</strong> <span className="text-success">{submission.grade.score}%</span>
+                <strong>Grade:</strong> <span className="text-success">{submission.grade.score}/10</span>
               </span>
             )}
           </div>
@@ -330,7 +328,7 @@ export default function QuizList() {
                 </div>
                 {submission?.grade?.score != null && (
                   <div className="text-end">
-                    <div className="h2 text-success mb-0">{submission.grade.score}%</div>
+                    <div className="h2 text-success mb-0">{submission.grade.score}/10</div>
                     <small className="text-muted">Your Score</small>
                   </div>
                 )}
