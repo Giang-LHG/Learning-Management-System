@@ -1,4 +1,3 @@
-// src/components/CourseDetail.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FiSearch, FiChevronDown, FiArrowLeft, FiBookOpen, FiClock, FiUser, FiPlay } from 'react-icons/fi';
