@@ -18,6 +18,8 @@ import AppealFormStudent   from './components/Student/AppealFormStudent';
 import LessonDetailStudent from './components/Student/LessionDetailStudent';
 import SidebarStudent     from './Layouts/Student/SideBarStudent';
 import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
+import SubjectOverView from './components/parent/SubjectOverView';
+import SideBarParent from './Layouts/parent/SideBarParent';
 function App() {
   return (
      <Router>
@@ -54,7 +56,10 @@ function App() {
 
         {/* Nếu root gốc, redirect luôn sang /student/subjects */}
         <Route path="/" element={<Navigate to="/student/subjects" replace />} />
-        <Route path="/parent/dashboard" element={<ParentStatsDashboard />} />
+        <Route path="/parent" element={<SideBarParent />} >
+        <Route path="dashboard" element={<ParentStatsDashboard />} />
+        <Route path="subjects" element={<SubjectOverView />} />
+        </Route>
       </Routes>
     </Router>
   );
