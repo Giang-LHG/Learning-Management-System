@@ -48,15 +48,16 @@ export default function QuizList() {
 
   // Fetch assignment detail
   const fetchAssignment = useCallback(async () => {
+   if(!studentId) return;
     try {
-      const resp = await axios.get(`/api/student/assignments/${assignmentId}`);
+      const resp = await axios.get(`/api/student/assignments/${assignmentId}/student/${studentId}`);
       if (resp.data.success) {
         setAssignment(resp.data.data);
       }
     } catch (err) {
       console.error("Error fetching assignment:", err);
     }
-  }, [assignmentId]);
+  }, [assignmentId, studentId]);
 
   // Fetch submission (if có) for this student
   const fetchSubmission = useCallback(async () => {

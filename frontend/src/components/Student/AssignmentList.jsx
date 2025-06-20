@@ -46,7 +46,18 @@ export default function AssignmentList() {
   const [sortBy, setSortBy] = useState('dueDate');
   const [order, setOrder] = useState('asc');
   const [isLoading, setIsLoading] = useState(true);
-
+const [studentId, setStudentId] = useState('');
+useEffect(() => {
+  try {
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      const u = JSON.parse(stored);
+      if (u && u._id) setStudentId(u._id);
+    }
+  } catch (e) {
+    console.warn('Error parsing user from localStorage:', e);
+  }
+}, []);
   // Fetch Course detail
   const fetchCourseDetail = useCallback(async () => {
     try {
@@ -61,9 +72,11 @@ export default function AssignmentList() {
 
   // Fetch Assignments cho course
   const fetchAssignments = useCallback(async () => {
+   if(!studentId) return;
     try {
       setIsLoading(true);
-      const resp = await axios.get(`/api/student/assignments/course/${courseId}`);
+      console.log(studentId);
+      const resp = await axios.get(`/api/student/assignments/course/${courseId}/student/${studentId}`);
       if (resp.data.success) {
         setAssignments(resp.data.data);
         setFiltered(resp.data.data);
@@ -73,7 +86,7 @@ export default function AssignmentList() {
     } finally {
       setIsLoading(false);
     }
-  }, [courseId]);
+  }, [courseId, studentId]);
 
   // Khi component mount
   useEffect(() => {
