@@ -86,7 +86,7 @@ export default function CourseList() {
     return coursesToFilter.filter(course => 
       course.title?.toLowerCase().includes(searchTerm) ||
       course.description?.toLowerCase().includes(searchTerm) ||
-      course.term?.toLowerCase().includes(searchTerm)
+course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   };
 
