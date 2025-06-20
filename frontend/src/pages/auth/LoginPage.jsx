@@ -75,7 +75,7 @@ const LoginPage = () => {
         {/* Card Body */}
         <div className="card-body p-4 p-lg-5">
           <Formik
-            initialValues={{ email: '', password: '' }}
+            initialValues={{ identifier: '', password: '' }}
             validationSchema={LoginSchema}
             onSubmit={handleSubmit}
           >

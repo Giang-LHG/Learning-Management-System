@@ -42,7 +42,10 @@ const UserSchema = new Schema(
     }
     // timestamps sẽ tự động tạo ra createdAt / updatedAt
   },
-  { timestamps: true }
+   {
+  timestamps: true,
+  collection: 'Users'
+}
 );
 
 module.exports = mongoose.model('User', UserSchema);
