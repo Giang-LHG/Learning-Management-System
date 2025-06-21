@@ -6,91 +6,97 @@ const Assignment  = require('../../models/Assignment');
 const Course      = require('../../models/Course');
 
 exports.getParentStats = async (req, res) => {
-   try {
+  try {
     const { parentId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(parentId)) {
       return res.status(400).json({ success: false, message: 'Invalid parentId' });
     }
 
     const parent = await User.findById(parentId).lean();
-    if (!parent || parent.roles !== 'parent') {
+    if (!parent || parent.role !== 'parent') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
     const students = await User.find({
-      roles: 'student',
-      'profile.parentIds': mongoose.Types.ObjectId(parentId)
+      role: 'student',
+      'profile.parentIds': new mongoose.Types.ObjectId(parentId)
     })
-    .select('_id profile.fullName')
-    .lean();
-
+      .select('_id profile.fullName')
+      .lean();
+console.log("student",students);
     const stats = await Promise.all(students.map(async (stu) => {
       const studentId = stu._id;
 
-      const enrolls = await Enrollment.find({ studentId })
-        .populate('courseId', 'credits subjectId')
+      const enrolls = await Enrollment.find({ studentId }).lean();
+      const submissions = await Submission.find({ studentId })
+        .select('assignmentId grade.score term')
         .lean();
 
-      const submissions = await Submission.find({
-        studentId,
-        'grade.score': { $ne: null }
-      })
-      .select('assignmentId grade.score')
-      .lean();
+      const assignments = await Assignment.find({})
+        .select('_id courseId')
+        .lean();
 
-      const assignmentCourseMap = {};
-      const assignmentIds = [...new Set(submissions.map(s => s.assignmentId.toString()))];
-      if (assignmentIds.length) {
-        const asgs = await Assignment.find({ _id: { $in: assignmentIds } })
-          .select('_id courseId')
-          .lean();
-        asgs.forEach(a => {
-          assignmentCourseMap[a._id.toString()] = a.courseId.toString();
-        });
-      }
+      const totalCourses = enrolls.length;
 
-      const courseScores = {};
-      submissions.forEach(s => {
-        const aid = s.assignmentId.toString();
-        const cid = assignmentCourseMap[aid];
-        if (!cid) return;
-        if (!courseScores[cid]) {
-          courseScores[cid] = { total: 0, count: 0 };
-        }
-        courseScores[cid].total += s.grade.score;
-        courseScores[cid].count += 1;
-      });
+      const gradedSubs = submissions.filter(s => s.grade && s.grade.score != null);
 
-      let sumWeighted = 0;
-      let sumCredits  = 0;
+      let weightedSum = 0;
+      let creditSum = 0;
       for (let e of enrolls) {
-        const cid = e.courseId._id.toString();
-        const credits = e.courseId.credits || 0;
-        const cs = courseScores[cid];
-        if (cs && cs.count) {
-          const avgCourse = cs.total / cs.count;
-          sumWeighted += avgCourse * credits;
-          sumCredits  += credits;
+        const course = await Course.findById(e.courseId).select('credits').lean();
+        if (!course) continue;
+        const courseCredits = course.credits || 0;
+        const relatedAids = assignments
+          .filter(a => a.courseId.toString() === e.courseId.toString())
+          .map(a => a._id.toString());
+        const scores = gradedSubs
+          .filter(s => relatedAids.includes(s.assignmentId.toString()))
+          .map(s => s.grade.score);
+        if (scores.length) {
+          const avgCourse = scores.reduce((sum, v) => sum + v, 0) / scores.length;
+          weightedSum += avgCourse * courseCredits;
+          creditSum += courseCredits;
         }
       }
-      const avgBySubject = sumCredits
-        ? (sumWeighted / sumCredits).toFixed(2)
-        : null;
+ const avg = weightedSum / creditSum;
+const avgGrade = creditSum ? +avg.toFixed(2) : null; 
+
+      const completedCount = gradedSubs.length;
+      const totalAssignCount = assignments.length;
+      const completionRate = totalAssignCount
+        ? (completedCount / totalAssignCount * 100).toFixed(1) + '%'
+        : 'N/A';
+
+      const byTerm = {};
+      enrolls.forEach(e => {
+        const t = e.term;
+        if (!byTerm[t]) byTerm[t] = { courses: 0, subs: 0, avgGrade: null };
+        byTerm[t].courses++;
+      });
+      submissions.forEach(s => {
+        const t = s.term;
+        if (!byTerm[t]) byTerm[t] = { courses: 0, subs: 0, avgGrade: null };
+        byTerm[t].subs++;
+      });
+      Object.keys(byTerm).forEach(t => {
+        const subsOfT = gradedSubs.filter(s => s.term === t).map(s => s.grade.score);
+        byTerm[t].avgGrade = subsOfT.length
+          ? (subsOfT.reduce((sum, v) => sum + v, 0) / subsOfT.length).toFixed(2)
+          : null;
+      });
 
       return {
         studentId,
         fullName: stu.profile.fullName,
-        totalCourses: enrolls.length,
-        averageByCourse: Object.entries(courseScores).map(([cid, { total, count }]) => ({
-          courseId: cid,
-          avgScore: (total / count).toFixed(2)
-        })),
-        avgBySubject,
+        totalCourses,
+        avgGrade,
+        completionRate,
+        byTerm
       };
     }));
+    console.log(stats);
 
     return res.json({ success: true, data: stats });
-
   } catch (err) {
     console.error('Error in getParentStats:', err);
     return res.status(500).json({ success: false, message: 'Server error' });
