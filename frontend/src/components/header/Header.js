@@ -1,16 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FiMenu, FiX, FiSearch, FiUser, FiLogOut } from 'react-icons/fi';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FiMenu, FiX, FiSearch, FiUser, FiLogOut, FiLogIn } from 'react-icons/fi';
 import { FaChalkboardTeacher } from 'react-icons/fa';
-import './Header.css'; 
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../../store/slices/authSlice';
+import './Header.css';
+
 function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const searchRef = useRef(null);
   const userDropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Lấy thông tin người dùng từ Redux store
+  const { user, token } = useSelector((state) => state.auth);
+  const isAuthenticated = !!token;
 
   // Đóng menu khi chuyển trang
   useEffect(() => {
@@ -22,18 +32,14 @@ function Header() {
   // Hiệu ứng sticky header khi cuộn
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 10);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Đóng search khi click bên ngoài
+  // Đóng search và dropdown khi click bên ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -61,6 +67,34 @@ function Header() {
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
+      setSearchOpen(false);
+    }
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    setUserDropdownOpen(false);
+    setMobileMenuOpen(false);
+    navigate('/');
+  };
+
+  // Tạo avatar từ tên người dùng
+  const getUserInitials = () => {
+    if (!user) return '';
+    const fullName = user.profile?.fullName || user.username || '';
+    const names = fullName.split(' ');
+    return names
+      .map(name => name[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
     <header className={`header ${isScrolled ? 'scrolled' : ''}`}>
@@ -114,86 +148,108 @@ function Header() {
           <button 
             className="search-button"
             onClick={() => setSearchOpen(!searchOpen)}
+            aria-label="Search"
           >
             <FiSearch size={20} />
           </button>
           
           {/* Search Input */}
-          <div 
+          <form 
             ref={searchRef}
             className={`search-container ${searchOpen ? 'open' : ''}`}
+            onSubmit={handleSearch}
           >
             <input 
               type="text" 
               placeholder="Search courses, instructors..." 
               className="search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <button className="search-submit">
+            <button type="submit" className="search-submit" aria-label="Submit search">
               <FiSearch size={18} />
             </button>
-          </div>
+          </form>
           
           {/* User Actions */}
           <div className="user-actions" ref={userDropdownRef}>
-            <button 
-              className="user-button"
-              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-            >
-              <FiUser size={20} />
-            </button>
-            
-            {userDropdownOpen && (
-              <div className="user-dropdown">
-                <div className="dropdown-header">
-                  <div className="user-avatar">JD</div>
-                  <div className="user-info">
-                    <div className="user-name">John Doe</div>
-                    <div className="user-email">john.doe@example.com</div>
-                  </div>
-                </div>
+            {isAuthenticated ? (
+              <>
+                <button 
+                  className="user-button"
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  aria-label="User menu"
+                >
+                  <div className="user-avatar-sm">{getUserInitials()}</div>
+                </button>
                 
-                <ul className="dropdown-links">
-                  <li>
-                    <Link to="/dashboard" className="dropdown-link">
-                      <FaChalkboardTeacher className="dropdown-icon" />
-                      Dashboard
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/profile" className="dropdown-link">
-                      <FiUser className="dropdown-icon" />
-                      My Profile
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/settings" className="dropdown-link">
-                      <FiUser className="dropdown-icon" />
-                      Account Settings
-                    </Link>
-                  </li>
-                  <li className="dropdown-divider"></li>
-                  <li>
-                    <Link to="/logout" className="dropdown-link">
-                      <FiLogOut className="dropdown-icon" />
-                      Logout
-                    </Link>
-                  </li>
-                </ul>
+                {userDropdownOpen && (
+                  <div className="user-dropdown">
+                    <div className="dropdown-header">
+                      <div className="user-avatar">{getUserInitials()}</div>
+                      <div className="user-info">
+                        <div className="user-name">{user?.profile?.fullName || user?.username}</div>
+                        <div className="user-email">{user?.email}</div>
+                      </div>
+                    </div>
+                    
+                    <ul className="dropdown-links">
+                      <li>
+                        <Link 
+                          to={user?.role === 'admin' ? '/admin' : user?.role === 'student' ? '/student' : user?.role === 'parent' ? '/parent/dashboard' : '/dashboard'} 
+                          className="dropdown-link" 
+                          onClick={() => setUserDropdownOpen(false)}
+                        >
+                          <FaChalkboardTeacher className="dropdown-icon" />
+                          Dashboard
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/profile" className="dropdown-link" onClick={() => setUserDropdownOpen(false)}>
+                          <FiUser className="dropdown-icon" />
+                          My Profile
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/settings" className="dropdown-link" onClick={() => setUserDropdownOpen(false)}>
+                          <FiUser className="dropdown-icon" />
+                          Account Settings
+                        </Link>
+                      </li>
+                      <li className="dropdown-divider"></li>
+                      <li>
+                        <button className="dropdown-link" onClick={handleLogout}>
+                          <FiLogOut className="dropdown-icon" />
+                          Logout
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="auth-buttons">
+                <Link 
+                  to="/login" 
+                  className="btn-login"
+                >
+                  <FiLogIn className="me-2" /> Sign In
+                </Link>
+                <Link to="/signup" className="btn-signup">
+                  Sign Up
+                </Link>
               </div>
             )}
             
-            <Link to="/signup" className="btn-signup">
-              Sign Up
-            </Link>
+            {/* Mobile Menu Button */}
+            <button 
+              className="mobile-menu-button" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Mobile menu"
+            >
+              {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+            </button>
           </div>
-          
-          {/* Mobile Menu Button */}
-          <button 
-            className="mobile-menu-button" 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-          </button>
         </div>
       </div>
 
@@ -237,33 +293,49 @@ function Header() {
                 Pricing
               </Link>
             </li>
-            <li>
-              <Link 
-                to="/dashboard" 
-                className={`mobile-nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/login" 
-                className="mobile-nav-btn mobile-nav-login"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Login
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/signup" 
-                className="mobile-nav-btn mobile-nav-signup"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Sign Up
-              </Link>
-            </li>
+            
+            {isAuthenticated ? (
+              <>
+                <li>
+                  <Link 
+                    to={user?.role === 'admin' ? '/admin' : user?.role === 'student' ? '/student' : user?.role === 'parent' ? '/parent/dashboard' : '/dashboard'} 
+                    className={`mobile-nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <button 
+                    className="mobile-nav-btn mobile-nav-logout"
+                    onClick={handleLogout}
+                  >
+                    <FiLogOut className="me-2" /> Logout
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <Link 
+                    to="/login" 
+                    className="mobile-nav-btn mobile-nav-login"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <FiLogIn className="me-2" /> Login
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    to="/signup" 
+                    className="mobile-nav-btn mobile-nav-signup"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </li>
+              </>
+            )}
           </ul>
         </div>
       </div>

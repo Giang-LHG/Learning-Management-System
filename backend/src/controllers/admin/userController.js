@@ -6,95 +6,90 @@ const { validationResult } = require('express-validator');
 // Helper: Tạo response error
 const createErrorResponse = (status, message) => ({ status, message });
 
-// Đăng ký người dùng mới
-exports.register = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+// Lấy tất cả users (có phân trang và lọc)
+exports.getAllUsers = async (req, res) => {
   try {
-    const { username, email, password, role, profile } = req.body;
+    const { page = 1, limit = 10, role, search, status } = req.query;
+    const filter = {};
 
-    // Kiểm tra username/email đã tồn tại
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-    if (existingUser) {
-      const message = existingUser.username === username 
-        ? 'Username already exists' 
-        : 'Email is already registered';
-      return res.status(409).json(createErrorResponse(409, message));
+    if (role) filter.role = role;
+    if (status !== undefined) filter.isActive = status === 'active';
+    if (search) {
+      filter.$or = [
+        { username: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
     }
 
-    // Mã hóa mật khẩu
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const users = await User.find(filter)
+      .select('-passwordHash')
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
 
-    // Tạo user mới với dữ liệu phù hợp theo role
-    const newUser = new User({
-      username,
-      email,
-      passwordHash,
-      role,
-      profile: {
-        fullName: profile.fullName,
-        avatarUrl: profile.avatarUrl || '',
-        ...(role === 'student' && { 
-          parentIds: profile.parentIds || [] 
-        }),
-        ...(role === 'instructor' && {
-          bio: profile.bio || '',
-          expertise: profile.expertise || ''
-        })
-      }
+    const total = await User.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / limit),
+      users
     });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching users',
+      error: error.message
+    });
+  }
+};
 
-    const savedUser = await newUser.save();
+// Lấy thông tin profile của user hiện tại
+exports.getCurrentUserProfile = async (req, res) => {
+  try {
+    const userId = req.user._id; // Sử dụng _id thay vì id
+    const user = await User.findById(userId).select('-passwordHash');
     
-    // Tạo response (loại bỏ passwordHash)
-    const userResponse = savedUser.toObject();
-    delete userResponse.passwordHash;
+    if (!user) {
+      return res.status(404).json(createErrorResponse(404, 'User not found'));
+    }
     
-    res.status(201).json(userResponse);
+    res.json(user);
   } catch (err) {
-    console.error('Registration error:', err);
+    console.error('Get current user profile error:', err);
     res.status(500).json(createErrorResponse(500, 'Server error'));
   }
 };
 
-// Đăng nhập
-exports.login = async (req, res) => {
+// Cập nhật profile của user hiện tại
+exports.updateCurrentUserProfile = async (req, res) => {
   try {
-    const { identifier, password } = req.body; // identifier có thể là username hoặc email
-
-    console.log('Login attempt with:', { identifier, password });
+    const userId = req.user._id; // Sử dụng _id thay vì id
+    const updates = req.body;
     
-    // Tìm user theo username hoặc email
-    const user = await User.findOne({
-      $or: [{ username: identifier }, { email: identifier }]
-    }).select('+passwordHash');
-    // console.log('User found:', user);
-    
-    if (!user) {
-      return res.status(401).json(createErrorResponse(401, 'Invalid credentials'));
+    // Xử lý mật khẩu mới nếu có
+    if (updates.password) {
+      const salt = await bcrypt.genSalt(10);
+      updates.passwordHash = await bcrypt.hash(updates.password, salt);
+      delete updates.password;
     }
-
-    // Xác thực mật khẩu
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) {
-      return res.status(401).json(createErrorResponse(401, 'Invalid password'));
-    }
-
-    // Tạo response (loại bỏ passwordHash)
-    const userResponse = user.toObject();
-    delete userResponse.passwordHash;
     
-    res.json({
-      ...userResponse,
-      message: 'Login successful'
-    });
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select('-passwordHash');
+    
+    if (!updatedUser) {
+      return res.status(404).json(createErrorResponse(404, 'User not found'));
+    }
+    
+    res.json(updatedUser);
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json(createErrorResponse(500, 'Login failed'));
+    console.error('Update current user profile error:', err);
+    res.status(500).json(createErrorResponse(500, 'Update failed'));
   }
 };
 

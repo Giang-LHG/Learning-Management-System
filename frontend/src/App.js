@@ -8,6 +8,10 @@ import store from './store/store';
 import MainLayout from './layouts/MainLayout.jsx';
 import AuthLayout from './layouts/AuthLayout.jsx';
 
+// --- Components ---
+import ProtectedRoute from './components/common/ProtectedRoute.jsx';
+import PublicRoute from './components/common/PublicRoute.jsx';
+
 // --- Pages (Public & Auth) ---
 import HomePage from './pages/home/HomePage.jsx';
 import LoginPage from './pages/auth/LoginPage.jsx';
@@ -48,27 +52,75 @@ function App() {
           {/* Public Route */}
           <Route path="/" element={<HomePage />} />
 
-          {/* Authentication Routes */}
+          {/* Authentication Routes - Chỉ cho phép user chưa đăng nhập */}
           <Route element={<AuthLayout />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<RegisterPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/login" element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            } />
+            <Route path="/signup" element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            } />
+            <Route path="/verify-email" element={
+              <PublicRoute>
+                <VerifyEmailPage />
+              </PublicRoute>
+            } />
+            <Route path="/reset-password" element={
+              <PublicRoute>
+                <ResetPasswordPage />
+              </PublicRoute>
+            } />
           </Route>
           
-          {/* Authenticated Routes with Main Layout */}
+          {/* Admin Routes - Chỉ cho phép admin */}
           <Route element={<MainLayout />}>
-            <Route path="/admin" element={<DashboardPage />} />
-            <Route path="/users" element={<UserManagementPage />} />
-            <Route path="/subjects" element={<SubjectManagerPage />} />
-            <Route path="/analytics" element={<AnalyticsDashboard />} />
-            <Route path="/reports" element={<ReportGeneratorPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/change-password" element={<ChangePasswordPage />} />
+            <Route path="/admin" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <DashboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/users" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UserManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/subjects" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <SubjectManagerPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/analytics" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AnalyticsDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/reports" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <ReportGeneratorPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/change-password" element={
+              <ProtectedRoute>
+                <ChangePasswordPage />
+              </ProtectedRoute>
+            } />
           </Route>
 
-          {/* Student Routes with Sidebar Layout */}
-          <Route path="/student" element={<SidebarStudent />}>
+          {/* Student Routes - Chỉ cho phép student */}
+          <Route path="/student" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <SidebarStudent />
+            </ProtectedRoute>
+          }>
             <Route index element={<Navigate to="subjects" replace />} />
             <Route path="subjects" element={<StudentSubjects />} />
             <Route path="courses" element={<CourseListStudent />} />
@@ -92,8 +144,12 @@ function App() {
             />
           </Route>
 
-          {/* Parent Dashboard */}
-          <Route path="/parent/dashboard" element={<ParentStatsDashboard />} />
+          {/* Parent Dashboard - Chỉ cho phép parent */}
+          <Route path="/parent/dashboard" element={
+            <ProtectedRoute allowedRoles={['parent']}>
+              <ParentStatsDashboard />
+            </ProtectedRoute>
+          } />
 
           {/* Fallback Route for Page Not Found */}
           <Route

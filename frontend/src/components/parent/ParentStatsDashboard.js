@@ -9,8 +9,12 @@ import {
   Button, 
   Spinner, 
   Badge,
-  ListGroup 
+  ListGroup,
+  Dropdown
 } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../../store/slices/authSlice';
 
 const ArrowLeft = ({ size = 20, className = "", style = {} }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className} style={style}>
@@ -23,6 +27,14 @@ const User = ({ size = 20, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
     <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+const LogOut = ({ size = 20, className = "" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+    <polyline points="16,17 21,12 16,7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
   </svg>
 );
 
@@ -66,6 +78,9 @@ const BarChart3 = ({ size = 20, className = "" }) => (
 );
 
 const ParentStatsDashboard = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -73,6 +88,11 @@ const ParentStatsDashboard = () => {
   useEffect(() => {
     fetchParentStats();
   }, []);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
 
   const fetchParentStats = async () => {
     try {
@@ -115,9 +135,23 @@ const ParentStatsDashboard = () => {
         {/* Header */}
         <div style={{ backgroundColor: '#0d6efd', color: 'white', padding: '2rem' }}>
           <Container>
-            <div className="d-flex align-items-center mb-3">
-              <ArrowLeft size={20} className="me-2" style={{ cursor: 'pointer' }} />
-              <small>Back to Dashboard</small>
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <div className="d-flex align-items-center">
+                <ArrowLeft size={20} className="me-2" style={{ cursor: 'pointer' }} />
+                <small>Back to Dashboard</small>
+              </div>
+              <Dropdown>
+                <Dropdown.Toggle variant="light" size="sm" className="d-flex align-items-center">
+                  <User size={16} className="me-2" />
+                  {user?.profile?.fullName || user?.username || 'Parent'}
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  <Dropdown.Item onClick={handleLogout} className="text-danger">
+                    <LogOut size={16} className="me-2" />
+                    Logout
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
             </div>
             <h1 className="h2 mb-2">Student Progress Overview</h1>
             <p className="text-light">Track your children's academic performance</p>
@@ -139,9 +173,23 @@ const ParentStatsDashboard = () => {
         {/* Header */}
         <div style={{ backgroundColor: '#0d6efd', color: 'white', padding: '2rem' }}>
           <Container>
-            <div className="d-flex align-items-center mb-3">
-              <ArrowLeft size={20} className="me-2" style={{ cursor: 'pointer' }} />
-              <small>Back to Dashboard</small>
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <div className="d-flex align-items-center">
+                <ArrowLeft size={20} className="me-2" style={{ cursor: 'pointer' }} />
+                <small>Back to Dashboard</small>
+              </div>
+              <Dropdown>
+                <Dropdown.Toggle variant="light" size="sm" className="d-flex align-items-center">
+                  <User size={16} className="me-2" />
+                  {user?.profile?.fullName || user?.username || 'Parent'}
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  <Dropdown.Item onClick={handleLogout} className="text-danger">
+                    <LogOut size={16} className="me-2" />
+                    Logout
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
             </div>
             <h1 className="h2 mb-2">Student Progress Overview</h1>
             <p className="text-light">Track your children's academic performance</p>
@@ -166,9 +214,23 @@ const ParentStatsDashboard = () => {
       {/* Header */}
       <div style={{ backgroundColor: '#0d6efd', color: 'white', padding: '2rem' }}>
         <Container>
-          <div className="d-flex align-items-center mb-3">
-            <ArrowLeft size={20} className="me-2" style={{ cursor: 'pointer' }} />
-            <small>Back to Dashboard</small>
+          <div className="d-flex align-items-center justify-content-between mb-3">
+            <div className="d-flex align-items-center">
+              <ArrowLeft size={20} className="me-2" style={{ cursor: 'pointer' }} />
+              <small>Back to Dashboard</small>
+            </div>
+            <Dropdown>
+              <Dropdown.Toggle variant="light" size="sm" className="d-flex align-items-center">
+                <User size={16} className="me-2" />
+                {user?.profile?.fullName || user?.username || 'Parent'}
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <Dropdown.Item onClick={handleLogout} className="text-danger">
+                  <LogOut size={16} className="me-2" />
+                  Logout
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
           </div>
           <h1 className="h2 mb-2">Student Progress Overview</h1>
           <p className="text-light">Track your children's academic performance</p>

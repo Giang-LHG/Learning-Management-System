@@ -17,10 +17,10 @@ const requireAuth = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     // 3. Xác minh token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     
     // 4. Tìm người dùng trong database và gắn vào request
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.userId).select('-passwordHash');
     
     if (!user) {
       return res.status(401).json({
@@ -30,7 +30,7 @@ const requireAuth = async (req, res, next) => {
     }
 
     // 5. Kiểm tra nếu người dùng bị vô hiệu hóa
-    if (!user.isActive) {
+    if (user.isActive === false) {
       return res.status(403).json({
         success: false,
         message: 'Tài khoản của bạn đã bị vô hiệu hóa'
@@ -84,8 +84,6 @@ const loginLimiter = rateLimit({
     message: 'Quá nhiều lần thử đăng nhập, vui lòng thử lại sau 15 phút'
   }
 });
-
-
 
 module.exports = {
   requireAuth,

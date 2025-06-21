@@ -2,46 +2,75 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../../controllers/admin/userController');
-const { body } = require('express-validator');
+const authMiddleware = require('../../middlewares/authMiddleware');
+const adminMiddleware = require('../../middlewares/adminMiddleware');
+const { check } = require('express-validator');
 
-// Middleware xác thực (ví dụ cơ bản)
-const authenticate = (req, res, next) => {
-  // Triển khai logic xác thực thực tế ở đây (JWT, session...)
-  next();
-};
+// Middleware xác thực người dùng
+const requireAuth = authMiddleware.requireAuth;
+// Middleware kiểm tra quyền admin
+const requireAdmin = adminMiddleware.requireAdmin;
 
-// Middleware phân quyền
-const authorize = (roles) => (req, res, next) => {
-  // Triển khai logic phân quyền dựa trên vai trò
-  next();
-};
+/**
+ * @route GET /users
+ * @description Lấy danh sách tất cả users (có phân trang và lọc)
+ * @access Private (Admin)
+ */
+router.get('/', [requireAuth, requireAdmin], userController.getAllUsers);
 
-// Đăng ký user
-router.post(
-  '/register',
+/**
+ * @route GET /users/profile
+ * @description Lấy thông tin profile của user hiện tại
+ * @access Private
+ */
+router.get('/profile', requireAuth, userController.getCurrentUserProfile);
+
+/**
+ * @route PUT /users/profile
+ * @description Cập nhật profile của user hiện tại
+ * @access Private
+ */
+router.put('/profile', [
+  requireAuth,
   [
-    body('username').trim().isLength({ min: 3 }),
-    body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 6 }),
-    body('role').isIn(['student', 'instructor', 'admin', 'parent']),
-    body('profile.fullName').notEmpty()
-  ],
-  userController.register
-);
+    check('username', 'Username is required').not().isEmpty(),
+    check('email', 'Please include a valid email').isEmail(),
+  ]
+], userController.updateCurrentUserProfile);
 
-// Đăng nhập
-router.post('/login', userController.login);
+/**
+ * @route GET /users/:id
+ * @description Lấy thông tin user theo ID
+ * @access Private (Admin)
+ */
+router.get('/:id', [requireAuth, requireAdmin], userController.getUserProfile);
 
-// Lấy thông tin user
-router.get('/:id', authenticate, userController.getUserProfile);
+/**
+ * @route PUT /users/:id
+ * @description Cập nhật thông tin user
+ * @access Private (Admin)
+ */
+router.put('/:id', [
+  requireAuth, 
+  requireAdmin,
+  [
+    check('username', 'Username is required').not().isEmpty(),
+    check('email', 'Please include a valid email').isEmail(),
+  ]
+], userController.updateUserProfile);
 
-// Cập nhật user (yêu cầu xác thực)
-router.put('/:id', authenticate, userController.updateUserProfile);
+/**
+ * @route DELETE /users/:id
+ * @description Xóa user
+ * @access Private (Admin)
+ */
+router.delete('/:id', [requireAuth, requireAdmin], userController.deleteUser);
 
-// Xóa user (chỉ admin)
-router.delete('/:id', authenticate, authorize(['admin']), userController.deleteUser);
-
-// Lấy user theo vai trò (option)
-router.get('/', authenticate, userController.getUsersByRole);
+/**
+ * @route GET /users/by-role
+ * @description Lấy users theo role
+ * @access Private (Admin)
+ */
+router.get('/by-role', [requireAuth, requireAdmin], userController.getUsersByRole);
 
 module.exports = router;

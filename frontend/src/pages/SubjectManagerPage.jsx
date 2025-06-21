@@ -25,6 +25,9 @@ const SubjectManagerPage = () => {
     queryFn: fetchSubjects
   });
 
+  // Extract subjects array from the API response
+  const subjectsList = subjects?.subjects || [];
+
   const deleteMutation = useMutation({
     mutationFn: deleteSubject,
     onSuccess: () => {
@@ -94,7 +97,7 @@ const SubjectManagerPage = () => {
     },
   ];
 
-  const filteredData = subjects?.filter(item => 
+  const filteredData = subjectsList.filter(item => 
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 

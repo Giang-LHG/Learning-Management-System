@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { Layout, Menu, Avatar, Button, Badge } from 'antd';
+import { Layout, Menu, Avatar, Button, Badge, Dropdown } from 'antd';
 import { 
   DashboardOutlined, 
   UserOutlined, 
@@ -10,14 +10,19 @@ import {
   SettingOutlined,
   BellOutlined,
   MenuUnfoldOutlined,
-  MenuFoldOutlined
+  MenuFoldOutlined,
+  LogoutOutlined
 } from '@ant-design/icons';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../store/slices/authSlice';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import BreadcrumbNav from '../components/ui/BreadcrumbNav';
 
 const { Header, Sider, Content } = Layout;
 
 const MainLayout = () => {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const [collapsed, setCollapsed] = useState(false);
   const [broken, setBroken] = useState(false);
   const [theme, setTheme] = useState('light');
@@ -30,6 +35,11 @@ const MainLayout = () => {
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
+
   const menuItems = [
     { key: '/admin', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: '/users', icon: <UserOutlined />, label: 'User Management' },
@@ -37,6 +47,21 @@ const MainLayout = () => {
     { key: '/analytics', icon: <PieChartOutlined />, label: 'Analytics' },
     { key: '/reports', icon: <FileTextOutlined />, label: 'Reports' },
     { key: '/profile', icon: <SettingOutlined />, label: 'Settings' },
+  ];
+
+  const userMenuItems = [
+    {
+      key: 'profile',
+      icon: <UserOutlined />,
+      label: 'Profile',
+      onClick: () => navigate('/profile')
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: 'Logout',
+      onClick: handleLogout
+    }
   ];
 
   const [selectedKeys, setSelectedKeys] = useState(['/']);
@@ -150,38 +175,50 @@ const MainLayout = () => {
               />
             </Badge>
             
-            <div 
-              style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-              onClick={() => navigate('/profile')}
+            <Dropdown
+              menu={{ items: userMenuItems }}
+              placement="bottomRight"
+              trigger={['click']}
             >
-              <div style={{ position: 'relative' }}>
-                <Avatar 
-                  icon={<UserOutlined />} 
-                  style={{ backgroundColor: '#3b82f6' }}
-                />
-                <div style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  width: 12,
-                  height: 12,
-                  backgroundColor: '#10b981',
-                  borderRadius: '50%',
-                  border: `2px solid ${theme === 'light' ? '#fff' : '#1f2937'}`
-                }}></div>
-              </div>
-              
-              {!collapsed && !broken && (
-                <div style={{ marginLeft: 12 }}>
-                  <span style={{
-                    fontWeight: 500,
-                    color: theme === 'light' ? '#374151' : '#e5e7eb'
-                  }}>
-                    Admin
-                  </span>
+              <div 
+                style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+              >
+                <div style={{ position: 'relative' }}>
+                  <Avatar 
+                    icon={<UserOutlined />} 
+                    style={{ backgroundColor: '#3b82f6' }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    width: 12,
+                    height: 12,
+                    backgroundColor: '#10b981',
+                    borderRadius: '50%',
+                    border: `2px solid ${theme === 'light' ? '#fff' : '#1f2937'}`
+                  }}></div>
                 </div>
-              )}
-            </div>
+                
+                {!collapsed && !broken && (
+                  <div style={{ marginLeft: 12 }}>
+                    <span style={{
+                      fontWeight: 500,
+                      color: theme === 'light' ? '#374151' : '#e5e7eb'
+                    }}>
+                      {user?.profile?.fullName || user?.username || 'User'}
+                    </span>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      color: theme === 'light' ? '#6b7280' : '#9ca3af',
+                      textTransform: 'capitalize'
+                    }}>
+                      {user?.role}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Dropdown>
           </div>
         </Header>
         
