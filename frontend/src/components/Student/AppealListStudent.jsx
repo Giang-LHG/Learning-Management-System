@@ -74,7 +74,6 @@ const getGradeColor = (score) => {
 export default function AppealList() {
   const navigate = useNavigate();
 
-  // Get studentId from localStorage or use default
 
   const [studentId, setStudentId] = useState("");
   
@@ -90,7 +89,6 @@ export default function AppealList() {
     }
   }, []);
 
-  // State
   const [appeals, setAppeals] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -98,14 +96,12 @@ export default function AppealList() {
   const [order, setOrder] = useState("desc");
   const [isLoading, setIsLoading] = useState(true);
   
-  // Comment-related state
   const [expandedAppeal, setExpandedAppeal] = useState(null);
   const [commentTexts, setCommentTexts] = useState({});
   const [submittingComment, setSubmittingComment] = useState({});
   const [commentErrors, setCommentErrors] = useState({});
   const [commentSuccess, setCommentSuccess] = useState({});
 
-  // Fetch appeals
   const fetchAppeals = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -167,25 +163,20 @@ export default function AppealList() {
     setFiltered(temp);
   }, [appeals, searchQuery, sortBy, order]);
 
-  // Handle sort change
   const handleSortChange = (value) => {
     const [field, ord] = value.split(":");
     setSortBy(field);
     setOrder(ord);
   };
 
-  // Toggle appeal expansion
   const toggleAppealExpansion = (appealId) => {
     setExpandedAppeal(expandedAppeal === appealId ? null : appealId);
-    // Clear any existing success/error messages when toggling
     setCommentErrors(prev => ({ ...prev, [appealId]: null }));
     setCommentSuccess(prev => ({ ...prev, [appealId]: null }));
   };
 
-  // Handle comment text change
   const handleCommentChange = (appealId, text) => {
     setCommentTexts(prev => ({ ...prev, [appealId]: text }));
-    // Clear error/success messages when user starts typing
     if (commentErrors[appealId]) {
       setCommentErrors(prev => ({ ...prev, [appealId]: null }));
     }
@@ -194,7 +185,6 @@ export default function AppealList() {
     }
   };
 
-  // Submit comment
   const submitComment = async (appeal) => {
     const { appealId, submissionId } = appeal;
     const commentText = commentTexts[appealId]?.trim();
@@ -217,16 +207,12 @@ export default function AppealList() {
       );
 
       if (response.data.success) {
-        // Clear the comment text
         setCommentTexts(prev => ({ ...prev, [appealId]: "" }));
         
-        // Show success message
         setCommentSuccess(prev => ({ ...prev, [appealId]: "Comment added successfully!" }));
         
-        // Refresh appeals to get updated comments
         await fetchAppeals();
         
-        // Clear success message after 3 seconds
         setTimeout(() => {
           setCommentSuccess(prev => ({ ...prev, [appealId]: null }));
         }, 3000);

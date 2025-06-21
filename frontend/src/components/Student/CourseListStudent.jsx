@@ -78,7 +78,6 @@ export default function CourseList() {
     });
   };
 
-  // Function to filter courses based on search query
   const filterCourses = (coursesToFilter, query) => {
     if (!query.trim()) return coursesToFilter;
     
@@ -90,12 +89,9 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   };
 
-  // Process courses (filter + sort + organize by tabs)
   const processedCourses = useMemo(() => {
-    // Combine sameTerm and otherTerms for "enrolled" tab
     const allEnrolled = [...coursesData.sameTerm, ...coursesData.otherTerms];
     
-    // Filter and sort each category
     const filteredEnrolled = filterCourses(allEnrolled, searchQuery);
     const filteredOther = filterCourses(coursesData.noneEnrolled, searchQuery);
     
@@ -108,7 +104,6 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
     };
   }, [coursesData, searchQuery, sortBy, order]);
 
-  // Get current courses for active tab with pagination
   const getCurrentCourses = () => {
     const courses = activeTab === 'enrolled' ? processedCourses.enrolled : processedCourses.other;
     const indexOfLastCourse = currentPage * coursesPerPage;
@@ -121,7 +116,6 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
     return Math.ceil(courses.length / coursesPerPage);
   };
 
-  // Load courses data from API
   useEffect(() => {
     if (!subjectId) return;
     
@@ -164,7 +158,6 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
     return () => cancel.cancel();
   }, [subjectId, studentId]);
 
-  // Reset pagination when tab changes or search/sort changes
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, searchQuery, sortBy, order]);
@@ -177,7 +170,6 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       
       if (data.success) {
-        // Move course from noneEnrolled to sameTerm (assuming it gets enrolled in current term)
         setCoursesData(prev => {
           const courseToMove = prev.noneEnrolled.find(c => c._id === courseId);
           if (courseToMove) {
@@ -210,7 +202,6 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       
       if (data.success) {
-        // Move course from otherTerms to sameTerm
         setCoursesData(prev => {
           const courseToMove = prev.otherTerms.find(c => c._id === courseId);
           if (courseToMove) {
@@ -235,11 +226,8 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
     }
   };
 
-  // Helper function to determine course type and get appropriate button
   const getCourseButton = (course) => {
-    // Check if course is from sameTerm (current term enrolled)
     const isFromSameTerm = coursesData.sameTerm.find(c => c._id === course._id);
-    // Check if course is from otherTerms (previously enrolled)
     const isFromOtherTerms = coursesData.otherTerms.find(c => c._id === course._id);
     
     if (isFromSameTerm) {
@@ -271,7 +259,6 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
         </Button> </>
       );
     } else {
-      // Course from noneEnrolled
       return (
         <Button
           variant="primary"
@@ -335,7 +322,6 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
         </Col>
       </Row>
 
-      {/* Tabs for Enrolled vs Other Courses */}
       <Tab.Container activeKey={activeTab} onSelect={handleTabChange}>
         <Nav variant="tabs" className="mb-3">
           <Nav.Item>
@@ -373,7 +359,6 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
         <>
           <Row xs={1} sm={2} md={3} lg={4} className="g-3 mb-4">
             {currentCourses.map(c => {
-              // Determine course status for styling
               const isFromSameTerm = coursesData.sameTerm.find(course => course._id === c._id);
               const isFromOtherTerms = coursesData.otherTerms.find(course => course._id === c._id);
               
@@ -446,7 +431,7 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
                   disabled={currentPage === 1}
                 />
                 
-                {/* Page numbers */}
+                {/* Page number */}
                 {[...Array(totalPages)].map((_, index) => {
                   const pageNumber = index + 1;
                   const isNearCurrent = Math.abs(pageNumber - currentPage) <= 2;
@@ -480,7 +465,7 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
             </div>
           )}
 
-          {/* Pagination Info */}
+          {/* Pagination info */}
           <div className="text-center text-muted mt-2">
             <small>
               Showing {currentCourses.length} of {currentTabCourses.length} courses

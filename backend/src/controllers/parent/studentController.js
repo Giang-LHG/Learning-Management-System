@@ -6,89 +6,91 @@ const Assignment  = require('../../models/Assignment');
 const Course      = require('../../models/Course');
 
 exports.getParentStats = async (req, res) => {
-  try {
+   try {
     const { parentId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(parentId)) {
       return res.status(400).json({ success: false, message: 'Invalid parentId' });
     }
 
-    // 1. Kiểm tra parentId có phải là parent không
     const parent = await User.findById(parentId).lean();
-    if (!parent || parent.role !== 'parent') {
+    if (!parent || parent.roles !== 'parent') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
-    // 2. Tìm tất cả học sinh có parentIds chứa parentId
     const students = await User.find({
-      role: 'student',
-      'profile.parentIds': new mongoose.Types.ObjectId(parentId)
-    }).select('_id profile.fullName').lean();
+      roles: 'student',
+      'profile.parentIds': mongoose.Types.ObjectId(parentId)
+    })
+    .select('_id profile.fullName')
+    .lean();
 
     const stats = await Promise.all(students.map(async (stu) => {
       const studentId = stu._id;
 
-      // A. Lấy enrollments của học sinh
-      const enrolls = await Enrollment.find({ studentId }).lean();
-
-      // B. Lấy submissions của học sinh
-      const submissions = await Submission.find({ studentId })
-        .select('assignmentId grade.term grade.score term')
+      const enrolls = await Enrollment.find({ studentId })
+        .populate('courseId', 'credits subjectId')
         .lean();
 
-      // C. Lấy tất cả assignment để tính tỷ lệ
-      //    (có thể giới hạn theo term nếu muốn)
-      const assignments = await Assignment.find({})
-        .select('_id term')
-        .lean();
+      const submissions = await Submission.find({
+        studentId,
+        'grade.score': { $ne: null }
+      })
+      .select('assignmentId grade.score')
+      .lean();
 
-      // D. Tính tổng số khóa học
-      const totalCourses = enrolls.length;
+      const assignmentCourseMap = {};
+      const assignmentIds = [...new Set(submissions.map(s => s.assignmentId.toString()))];
+      if (assignmentIds.length) {
+        const asgs = await Assignment.find({ _id: { $in: assignmentIds } })
+          .select('_id courseId')
+          .lean();
+        asgs.forEach(a => {
+          assignmentCourseMap[a._id.toString()] = a.courseId.toString();
+        });
+      }
 
-      // E. Tính điểm trung bình:
-      const gradedSubs = submissions.filter(s => s.grade && s.grade.score != null);
-      const avgGrade = gradedSubs.length
-        ? (gradedSubs.reduce((sum, s) => sum + s.grade.score, 0) / gradedSubs.length)
-        : null;
-
-      // F. Tỷ lệ hoàn thành assignment:
-      //    Số assignment mà học sinh đã nộp và chấm điểm / tổng assignment
-      const completedCount = gradedSubs.length;
-      const totalAssignCount = assignments.length;
-      const completionRate = totalAssignCount
-        ? (completedCount / totalAssignCount * 100).toFixed(1) + '%'
-        : 'N/A';
-
-      // G. Thống kê theo term (nếu muốn):
-      const byTerm = {};
-      enrolls.forEach(e => {
-        const t = e.term;
-        if (!byTerm[t]) byTerm[t] = { courses: 0, subs: 0, avgGrade: null };
-        byTerm[t].courses++;
-      });
+      const courseScores = {};
       submissions.forEach(s => {
-        const t = s.term;
-        if (!byTerm[t]) byTerm[t] = { courses: 0, subs: 0, avgGrade: null };
-        byTerm[t].subs++;
+        const aid = s.assignmentId.toString();
+        const cid = assignmentCourseMap[aid];
+        if (!cid) return;
+        if (!courseScores[cid]) {
+          courseScores[cid] = { total: 0, count: 0 };
+        }
+        courseScores[cid].total += s.grade.score;
+        courseScores[cid].count += 1;
       });
-      // Tính avgGrade theo term
-      Object.keys(byTerm).forEach(t => {
-        const subsOfT = gradedSubs.filter(s => s.term === t);
-        byTerm[t].avgGrade = subsOfT.length
-          ? (subsOfT.reduce((sum, s) => sum + s.grade.score, 0) / subsOfT.length).toFixed(2)
-          : null;
-      });
+
+      let sumWeighted = 0;
+      let sumCredits  = 0;
+      for (let e of enrolls) {
+        const cid = e.courseId._id.toString();
+        const credits = e.courseId.credits || 0;
+        const cs = courseScores[cid];
+        if (cs && cs.count) {
+          const avgCourse = cs.total / cs.count;
+          sumWeighted += avgCourse * credits;
+          sumCredits  += credits;
+        }
+      }
+      const avgBySubject = sumCredits
+        ? (sumWeighted / sumCredits).toFixed(2)
+        : null;
 
       return {
         studentId,
         fullName: stu.profile.fullName,
-        totalCourses,
-        avgGrade,
-        completionRate,
-        byTerm
+        totalCourses: enrolls.length,
+        averageByCourse: Object.entries(courseScores).map(([cid, { total, count }]) => ({
+          courseId: cid,
+          avgScore: (total / count).toFixed(2)
+        })),
+        avgBySubject,
       };
     }));
 
     return res.json({ success: true, data: stats });
+
   } catch (err) {
     console.error('Error in getParentStats:', err);
     return res.status(500).json({ success: false, message: 'Server error' });

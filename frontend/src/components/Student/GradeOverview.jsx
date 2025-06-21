@@ -72,7 +72,6 @@ export default function GradeOverview() {
   const [assignments, setAssignments] = useState([]);
   const [activeTab, setActiveTab] = useState("current");
   
-  // New state for term filtering
   const [availableTerms, setAvailableTerms] = useState([]);
   const [selectedTerm, setSelectedTerm] = useState("all");
 
@@ -81,7 +80,6 @@ export default function GradeOverview() {
       setIsLoading(true);
       const resp = await axios.get(`/api/student/submissions/student/${studentId}/course/${courseId}`);
       if (resp.data.success) {
-        // Handle new response structure
         const currentTermData = resp.data.data || [];
         const previousTermData = resp.data.preTermSubmissions || [];
         
@@ -90,11 +88,9 @@ export default function GradeOverview() {
         setFilteredOnTerm(currentTermData);
         setFilteredPreTerm(previousTermData);
 
-        // Extract unique terms from previous submissions
         const terms = [...new Set(previousTermData.map(s => s.term).filter(Boolean))];
-        setAvailableTerms(terms.sort().reverse()); // Sort with most recent first
+        setAvailableTerms(terms.sort().reverse()); 
 
-        // Get unique assignments from both datasets
         const allSubmissions = [...currentTermData, ...previousTermData];
         const uniqueAssignments = [
           ...new Map(
@@ -119,17 +115,14 @@ export default function GradeOverview() {
     fetchGrades();
   }, [fetchGrades]);
 
-  // Filter and sort function
   const filterAndSort = useCallback((submissions) => {
     let temp = [...submissions];
 
-    // Filter by search query
     if (searchQuery.trim()) {
       const regex = new RegExp(searchQuery, "i");
       temp = temp.filter((s) => regex.test(s.assignment.title));
     }
 
-    // Filter by selected term (only for previous submissions)
     if (activeTab === 'previous' && selectedTerm !== 'all') {
       temp = temp.filter(s => s.term === selectedTerm);
     }

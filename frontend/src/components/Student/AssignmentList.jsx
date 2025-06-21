@@ -38,7 +38,6 @@ export default function AssignmentList() {
   const navigate = useNavigate();
   const { courseId } = useParams();
 
-  // State quản lý
   const [course, setCourse] = useState(null);
   const [assignments, setAssignments] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -58,7 +57,6 @@ useEffect(() => {
     console.warn('Error parsing user from localStorage:', e);
   }
 }, []);
-  // Fetch Course detail
   const fetchCourseDetail = useCallback(async () => {
     try {
       const resp = await axios.get(`/api/student/courses/${courseId}`);
@@ -88,7 +86,6 @@ useEffect(() => {
     }
   }, [courseId, studentId]);
 
-  // Khi component mount
   useEffect(() => {
     fetchCourseDetail();
     fetchAssignments();
@@ -131,7 +128,6 @@ useEffect(() => {
     navigate(`/student/quiz/${assignmentId}`);
   };
 
-  // Helper function to get assignment status
   const getAssignmentStatus = (dueDate) => {
     const now = new Date();
     const due = new Date(dueDate);
@@ -173,7 +169,6 @@ useEffect(() => {
       paddingBottom: '2rem'
     }}>
       <Container>
-        {/* Back Button */}
         <motion.div
           initial={{ x: -50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -386,6 +381,14 @@ useEffect(() => {
                           Due: {new Date(a.dueDate).toLocaleDateString()}
                         </small>
                       </Card.Text>
+                      {(() => {
+  const statusInfo = getAssignmentStatus(a.dueDate);
+  return (
+    <Badge bg={statusInfo.variant} className="mb-2" style={{ alignSelf: 'flex-start', borderRadius: '12px' }}>
+      {statusInfo.text}
+    </Badge>
+  );
+})()}
                       <Button
                         onClick={() => goToQuizList(a._id)}
                         style={{
