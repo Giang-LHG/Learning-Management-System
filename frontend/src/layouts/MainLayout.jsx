@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { Layout, Menu, Avatar, Button, Badge, Dropdown } from 'antd';
-import { 
-  DashboardOutlined, 
-  UserOutlined, 
+import {
+  DashboardOutlined,
+  UserOutlined,
   BookOutlined,
   PieChartOutlined,
   FileTextOutlined,
@@ -71,7 +71,7 @@ const MainLayout = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider 
+      <Sider
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
@@ -83,14 +83,14 @@ const MainLayout = () => {
           setBroken(broken);
           if (broken) setCollapsed(true);
         }}
-        style={{ 
-          height: '100vh', 
-          position: 'fixed', 
-          left: 0, 
-          zIndex: 10 
+        style={{
+          height: '100vh',
+          position: 'fixed',
+          left: 0,
+          zIndex: 10
         }}
       >
-        <div 
+        <div
           style={{
             height: 64,
             display: 'flex',
@@ -102,18 +102,18 @@ const MainLayout = () => {
           }}
           onClick={() => navigate('/')}
         >
-          <h1 style={{ 
-            fontSize: '1.25rem', 
-            fontWeight: 700, 
+          <h1 style={{
+            fontSize: '1.25rem',
+            fontWeight: 700,
             color: '#fff',
             margin: 0
           }}>
             {collapsed ? 'LMS' : 'TEACHLY'}
           </h1>
         </div>
-        
-        <Menu 
-          theme={theme} 
+
+        <Menu
+          theme={theme}
           mode="inline"
           selectedKeys={selectedKeys}
           items={menuItems.map(item => ({
@@ -125,8 +125,8 @@ const MainLayout = () => {
           style={{ marginTop: 8 }}
         />
       </Sider>
-      
-      <Layout style={{ 
+
+      <Layout style={{
         transition: 'all 0.2s',
         marginLeft: broken ? 0 : collapsed ? 80 : 250
       }}>
@@ -154,38 +154,38 @@ const MainLayout = () => {
             )}
             <BreadcrumbNav />
           </div>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-            
-            <Badge 
-              count={5} 
+
+            <Badge
+              count={5}
               style={{ display: broken ? 'none' : 'block' }}
               overflowCount={9}
               offset={[-5, 5]}
             >
-              <Button 
-                type="text" 
-                shape="circle" 
-                icon={<BellOutlined style={{ 
+              <Button
+                type="text"
+                shape="circle"
+                icon={<BellOutlined style={{
                   color: theme === 'light' ? '#4b5563' : '#d1d5db',
                   fontSize: 16
                 }} />}
                 style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               />
             </Badge>
-            
+
             <Dropdown
               menu={{ items: userMenuItems }}
               placement="bottomRight"
               trigger={['click']}
             >
-              <div 
+              <div
                 style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
               >
                 <div style={{ position: 'relative' }}>
-                  <Avatar 
-                    icon={<UserOutlined />} 
+                  <Avatar
+                    icon={<UserOutlined />}
                     style={{ backgroundColor: '#3b82f6' }}
                   />
                   <div style={{
@@ -199,7 +199,7 @@ const MainLayout = () => {
                     border: `2px solid ${theme === 'light' ? '#fff' : '#1f2937'}`
                   }}></div>
                 </div>
-                
+
                 {!collapsed && !broken && (
                   <div style={{ marginLeft: 12 }}>
                     <span style={{
@@ -209,25 +209,27 @@ const MainLayout = () => {
                       {user?.profile?.fullName || user?.username || 'User'}
                     </span>
                     <div style={{
+                      display: 'inline',
                       fontSize: '0.75rem',
                       color: theme === 'light' ? '#6b7280' : '#9ca3af',
                       textTransform: 'capitalize'
                     }}>
-                      {user?.role}
+                      {`  (${user?.role})`}
                     </div>
+
                   </div>
                 )}
               </div>
             </Dropdown>
           </div>
         </Header>
-        
-        <Content style={{ 
-          padding: '16px 24px', 
+
+        <Content style={{
+          padding: '16px 24px',
           backgroundColor: theme === 'light' ? '#f3f4f6' : '#111827',
           minHeight: 'calc(100vh - 64px)'
         }}>
-          <div style={{ 
+          <div style={{
             backgroundColor: theme === 'light' ? '#fff' : '#1f2937',
             borderRadius: 8,
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
