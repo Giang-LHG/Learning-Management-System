@@ -1,4 +1,3 @@
-// src/components/CourseDetail.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FiSearch, FiChevronDown, FiArrowLeft, FiBookOpen, FiClock, FiUser, FiPlay } from 'react-icons/fi';
@@ -39,10 +38,10 @@ export default function CourseDetail() {
   const [order, setOrder]               = useState('asc');
   const [isLoading, setIsLoading]       = useState(true);
 
-  // show assignments?
+  
   const [showAssignments, setShowAssignments] = useState(false);
 
-  // 1) Utility lấy studentId
+  // 1) lấy studentId
   const getStudentId = () => {
     try {
       const stored = localStorage.getItem('user');
@@ -105,7 +104,6 @@ export default function CourseDetail() {
       .catch(err => console.error('Error fetching enrollment:', err));
   }, [course, courseId]);
 
-  // 4) Search & sort modules
   useEffect(() => {
     let temp = [...modules];
     if (searchQuery.trim()) {

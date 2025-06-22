@@ -44,6 +44,8 @@ import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 
 const queryClient = new QueryClient();
 
+import SubjectOverView from './components/parent/SubjectOverView';
+import SideBarParent from './Layouts/parent/SideBarParent';
 function App() {
   return (
     <Provider store={store}>
@@ -145,11 +147,11 @@ function App() {
           </Route>
 
           {/* Parent Dashboard - Chỉ cho phép parent */}
-          <Route path="/parent/dashboard" element={
-            <ProtectedRoute allowedRoles={['parent']}>
-              <ParentStatsDashboard />
-            </ProtectedRoute>
-          } />
+         <Route path="/" element={<Navigate to="/student/subjects" replace />} />
+        <Route path="/parent" element={<SideBarParent />} >
+        <Route path="dashboard" element={<ParentStatsDashboard />} />
+        <Route path="subjects" element={<SubjectOverView />} />
+        </Route>
 
           {/* Fallback Route for Page Not Found */}
           <Route
@@ -165,6 +167,10 @@ function App() {
       </QueryClientProvider>
     </Provider>
   )
+     
 }
+     
+
+   
 
 export default App;

@@ -38,7 +38,6 @@ export default function AssignmentList() {
   const navigate = useNavigate();
   const { courseId } = useParams();
 
-  // State quản lý
   const [course, setCourse] = useState(null);
   const [assignments, setAssignments] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -46,8 +45,18 @@ export default function AssignmentList() {
   const [sortBy, setSortBy] = useState('dueDate');
   const [order, setOrder] = useState('asc');
   const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch Course detail
+const [studentId, setStudentId] = useState('');
+useEffect(() => {
+  try {
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      const u = JSON.parse(stored);
+      if (u && u._id) setStudentId(u._id);
+    }
+  } catch (e) {
+    console.warn('Error parsing user from localStorage:', e);
+  }
+}, []);
   const fetchCourseDetail = useCallback(async () => {
     try {
       const resp = await axios.get(`/api/student/courses/${courseId}`);
@@ -61,9 +70,11 @@ export default function AssignmentList() {
 
   // Fetch Assignments cho course
   const fetchAssignments = useCallback(async () => {
+   if(!studentId) return;
     try {
       setIsLoading(true);
-      const resp = await axios.get(`/api/student/assignments/course/${courseId}`);
+      console.log(studentId);
+      const resp = await axios.get(`/api/student/assignments/course/${courseId}/student/${studentId}`);
       if (resp.data.success) {
         setAssignments(resp.data.data);
         setFiltered(resp.data.data);
@@ -73,9 +84,8 @@ export default function AssignmentList() {
     } finally {
       setIsLoading(false);
     }
-  }, [courseId]);
+  }, [courseId, studentId]);
 
-  // Khi component mount
   useEffect(() => {
     fetchCourseDetail();
     fetchAssignments();
@@ -118,7 +128,6 @@ export default function AssignmentList() {
     navigate(`/student/quiz/${assignmentId}`);
   };
 
-  // Helper function to get assignment status
   const getAssignmentStatus = (dueDate) => {
     const now = new Date();
     const due = new Date(dueDate);
@@ -160,7 +169,6 @@ export default function AssignmentList() {
       paddingBottom: '2rem'
     }}>
       <Container>
-        {/* Back Button */}
         <motion.div
           initial={{ x: -50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -373,6 +381,14 @@ export default function AssignmentList() {
                           Due: {new Date(a.dueDate).toLocaleDateString()}
                         </small>
                       </Card.Text>
+                      {(() => {
+  const statusInfo = getAssignmentStatus(a.dueDate);
+  return (
+    <Badge bg={statusInfo.variant} className="mb-2" style={{ alignSelf: 'flex-start', borderRadius: '12px' }}>
+      {statusInfo.text}
+    </Badge>
+  );
+})()}
                       <Button
                         onClick={() => goToQuizList(a._id)}
                         style={{

@@ -5,7 +5,7 @@ const Course = require('../../models/Course');
 const Subject = require('../../models/Subject');
 const Assignment = require('../../models/Assignment');
 const Submission = require('../../models/Submission');
-
+const User = require('../../models/User');
 exports.enrollCourse = async (req, res) => {
   try {
     const { studentId, courseId } = req.body;
@@ -17,7 +17,10 @@ exports.enrollCourse = async (req, res) => {
     ) {
       return res.status(400).json({ success: false, message: 'Invalid studentId or courseId' });
     }
-
+const UserCheck = await User.findById(studentId).lean();
+if (UserCheck.role !== 'student') {
+  return res.status(404).json({ success: false, message: 'You are not a student' });
+}
     // 2. Kiểm tra course tồn tại
    const course = await Course.findById(courseId).lean();
 if (!course) {

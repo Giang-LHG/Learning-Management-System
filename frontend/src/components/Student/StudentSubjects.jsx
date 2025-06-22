@@ -178,16 +178,7 @@ export default function StudentSubjects() {
               <Card.Subtitle className="mb-2 text-muted">
                 Code: {sub.code || '—'}
               </Card.Subtitle>
-              {showCompletionDate && sub.completedAt && (
-                <Card.Text className="text-success small">
-                  <strong>Completed:</strong> {new Date(sub.completedAt).toLocaleDateString()}
-                </Card.Text>
-              )}
-              {showCompletionDate && sub.grade && (
-                <Card.Text className="text-info small">
-                  <strong>Grade:</strong> {sub.grade}
-                </Card.Text>
-              )}
+             
               <Button
                 variant={btnVariant}
                 className="mt-auto text-white"

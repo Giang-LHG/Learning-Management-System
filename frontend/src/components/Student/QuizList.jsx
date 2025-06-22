@@ -48,30 +48,34 @@ export default function QuizList() {
 
   // Fetch assignment detail
   const fetchAssignment = useCallback(async () => {
+   if(!studentId) return;
     try {
-      const resp = await axios.get(`/api/student/assignments/${assignmentId}`);
+      const resp = await axios.get(`/api/student/assignments/${assignmentId}/student/${studentId}`);
       if (resp.data.success) {
         setAssignment(resp.data.data);
       }
     } catch (err) {
       console.error("Error fetching assignment:", err);
     }
-  }, [assignmentId]);
+  }, [assignmentId, studentId]);
 
   // Fetch submission (if có) for this student
   const fetchSubmission = useCallback(async () => {
     try {
-      // FIX: Sử dụng đúng endpoint như bạn đã chỉ định
-      const resp = await axios.get(
-        `/api/student/submissions/assignment/${assignmentId}`
-      );
-      if (resp.data.success) {
-        // Lọc ra submission đúng studentId
-        const allSubs = resp.data.data;
-      
-        const mySub = allSubs.find(
-          (s) => s.studentId._id.toString() === studentId.toString()
-        );
+     const resp = await axios.get(`/api/student/submissions/student/${studentId}`);
+
+if (resp.data.success) {
+  const allSubs = resp.data.data;
+
+  const lastTerm = Array.isArray(assignment.term)
+    ? assignment.term[assignment.term.length - 1]
+    : assignment.term;
+
+  const mySub = allSubs.find(
+    (s) =>
+      s.assignmentId?._id?.toString() === assignmentId.toString() &&
+      s.term === lastTerm
+  );
         if (mySub) {
           setSubmission(mySub);
           setHasSubmitted(true);
@@ -144,7 +148,7 @@ export default function QuizList() {
 
     try {
       if (hasSubmitted && submission) {
-        // RESUBMIT - Update existing submission using correct endpoint
+        // RESUBMIT 
         let resubmitPayload = {};
         
         if (assignment.type === "quiz") {

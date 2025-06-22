@@ -16,7 +16,6 @@ export default function AppealForm() {
   const navigate = useNavigate();
   const { submissionId } = useParams();
 
-  // State quản lý
   const [submission, setSubmission] = useState(null);
   const [appealContent, setAppealContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +36,6 @@ export default function AppealForm() {
       console.warn("Error parsing user from localStorage");
     }
   }, []);
-  // Fetch submission detail
   const fetchSubmission = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -56,7 +54,6 @@ export default function AppealForm() {
     fetchSubmission();
   }, [fetchSubmission]);
 
-  // Handle appeal submit
   const handleSubmit = async () => {
   if (!appealContent.trim()) {
     alert("Please enter your appeal request.");
@@ -76,8 +73,8 @@ export default function AppealForm() {
     const resp = await axios.post(
       `/api/student/submissions/${submissionId}/appeals`,
       {
-        studentId,                   // who is making the appeal
-        text: appealContent.trim() // your appeal comment
+        studentId,                  
+        text: appealContent.trim() 
       }
     );
 

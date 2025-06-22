@@ -31,7 +31,6 @@ export default function LessonDetail() {
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
 
-  // Navigation state for next/previous lessons
   const [navigationInfo, setNavigationInfo] = useState({
     previousLesson: null,
     nextLesson: null,
@@ -39,7 +38,6 @@ export default function LessonDetail() {
     totalLessons: 0
   });
 
-  // Fetch lesson details
   const fetchLesson = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -60,9 +58,8 @@ export default function LessonDetail() {
           
           if (lessonData) {
             setLesson(lessonData);
-            setNotes(""); // Reset notes for each lesson
+            setNotes(""); 
             
-            // Set navigation info
             const currentIndex = module.lessons.findIndex(
               (l) => l.lessonId === lessonId || l._id === lessonId
             );
@@ -86,7 +83,6 @@ export default function LessonDetail() {
     fetchLesson();
   }, [fetchLesson]);
 
-  // Navigation handlers
   const goToPreviousLesson = () => {
     if (navigationInfo.previousLesson) {
       navigate(`/student/course/${courseId}/module/${moduleId}/lesson/${navigationInfo.previousLesson.lessonId || navigationInfo.previousLesson._id}`);
