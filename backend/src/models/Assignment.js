@@ -1,3 +1,4 @@
+
 // models/Assignment.js
 const mongoose = require('mongoose');
 const { Schema, Types } = mongoose;
@@ -65,18 +66,27 @@ const AssignmentSchema = new Schema(
       type: Date,
       required: true
     },
+    isVisible: {
+      type: Boolean,
+      default: true
+    },
+    term: {
+      type: [String],
+      required: true
+    },
     questions: {
       type: [QuestionSchema],
-      default: undefined // Chỉ sử dụng khi type === 'quiz'
+      default: undefined
     }
-     ,term: {
-  type: [String],
-  required: true,
-  validate: v => Array.isArray(v) && v.length > 0
-}
-    // timestamps tự động tạo createdAt / updatedAt
-  },
-  { timestamps: true }
-);
+
+    , term: {
+      type: [String],
+      required: true,
+      validate: v => Array.isArray(v) && v.length > 0
+    }
+  })
+// timestamps tự động tạo createdAt / updatedAt
+
+
 
 module.exports = mongoose.model('Assignment', AssignmentSchema);

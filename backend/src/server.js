@@ -1,9 +1,12 @@
+
+
 // server.js
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const studentRoute = require('./routes/student/index.js');
+const instructorRoute = require('./routes/instructor/index.js'); // NEW
 const parentRoute = require('./routes/parent/index.js');
 const userRoutes = require('./routes/admin/userRoutes.js');
 const subjectRoutes = require('./routes/admin/subjectRoutes.js');
@@ -13,6 +16,10 @@ const authRoutes = require('./routes/auth/authRoutes.js');
 dotenv.config();
 
 const app = express();
+const port = process.env.PORT || 3000;
+
+
+app.use(express.json());
 // Cấu hình CORS
 app.use(cors({
   origin: 'http://localhost:8081',
@@ -22,27 +29,26 @@ app.use(cors({
 app.use(cors());
 
 // Middleware
-app.use(express.json());
-
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 })
-    .then(() => {
-        console.log('Connected to MongoDB');
-    })
-    .catch((error) => {
-        console.error('Error connecting to MongoDB:', error);
-    });
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
+  });
 
+// Middleware
+app.use("/api/instructor/", instructorRoute); // NEW
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use("/api/student/", studentRoute);
+
 app.use("/api/parent/", parentRoute);
 
 // Xử lý lỗi
@@ -52,6 +58,8 @@ app.use((err, req, res, next) => {
 });
 
 
+app.use("/api/student/", studentRoute);
+
 const PORT = process.env.PORT || 8021;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-// server.js
+

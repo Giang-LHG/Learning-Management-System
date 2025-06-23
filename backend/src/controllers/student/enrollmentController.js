@@ -1,3 +1,4 @@
+
 // controllers/student/enrollmentController.js
 const mongoose = require('mongoose');
 const Enrollment = require('../../models/Enrollment');
@@ -9,97 +10,94 @@ const User = require('../../models/User');
 exports.enrollCourse = async (req, res) => {
   try {
     const { studentId, courseId } = req.body;
-  console.log('req.body:', req.body);
-    // 1. Validate ObjectId
+
     if (
       !mongoose.Types.ObjectId.isValid(studentId) ||
       !mongoose.Types.ObjectId.isValid(courseId)
     ) {
       return res.status(400).json({ success: false, message: 'Invalid studentId or courseId' });
     }
-const UserCheck = await User.findById(studentId).lean();
-if (UserCheck.role !== 'student') {
-  return res.status(404).json({ success: false, message: 'You are not a student' });
-}
+    const UserCheck = await User.findById(studentId).lean();
+    if (UserCheck.role !== 'student') {
+      return res.status(404).json({ success: false, message: 'You are not a student' });
+    }
     // 2. Kiểm tra course tồn tại
-   const course = await Course.findById(courseId).lean();
-if (!course) {
-  return res.status(404).json({ success: false, message: 'Course not found' });
-}
-const courseTerm = course.term[course.term.length - 1];
-const now = Date.now();
-const startMs = course.startDate ? new Date(course.startDate).getTime() : null;
-const endMs   = course.endDate   ? new Date(course.endDate).getTime()   : null;
+    const course = await Course.findById(courseId).lean();
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+    const courseTerm = course.term[course.term.length - 1];
+    const now = Date.now();
+    const startMs = course.startDate ? new Date(course.startDate).getTime() : null;
+    const endMs = course.endDate ? new Date(course.endDate).getTime() : null;
 
-if (course.startDate && isNaN(startMs)) {
-  return res
-    .status(500)
-    .json({ success: false, message: 'Invalid startDate format' });
-}
+    if (course.startDate && isNaN(startMs)) {
+      return res
+        .status(500)
+        .json({ success: false, message: 'Invalid startDate format' });
+    }
 
-if (course.endDate && isNaN(endMs)) {
-  return res
-    .status(500)
-    .json({ success: false, message: 'Invalid endDate format' });
-}
+    if (course.endDate && isNaN(endMs)) {
+      return res
+        .status(500)
+        .json({ success: false, message: 'Invalid endDate format' });
+    }
 
-if (startMs !== null && now < startMs) {
-  return res
-    .status(400)
-    .json({ success: false, message: `This course will open on ${new Date(startMs).toLocaleString()}.` });
-}
+    if (startMs !== null && now < startMs) {
+      return res
+        .status(400)
+        .json({ success: false, message: `This course will open on ${new Date(startMs).toLocaleString()}.` });
+    }
 
-if (endMs !== null && now > endMs) {
-  return res
-    .status(400)
-    .json({ success: false, message: `This course closed on ${new Date(endMs).toLocaleString()}.` });
-}
-// Chỉ đánh giá là “already” khi có cùng courseId và cùng term
-const already = await Enrollment.findOne({
-  studentId,
-  courseId,
-  term: courseTerm
-}).lean();
+    if (endMs !== null && now > endMs) {
+      return res
+        .status(400)
+        .json({ success: false, message: `This course closed on ${new Date(endMs).toLocaleString()}.` });
+    }
+    // Chỉ đánh giá là “already” khi có cùng courseId và cùng term
+    const already = await Enrollment.findOne({
+      studentId,
+      courseId,
+      term: courseTerm
+    }).lean();
 
 
 
     // 3. Kiểm tra xem học sinh đã enroll chưa
-  
+
     if (already) {
-      return res.status(400).json({ success: false, message: 'Already enrolled in this course' });
+      return res.status(400).json({ success: false, message: `Already enrolled in this course for term ${currentTerm}` });
     }
 
-    // 4. Lấy subject của khóa học để kiểm tra prerequisites
     const subject = await Subject.findById(course.subjectId).lean();
     if (!subject || subject.status !== 'approved') {
       return res
         .status(400)
         .json({ success: false, message: 'Subject not found or not approved' });
     }
-    
-const siblingCourses = await Course.find({ subjectId: subject._id })
-  .select('_id')
-  .lean();
-const siblingIds = siblingCourses.map(c => c._id);
-const hasEnrolledSibling = await Enrollment.exists({
-  studentId,
-  courseId: { $in: siblingIds }
-});
-if (hasEnrolledSibling) {
-  const newEnrollment = await Enrollment.create({ studentId, courseId, enrolledAt: new Date(), term: courseTerm });
-  return res.status(201).json({ success: true, data: newEnrollment });
-}
+
+    const siblingCourses = await Course.find({ subjectId: subject._id })
+      .select('_id')
+      .lean();
+    const siblingIds = siblingCourses.map(c => c._id);
+    const hasEnrolledSibling = await Enrollment.exists({
+      studentId,
+      courseId: { $in: siblingIds }
+    });
+    if (hasEnrolledSibling) {
+      const newEnrollment = await Enrollment.create({ studentId, courseId, enrolledAt: new Date(), term: courseTerm });
+      return res.status(201).json({ success: true, data: newEnrollment });
+    }
     const prereqSubjectIds = subject.prerequisites || [];
 
-    // 5. Nếu không có prerequisites, cho enroll luôn
     if (!prereqSubjectIds.length) {
       const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(), term: courseTerm });
       await newEnrollment.save();
       return res.status(201).json({ success: true, data: newEnrollment });
     }
 
-    
-      // 6. Với mỗi subjectId trong danh sách prerequisites
+
+    // 6. Với mỗi subjectId trong danh sách prerequisites
     for (let prereqSubjId of prereqSubjectIds) {
       // 6.1. Tìm tất cả các enrollment của sinh viên
       //      và chọn enrollment gần nhất mà thuộc subject này
@@ -126,12 +124,12 @@ if (hasEnrolledSibling) {
       // 6.2. Xác định term của enrollment đó
       const prereqTerm = latestEnroll.term;
 
-  // 6.3. Lấy tất cả assignment trong term đó
-const assignments = await Assignment.find({
-  term: { $in: [prereqTerm] }  // <-- dùng $in để match phần tử trong mảng
-})
-  .select('_id courseId')
-  .lean();
+      // 6.3. Lấy tất cả assignment trong term đó
+      const assignments = await Assignment.find({
+        term: { $in: [prereqTerm] }  // <-- dùng $in để match phần tử trong mảng
+      })
+        .select('_id courseId')
+        .lean();
 
       const filteredAids = [];
       for (let a of assignments) {
@@ -146,28 +144,28 @@ const assignments = await Assignment.find({
       }
 
       // 6.4. Với mỗi assignmentId, kiểm tra submission có graded không
-    for (let aid of filteredAids) {
-  const sub = await Submission.findOne({
-    assignmentId: aid,
-    studentId,
-    term: prereqTerm   // đây vẫn là string
-  })
-    .select('grade.score')
-    .lean();
+      for (let aid of filteredAids) {
+        const sub = await Submission.findOne({
+          assignmentId: aid,
+          studentId,
+          term: prereqTerm   // đây vẫn là string
+        })
+          .select('grade.score')
+          .lean();
 
-  if (!sub || sub.grade.score == null) {
-    const ms = await Subject.findById(prereqSubjId).select('name').lean();
-    return res.status(400).json({
-      success: false,
-      message: `Bạn phải nộp và được chấm hết tất cả assignments của môn "${ms.name}" (học kỳ ${prereqTerm}) trước khi đăng ký.`
-    });
-  }
-}
+        if (!sub || sub.grade.score == null) {
+          const ms = await Subject.findById(prereqSubjId).select('name').lean();
+          return res.status(400).json({
+            success: false,
+            message: `Bạn phải nộp và được chấm hết tất cả assignments của môn "${ms.name}" (học kỳ ${prereqTerm}) trước khi đăng ký.`
+          });
+        }
+      }
     }
-  
+
 
     // 7. Nếu đã vượt qua tất cả điều kiện prerequisite, tạo enrollment
-    const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(),term:course.term });
+    const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(), term: course.term });
     await newEnrollment.save();
     return res.status(201).json({ success: true, data: newEnrollment });
   } catch (err) {
@@ -175,6 +173,7 @@ const assignments = await Assignment.find({
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
 exports.searchEnrollments = async (req, res) => {
   try {
     const { q } = req.query;
@@ -185,24 +184,21 @@ exports.searchEnrollments = async (req, res) => {
     }
     const regex = new RegExp(q, 'i');
 
-    // Sử dụng aggregation để lookup details course và lọc theo title chứa keyword
     const results = await Enrollment.aggregate([
       {
         $lookup: {
-          from: 'courses',           // tên collection courses trong MongoDB
+          from: 'courses',
           localField: 'courseId',
           foreignField: '_id',
           as: 'course'
         }
       },
       { $unwind: '$course' },
-      // Lọc course.title hoặc course.description chứa regex
       {
         $match: {
           'course.title': { $regex: regex }
         }
       },
-
       {
         $project: {
           studentId: 1,

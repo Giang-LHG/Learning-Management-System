@@ -1,3 +1,4 @@
+
 // models/Course.js
 const mongoose = require('mongoose');
 const { Schema, Types } = mongoose;
@@ -16,6 +17,10 @@ const LessonSchema = new Schema(
     content: {
       type: String,
       default: ''
+    },
+    isVisible: {
+      type: Boolean,
+      default: true
     }
   },
   { _id: false }
@@ -31,6 +36,10 @@ const ModuleSchema = new Schema(
       type: String,
       required: true,
       trim: true
+    },
+    isVisible: {
+      type: Boolean,
+      default: true
     },
     lessons: [LessonSchema]
   },
@@ -70,15 +79,19 @@ const CourseSchema = new Schema(
     credits: {
       type: Number,
       default: 0
+    },
+    term: {
+      type: [String],
+      required: true
     }
-    ,term: {
-  type: [String],
-  required: true,
-  validate: v => Array.isArray(v) && v.length > 0
-}
+
+    , term: {
+      type: [String],
+      required: true,
+      validate: v => Array.isArray(v) && v.length > 0
+    }
     // timestamps tự động tạo createdAt / updatedAt
-  },
-  { timestamps: true }
+  }
 );
 
 module.exports = mongoose.model('Course', CourseSchema);
