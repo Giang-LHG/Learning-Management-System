@@ -1,6 +1,6 @@
 import React from 'react';
 import { FiMail, FiPhone, FiMapPin, FiFacebook, FiTwitter, FiInstagram, FiLinkedin, FiYoutube } from 'react-icons/fi';
-import './Footer.css'; 
+import './Footer.css';
 
 function Footer() {
   return (
@@ -14,7 +14,7 @@ function Footer() {
               <span className="logo-dot">.</span>
             </div>
             <p className="footer-description">
-              Transforming education through innovative learning solutions. 
+              Transforming education through innovative learning solutions.
               Access thousands of courses anytime, anywhere.
             </p>
             <div className="footer-social">
@@ -89,14 +89,14 @@ function Footer() {
                 <span>123 Education St, Learning City, ED 54321</span>
               </li>
             </ul>
-            
+
             <div className="footer-newsletter">
               <h4 className="footer-heading">Newsletter</h4>
               <p>Subscribe to get the latest updates</p>
               <div className="newsletter-form">
-                <input 
-                  type="email" 
-                  placeholder="Your email address" 
+                <input
+                  type="email"
+                  placeholder="Your email address"
                   className="newsletter-input"
                 />
                 <button className="newsletter-button">

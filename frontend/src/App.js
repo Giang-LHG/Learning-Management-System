@@ -5,8 +5,8 @@ import { Provider } from 'react-redux';
 import store from './store/store';
 
 // --- Layouts ---
-import MainLayout from './layouts/MainLayout.jsx';
-import AuthLayout from './layouts/AuthLayout.jsx';
+import MainLayout from './Layouts/MainLayout.jsx';
+import AuthLayout from './Layouts/AuthLayout.jsx';
 
 // --- Components ---
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
@@ -39,13 +39,13 @@ import QuizList from './components/Student/QuizList';
 import GradeOverview from './components/Student/GradeOverview';
 import AppealListStudent from './components/Student/AppealListStudent';
 import AppealFormStudent from './components/Student/AppealFormStudent';
-import SidebarStudent from './layouts/Student/SideBarStudent.js'; 
+import SidebarStudent from './Layouts/Student/SideBarStudent.js';
 import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 
 const queryClient = new QueryClient();
 
 import SubjectOverView from './components/parent/SubjectOverView';
-import SideBarParent from './layouts/parent/SideBarParent';
+import SideBarParent from './Layouts/parent/SideBarParent';
 function App() {
   return (
     <Provider store={store}>
@@ -77,7 +77,7 @@ function App() {
               </PublicRoute>
             } />
           </Route>
-          
+
           {/* Admin Routes - Chỉ cho phép admin */}
           <Route element={<MainLayout />}>
             <Route path="/admin" element={
@@ -134,7 +134,7 @@ function App() {
             <Route path="grades/:courseId" element={<GradeOverview />} />
             <Route path="appeals" element={<AppealListStudent />} />
             <Route path="appeal/:submissionId" element={<AppealFormStudent />} />
-            
+
             <Route
               path="*"
               element={
@@ -147,11 +147,11 @@ function App() {
           </Route>
 
           {/* Parent Dashboard - Chỉ cho phép parent */}
-         <Route path="/" element={<Navigate to="/student/subjects" replace />} />
-        <Route path="/parent" element={<SideBarParent />} >
-        <Route path="dashboard" element={<ParentStatsDashboard />} />
-        <Route path="subjects" element={<SubjectOverView />} />
-        </Route>
+          <Route path="/" element={<Navigate to="/student/subjects" replace />} />
+          <Route path="/parent" element={<SideBarParent />} >
+            <Route path="dashboard" element={<ParentStatsDashboard />} />
+            <Route path="subjects" element={<SubjectOverView />} />
+          </Route>
 
           {/* Fallback Route for Page Not Found */}
           <Route
@@ -167,10 +167,10 @@ function App() {
       </QueryClientProvider>
     </Provider>
   )
-     
-}
-     
 
-   
+}
+
+
+
 
 export default App;
