@@ -3,10 +3,7 @@ const Assignment = require('../../models/Assignment');
 const Course = require('../../models/Course');
 const User = require('../../models/User');
 const Enrollment = require('../../models/Enrollment'); 
-/**
- * GET /assignments/course/:courseId
- * Trả về danh sách tất cả Assignment theo courseId
- */
+
 exports.getAssignmentsByCourse = async (req, res) => {
   try {
   const { courseId ,studentId} = req.params;
@@ -17,14 +14,14 @@ exports.getAssignmentsByCourse = async (req, res) => {
 if(!studentId || !mongoose.Types.ObjectId.isValid(studentId)){
   return res.status(400).json({ success: false, message: 'Invalid studentId' });
 }
-  // 1. Lấy thông tin course để biết term
+  //  Lấy thông tin course để biết term
   const course = await Course.findById(courseId).select('term').lean();
   if (!course || !Array.isArray(course.term) || course.term.length === 0) {
     return res.status(404).json({ success: false, message: 'Course not found or term missing' });
   }
 
   const latestTerm = course.term[course.term.length - 1]; // term mới nhất
-//1.1 Lấy tất cả enrollments của student
+//Lấy tất cả enrollments của student
 const hasEnrolled = await Enrollment.exists({
       studentId,
       courseId,
@@ -36,7 +33,7 @@ const hasEnrolled = await Enrollment.exists({
         message: 'You are not enrolled in this course for the current term'
       });
     }
-  // 2. Tìm tất cả assignment của course đúng term mới nhất
+  //  Tìm tất cả assignment của course đúng term mới nhất
   const assignments = await Assignment.find({ 
       courseId,
       term: latestTerm  // do Assignment.term là mảng, cần dùng $in nếu cần khớp phần tử
@@ -52,10 +49,7 @@ const hasEnrolled = await Enrollment.exists({
 }
 };
 
-/**
- * GET /assignments/:assignmentId
- * Trả về một Assignment chi tiết theo assignmentId
- */
+
 exports.getAssignmentById = async (req, res) => {
   try {
     const { assignmentId, studentId } = req.params;

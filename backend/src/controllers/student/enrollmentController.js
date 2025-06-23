@@ -86,14 +86,14 @@ const hasEnrolledSibling = await Enrollment.exists({
   courseId: { $in: siblingIds }
 });
 if (hasEnrolledSibling) {
-  const newEnrollment = await Enrollment.create({ studentId, courseId, enrolledAt: new Date(), term: courseTerm });
+  const newEnrollment = await Enrollment.create({ studentId, courseId, enrolledAt: new Date(), term: courseTerm,subjectId:subject._id });
   return res.status(201).json({ success: true, data: newEnrollment });
 }
     const prereqSubjectIds = subject.prerequisites || [];
 
     // 5. Nếu không có prerequisites, cho enroll luôn
     if (!prereqSubjectIds.length) {
-      const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(), term: courseTerm });
+      const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(), term: courseTerm ,subjectId:subject._id});
       await newEnrollment.save();
       return res.status(201).json({ success: true, data: newEnrollment });
     }
@@ -167,7 +167,7 @@ const assignments = await Assignment.find({
   
 
     // 7. Nếu đã vượt qua tất cả điều kiện prerequisite, tạo enrollment
-    const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(),term:course.term });
+    const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(),term:course.term,subjectId:subject._id });
     await newEnrollment.save();
     return res.status(201).json({ success: true, data: newEnrollment });
   } catch (err) {
