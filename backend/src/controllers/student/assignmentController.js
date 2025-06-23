@@ -36,7 +36,7 @@ const hasEnrolled = await Enrollment.exists({
   //  Tìm tất cả assignment của course đúng term mới nhất
   const assignments = await Assignment.find({ 
       courseId,
-      term: latestTerm  // do Assignment.term là mảng, cần dùng $in nếu cần khớp phần tử
+      term: latestTerm  
     })
     .sort({ dueDate: 1 })
     .lean();
