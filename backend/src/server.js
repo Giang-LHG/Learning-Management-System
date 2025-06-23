@@ -1,3 +1,5 @@
+
+
 // server.js
 const express = require('express');
 const cors = require('cors');
@@ -9,6 +11,7 @@ const userRoutes = require('./routes/admin/userRoutes.js');
 const subjectRoutes = require('./routes/admin/subjectRoutes.js');
 const dashboardRoutes = require('./routes/admin/dashboardRoutes.js');
 const authRoutes = require('./routes/auth/authRoutes.js');
+const instructorRoute = require('./routes/instructor/index.js'); // NEW
 
 dotenv.config();
 
@@ -44,7 +47,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use("/api/student/", studentRoute);
 app.use("/api/parent/", parentRoute);
-
+app.use("/api/student/", studentRoute);
+app.use("/api/instructor/", instructorRoute);
 // Xử lý lỗi
 app.use((err, req, res, next) => {
   console.error(err.stack);

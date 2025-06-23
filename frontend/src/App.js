@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom'; // Added Navigate import
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -27,7 +28,18 @@ import AnalyticsDashboard from './pages/AnalyticsDashboard.jsx';
 import ReportGeneratorPage from './pages/ReportGeneratorPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
-
+// --- Pages/Components for Instructor ---
+import InstructorSubmissionList from './components/Instructor/InstructorSubmissionList';
+import GradeSubmission from './components/Instructor/GradeSubmission';
+import InstructorAppealList from './components/Instructor/InstructorAppealList';
+import ReviewAppeal from './components/Instructor/ReviewAppeal';
+import CourseParticipantsList from './components/Instructor/CourseParticipantsList';
+import DeadlineScheduler from './components/Instructor/DeadlineScheduler';
+import CourseEditor from './components/Instructor/CourseEditor';
+import AnalyticsDashboard from './components/Instructor/AnalyticsDashboard';
+import AssignmentCreate from './components/Instructor/AssignmentCreate';
+import CourseList from './components/Instructor/CourseList1';
+import CourseDetail1 from './components/Instructor/CourseDetail1';
 // --- Pages/Components for Student ---
 import StudentSubjects from './components/Student/StudentSubjects';
 import CourseListStudent from './components/Student/CourseListStudent';
@@ -153,6 +165,18 @@ function App() {
         <Route path="subjects" element={<SubjectOverView />} />
         </Route>
 
+{/* --- INSTRUCTOR ROUTES --- */}
+        <Route path="/instructor/course" element={< CourseList />} />
+        <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
+        <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />
+        <Route path="/instructor/submission/:submissionId/grade" element={<GradeSubmission />} />
+        <Route path="/instructor/appeals" element={<InstructorAppealList />} />
+        <Route path="/instructor/appeal/review/:submissionId/:appealId" element={<ReviewAppeal />} />
+        <Route path="/instructor/course/:courseId/participants" element={<CourseParticipantsList />} />
+        <Route path="/instructor/course/:courseId/edit" element={<CourseEditor />} />
+        <Route path="/instructor/course/:courseId/deadlines" element={<DeadlineScheduler />} />
+        <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard />} />
+        <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
           {/* Fallback Route for Page Not Found */}
           <Route
             path="*"
@@ -167,10 +191,12 @@ function App() {
       </QueryClientProvider>
     </Provider>
   )
-     
-}
-     
 
+
+
+
+
+}
    
 
 export default App;

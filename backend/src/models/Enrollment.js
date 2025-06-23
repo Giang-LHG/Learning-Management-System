@@ -1,3 +1,4 @@
+
 // models/Enrollment.js
 const mongoose = require('mongoose');
 const { Schema, Types } = mongoose;
@@ -22,15 +23,14 @@ const EnrollmentSchema = new Schema(
       type: String,
       enum: ['active', 'completed', 'dropped'],
       default: 'active'
-    }
-     ,term:{
+    },
+   term:{
       type:String,
       required:true,
       trim:true
     }
   },
   { timestamps: false }
-  // Không cần timestamps vì chỉ lưu enrolledAt, status; nếu muốn thêm createdAt/updatedAt thì set { timestamps: true }.
 );
 
 module.exports = mongoose.model('Enrollment', EnrollmentSchema);

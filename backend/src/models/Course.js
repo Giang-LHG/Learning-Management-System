@@ -1,3 +1,4 @@
+
 // models/Course.js
 const mongoose = require('mongoose');
 const { Schema, Types } = mongoose;
@@ -16,6 +17,10 @@ const LessonSchema = new Schema(
     content: {
       type: String,
       default: ''
+    },
+    isVisible: {
+      type: Boolean,
+      default: true
     }
   },
   { _id: false }
@@ -31,6 +36,10 @@ const ModuleSchema = new Schema(
       type: String,
       required: true,
       trim: true
+    },
+    isVisible: {
+      type: Boolean,
+      default: true
     },
     lessons: [LessonSchema]
   },

@@ -1,3 +1,4 @@
+
 // controllers/student/enrollmentController.js
 const mongoose = require('mongoose');
 const Enrollment = require('../../models/Enrollment');
@@ -9,8 +10,7 @@ const User = require('../../models/User');
 exports.enrollCourse = async (req, res) => {
   try {
     const { studentId, courseId } = req.body;
-  console.log('req.body:', req.body);
-    // 1. Validate ObjectId
+  
     if (
       !mongoose.Types.ObjectId.isValid(studentId) ||
       !mongoose.Types.ObjectId.isValid(courseId)
@@ -66,10 +66,9 @@ const already = await Enrollment.findOne({
     // 3. Kiểm tra xem học sinh đã enroll chưa
   
     if (already) {
-      return res.status(400).json({ success: false, message: 'Already enrolled in this course' });
+      return res.status(400).json({ success: false, message: `Already enrolled in this course for term ${currentTerm}` });
     }
 
-    // 4. Lấy subject của khóa học để kiểm tra prerequisites
     const subject = await Subject.findById(course.subjectId).lean();
     if (!subject || subject.status !== 'approved') {
       return res
@@ -91,7 +90,6 @@ if (hasEnrolledSibling) {
 }
     const prereqSubjectIds = subject.prerequisites || [];
 
-    // 5. Nếu không có prerequisites, cho enroll luôn
     if (!prereqSubjectIds.length) {
       const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(), term: courseTerm });
       await newEnrollment.save();
@@ -175,6 +173,7 @@ const assignments = await Assignment.find({
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
 exports.searchEnrollments = async (req, res) => {
   try {
     const { q } = req.query;
@@ -185,24 +184,21 @@ exports.searchEnrollments = async (req, res) => {
     }
     const regex = new RegExp(q, 'i');
 
-    // Sử dụng aggregation để lookup details course và lọc theo title chứa keyword
     const results = await Enrollment.aggregate([
       {
         $lookup: {
-          from: 'courses',           // tên collection courses trong MongoDB
+          from: 'courses',
           localField: 'courseId',
           foreignField: '_id',
           as: 'course'
         }
       },
       { $unwind: '$course' },
-      // Lọc course.title hoặc course.description chứa regex
       {
         $match: {
           'course.title': { $regex: regex }
         }
       },
-
       {
         $project: {
           studentId: 1,
