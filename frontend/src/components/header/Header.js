@@ -104,37 +104,37 @@ function Header() {
             <span className="logo-gradient">Edu</span>LMS
           </Link>
         </div>
-        
+
         {/* Desktop Navigation */}
         <nav className="desktop-nav">
           <ul className="nav-links">
             <li>
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
               >
                 Home
               </Link>
             </li>
             <li>
-              <Link 
-                to="/courses" 
+              <Link
+                to="/courses"
                 className={`nav-link ${location.pathname === '/courses' ? 'active' : ''}`}
               >
                 Courses
               </Link>
             </li>
             <li>
-              <Link 
-                to="/instructors" 
+              <Link
+                to="/instructors"
                 className={`nav-link ${location.pathname === '/instructors' ? 'active' : ''}`}
               >
                 Instructors
               </Link>
             </li>
             <li>
-              <Link 
-                to="/pricing" 
+              <Link
+                to="/pricing"
                 className={`nav-link ${location.pathname === '/pricing' ? 'active' : ''}`}
               >
                 Pricing
@@ -145,23 +145,23 @@ function Header() {
 
         <div className="header-actions">
           {/* Search Button */}
-          <button 
+          <button
             className="search-button"
             onClick={() => setSearchOpen(!searchOpen)}
             aria-label="Search"
           >
             <FiSearch size={20} />
           </button>
-          
+
           {/* Search Input */}
-          <form 
+          <form
             ref={searchRef}
             className={`search-container ${searchOpen ? 'open' : ''}`}
             onSubmit={handleSearch}
           >
-            <input 
-              type="text" 
-              placeholder="Search courses, instructors..." 
+            <input
+              type="text"
+              placeholder="Search courses, instructors..."
               className="search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -170,34 +170,52 @@ function Header() {
               <FiSearch size={18} />
             </button>
           </form>
-          
+
           {/* User Actions */}
           <div className="user-actions" ref={userDropdownRef}>
             {isAuthenticated ? (
               <>
-                <button 
+                <button
                   className="user-button"
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   aria-label="User menu"
                 >
                   <div className="user-avatar-sm">{getUserInitials()}</div>
                 </button>
-                
+
                 {userDropdownOpen && (
                   <div className="user-dropdown">
-                    <div className="dropdown-header">
-                      <div className="user-avatar">{getUserInitials()}</div>
-                      <div className="user-info">
-                        <div className="user-name">{user?.profile?.fullName || user?.username}</div>
-                        <div className="user-email">{user?.email}</div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '1.2rem',
+                      background: '#f9fafb',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        marginRight: '0.8rem'
+                      }}>{getUserInitials()}</div>
+                      <div>
+                        <div>{user?.profile?.fullName || user?.username}</div>
+                        <div>{user?.email}</div>
                       </div>
                     </div>
-                    
+
                     <ul className="dropdown-links">
                       <li>
-                        <Link 
-                          to={user?.role === 'admin' ? '/admin' : user?.role === 'student' ? '/student' : user?.role === 'parent' ? '/parent/dashboard' : '/dashboard'} 
-                          className="dropdown-link" 
+                        <Link
+                          to={user?.role === 'admin' ? '/admin' : user?.role === 'student' ? '/student' : user?.role === 'parent' ? '/parent/dashboard' : '/dashboard'}
+                          className="dropdown-link"
                           onClick={() => setUserDropdownOpen(false)}
                         >
                           <FaChalkboardTeacher className="dropdown-icon" />
@@ -229,8 +247,8 @@ function Header() {
               </>
             ) : (
               <div className="auth-buttons">
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   className="btn-login"
                 >
                   <FiLogIn className="me-2" /> Sign In
@@ -240,10 +258,10 @@ function Header() {
                 </Link>
               </div>
             )}
-            
+
             {/* Mobile Menu Button */}
-            <button 
-              className="mobile-menu-button" 
+            <button
+              className="mobile-menu-button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Mobile menu"
             >
@@ -258,8 +276,8 @@ function Header() {
         <div className="mobile-nav-container">
           <ul className="mobile-nav-links">
             <li>
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className={`mobile-nav-link ${location.pathname === '/' ? 'active' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -267,8 +285,8 @@ function Header() {
               </Link>
             </li>
             <li>
-              <Link 
-                to="/courses" 
+              <Link
+                to="/courses"
                 className={`mobile-nav-link ${location.pathname === '/courses' ? 'active' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -276,8 +294,8 @@ function Header() {
               </Link>
             </li>
             <li>
-              <Link 
-                to="/instructors" 
+              <Link
+                to="/instructors"
                 className={`mobile-nav-link ${location.pathname === '/instructors' ? 'active' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -285,20 +303,20 @@ function Header() {
               </Link>
             </li>
             <li>
-              <Link 
-                to="/pricing" 
+              <Link
+                to="/pricing"
                 className={`mobile-nav-link ${location.pathname === '/pricing' ? 'active' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
               </Link>
             </li>
-            
+
             {isAuthenticated ? (
               <>
                 <li>
-                  <Link 
-                    to={user?.role === 'admin' ? '/admin' : user?.role === 'student' ? '/student' : user?.role === 'parent' ? '/parent/dashboard' : '/dashboard'} 
+                  <Link
+                    to={user?.role === 'admin' ? '/admin' : user?.role === 'student' ? '/student' : user?.role === 'parent' ? '/parent/dashboard' : '/dashboard'}
                     className={`mobile-nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
@@ -306,7 +324,7 @@ function Header() {
                   </Link>
                 </li>
                 <li>
-                  <button 
+                  <button
                     className="mobile-nav-btn mobile-nav-logout"
                     onClick={handleLogout}
                   >
@@ -317,8 +335,8 @@ function Header() {
             ) : (
               <>
                 <li>
-                  <Link 
-                    to="/login" 
+                  <Link
+                    to="/login"
                     className="mobile-nav-btn mobile-nav-login"
                     onClick={() => setMobileMenuOpen(false)}
                   >
@@ -326,8 +344,8 @@ function Header() {
                   </Link>
                 </li>
                 <li>
-                  <Link 
-                    to="/signup" 
+                  <Link
+                    to="/signup"
                     className="mobile-nav-btn mobile-nav-signup"
                     onClick={() => setMobileMenuOpen(false)}
                   >

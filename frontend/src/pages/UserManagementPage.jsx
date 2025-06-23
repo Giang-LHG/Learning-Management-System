@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table, Button, Space, Input, Modal, message, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
@@ -12,11 +12,16 @@ const UserManagementPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const queryClient = useQueryClient();
 
-  // Fetch users data
-  const { data: users, isLoading, error } = useQuery({
+  // Sửa tên biến data thành responseData
+  const { data: responseData, isLoading, error } = useQuery({
     queryKey: ['users'],
     queryFn: fetchUsers
   });
+
+  // Lấy mảng users từ responseData
+  const users = useMemo(() => {
+    return responseData?.users || []; // Luôn trả về mảng
+  }, [responseData]);
 
   // Delete user mutation
   const deleteMutation = useMutation({
@@ -127,12 +132,19 @@ const UserManagementPage = () => {
     },
   ];
 
-  // Filter users based on search term
-  const filteredUsers = users?.filter(user => 
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  // Sửa lọc dữ liệu - sử dụng users từ useMemo
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm) return users;
+    
+    return users.filter(user => {
+      const term = searchTerm.toLowerCase();
+      return (
+        (user.username && user.username.toLowerCase().includes(term)) ||
+        (user.email && user.email.toLowerCase().includes(term)) ||
+        (user.role && user.role.toLowerCase().includes(term))
+      );
+    });
+  }, [users, searchTerm]);
 
   if (error) {
     return (

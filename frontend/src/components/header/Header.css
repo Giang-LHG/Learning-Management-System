@@ -221,7 +221,7 @@
 
 .dropdown-header {
   display: flex;
-  align-items: center;
+  align-items: center; 
   padding: 1.2rem;
   background: #f9fafb;
   border-bottom: 1px solid #e5e7eb;

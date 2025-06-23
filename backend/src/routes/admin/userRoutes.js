@@ -17,6 +17,7 @@ const requireAdmin = adminMiddleware.requireAdmin;
  * @access Private (Admin)
  */
 router.get('/', [requireAuth, requireAdmin], userController.getAllUsers);
+// router.get('/', [requireAuth, requireAdmin], userController.getAllUsers);
 
 /**
  * @route GET /users/profile
