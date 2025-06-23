@@ -1,10 +1,9 @@
-
 const Subject = require('../../models/Subject');
 const Enrollment = require('../../models/Enrollment');
 const Course = require('../../models/Course');
 const mongoose = require('mongoose');
-
-const getAllSubjects = async (req, res) => {
+// Lấy tất cả subjects đã được duyệt
+exports.getAllSubjects = async (req, res) => {
   try {
     const subjects = await Subject.find({ status: 'approved' });
     res.json({ success: true, data: subjects });
@@ -57,42 +56,49 @@ try {
   res.status(500).json({ success: false, message: 'Error fetching subjects by student' });
 }
 };
-
-const searchSubjects = async (req, res) => {
+exports.searchSubjects = async (req, res) => {
   try {
     const { q, sortBy, order } = req.query;
     if (!q) {
       return res.status(400).json({ success: false, message: '"q" is required' });
     }
     const regex = new RegExp(q, 'i');
+    // build sort object nếu có
     const sortObj = {};
     if (sortBy) sortObj[sortBy] = order === 'desc' ? -1 : 1;
+
     const subjects = await Subject.find({
       status: 'approved',
       name: { $regex: regex }
     })
     .sort(sortObj)
     .lean();
+
     res.json({ success: true, data: subjects });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'Error searching subjects' });
   }
 };
-
-const sortSubjects = async (req, res) => {
+exports.sortSubjects = async (req, res) => {
   try {
     const { sortBy, order } = req.query;
+
+    // Các trường được phép sort
     const allowedSortFields = ['name', 'code', 'createdAt', 'updatedAt'];
     let sortObj = {};
+
     if (sortBy && allowedSortFields.includes(sortBy)) {
       sortObj[sortBy] = order === 'desc' ? -1 : 1;
     } else {
+      // Mặc định sort theo 'name' tăng dần
       sortObj = { name: 1 };
     }
+
     const subjects = await Subject.find({ status: 'approved' })
       .sort(sortObj)
       .lean();
+
     return res.json({ success: true, data: subjects });
   } catch (err) {
     console.error('Error in sortSubjects:', err);

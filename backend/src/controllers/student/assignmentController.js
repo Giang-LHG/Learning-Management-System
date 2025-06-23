@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 const Assignment = require('../../models/Assignment');
 const Course = require('../../models/Course');
@@ -53,7 +52,11 @@ const hasEnrolled = await Enrollment.exists({
 }
 };
 
-const getAssignmentById = async (req, res) => {
+/**
+ * GET /assignments/:assignmentId
+ * Trả về một Assignment chi tiết theo assignmentId
+ */
+exports.getAssignmentById = async (req, res) => {
   try {
     const { assignmentId, studentId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
@@ -90,28 +93,32 @@ if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
-
-const sortAssignments = async (req, res) => {
+exports.sortAssignments = async (req, res) => {
   try {
     const { sortBy, order ,courseId} = req.query;
+
+    // Các trường được phép sort
     const allowedSortFields = ['title', 'dueDate', 'createdAt'];
     let sortObj = {};
+
     if (sortBy && allowedSortFields.includes(sortBy)) {
       sortObj[sortBy] = order === 'desc' ? -1 : 1;
     } else {
+      // Mặc định sort theo dueDate tăng dần
       sortObj = { dueDate: 1 };
     }
+
     const assignments = await Assignment.find({})
       .sort(sortObj)
       .lean();
+
     return res.json({ success: true, data: assignments });
   } catch (err) {
     console.error('Error in sortAssignments:', err);
     return res.status(500).json({ success: false, message: 'Error sorting assignments' });
   }
 };
-
-const searchAssignments = async (req, res) => {
+exports.searchAssignments = async (req, res) => {
   try {
     const { q, courseId } = req.query;
     if (!q || typeof q !== 'string') {
@@ -131,11 +138,4 @@ const searchAssignments = async (req, res) => {
     console.error('Error in searchAssignments:', err);
     return res.status(500).json({ success: false, message: 'Error searching assignments' });
   }
-};
-
-module.exports = {
-    getAssignmentsByCourse,
-    getAssignmentById,
-    sortAssignments,
-    searchAssignments
 };

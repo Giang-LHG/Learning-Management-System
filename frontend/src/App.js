@@ -6,8 +6,8 @@ import { Provider } from 'react-redux';
 import store from './store/store';
 
 // --- Layouts ---
-import MainLayout from './layouts/MainLayout.jsx';
-import AuthLayout from './layouts/AuthLayout.jsx';
+import MainLayout from './Layouts/MainLayout.jsx';
+import AuthLayout from './Layouts/AuthLayout.jsx';
 
 // --- Components ---
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
@@ -36,7 +36,7 @@ import ReviewAppeal from './components/Instructor/ReviewAppeal';
 import CourseParticipantsList from './components/Instructor/CourseParticipantsList';
 import DeadlineScheduler from './components/Instructor/DeadlineScheduler';
 import CourseEditor from './components/Instructor/CourseEditor';
-import AnalyticsDashboard from './components/Instructor/AnalyticsDashboard';
+import AnalyticsDashboard1 from './components/Instructor/AnalyticsDashboard';
 import AssignmentCreate from './components/Instructor/AssignmentCreate';
 import CourseList from './components/Instructor/CourseList1';
 import CourseDetail1 from './components/Instructor/CourseDetail1';
@@ -51,13 +51,13 @@ import QuizList from './components/Student/QuizList';
 import GradeOverview from './components/Student/GradeOverview';
 import AppealListStudent from './components/Student/AppealListStudent';
 import AppealFormStudent from './components/Student/AppealFormStudent';
-import SidebarStudent from './layouts/Student/SideBarStudent.js'; 
+import SidebarStudent from './Layouts/Student/SideBarStudent.js'; 
 import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 
 const queryClient = new QueryClient();
 
 import SubjectOverView from './components/parent/SubjectOverView';
-import SideBarParent from './layouts/parent/SideBarParent';
+import SideBarParent from './Layouts/parent/SideBarParent';
 function App() {
   return (
     <Provider store={store}>
@@ -175,7 +175,7 @@ function App() {
         <Route path="/instructor/course/:courseId/participants" element={<CourseParticipantsList />} />
         <Route path="/instructor/course/:courseId/edit" element={<CourseEditor />} />
         <Route path="/instructor/course/:courseId/deadlines" element={<DeadlineScheduler />} />
-        <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard />} />
+        <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard1 />} />
         <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
           {/* Fallback Route for Page Not Found */}
           <Route
