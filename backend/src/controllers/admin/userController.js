@@ -192,3 +192,114 @@ exports.getUsersByRole = async (req, res) => {
     res.status(500).json(createErrorResponse(500, 'Server error'));
   }
 };
+
+// Thêm người dùng mới
+exports.createUser = async (req, res) => {
+  try {
+    // Kiểm tra lỗi validation
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { username, email, password, role, profile } = req.body;
+
+    // Kiểm tra email hoặc username đã tồn tại
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.status(400).json(createErrorResponse(400, 'Email hoặc username đã tồn tại'));
+    }
+
+    // Mã hóa mật khẩu
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    // Tạo user mới với dữ liệu hợp lệ theo role
+    const newUser = new User({
+      username,
+      email,
+      passwordHash,
+      role,
+      profile: this.sanitizeProfileByRole(role, profile)
+    });
+
+    await newUser.save();
+
+    // Trả về user đã tạo (không bao gồm mật khẩu)
+    const userResponse = newUser.toObject();
+    delete userResponse.passwordHash;
+    res.status(201).json(userResponse);
+
+  } catch (err) {
+    console.error('Create user error:', err);
+    res.status(500).json(createErrorResponse(500, 'Tạo người dùng thất bại'));
+  }
+};
+
+// Helper: Lọc dữ liệu profile theo role
+exports.sanitizeProfileByRole = (role, profile) => {
+  if (!profile) return {};
+
+  const sanitized = { ...profile };
+
+  // Chỉ student mới có parentIds
+  if (role !== 'student') {
+    sanitized.parentIds = undefined;
+  }
+
+  // Chỉ instructor mới có bio và expertise
+  if (role !== 'instructor') {
+    sanitized.bio = undefined;
+    sanitized.expertise = undefined;
+  }
+
+  return sanitized;
+};
+
+// Cập nhật thông tin user (Đã cải tiến)
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const updates = req.body;
+    
+    // Xử lý mật khẩu mới nếu có
+    if (updates.password) {
+      const salt = await bcrypt.genSalt(10);
+      updates.passwordHash = await bcrypt.hash(updates.password, salt);
+      delete updates.password;
+    }
+    
+    // Xử lý profile theo role
+    if (updates.profile) {
+      const user = await User.findById(userId);
+      const role = updates.role || user.role;
+      
+      // Sử dụng helper để lọc dữ liệu
+      updates.profile = this.sanitizeProfileByRole(role, updates.profile);
+    }
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select('-passwordHash');
+    
+    if (!updatedUser) {
+      return res.status(404).json(createErrorResponse(404, 'Không tìm thấy người dùng'));
+    }
+    
+    res.json(updatedUser);
+  } catch (err) {
+    console.error('Update error:', err);
+    
+    // Xử lý lỗi duplicate key
+    if (err.code === 11000) {
+      return res.status(400).json(createErrorResponse(400, 'Email hoặc username đã tồn tại'));
+    }
+    
+    res.status(500).json(createErrorResponse(500, 'Cập nhật thất bại'));
+  }
+};

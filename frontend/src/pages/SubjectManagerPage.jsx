@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table, Button, Input, Modal } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import CreateSubjectForm from '../components/subjects/CreateSubjectForm';
+import SubjectForm from '../components/subjects/CreateSubjectForm';
 import StatusBadge from '../components/subjects/StatusBadge';
 import DeleteSubjectConfirmation from '../components/subjects/DeleteSubjectConfirmation';
 import { fetchSubjects, deleteSubject } from '../services/subjectService';
@@ -18,6 +18,8 @@ const SubjectManagerPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingSubject, setEditingSubject] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: subjects, isLoading } = useQuery({
@@ -51,8 +53,13 @@ const SubjectManagerPage = () => {
 
   const confirmDelete = () => {
     if (selectedSubject) {
-      deleteMutation.mutate(selectedSubject.id);
+      deleteMutation.mutate(selectedSubject._id);
     }
+  };
+
+  const handleEdit = (subject) => {
+    setEditingSubject(subject);
+    setEditModalVisible(true);
   };
 
   const columns = [
@@ -84,7 +91,7 @@ const SubjectManagerPage = () => {
       key: 'action',
       render: (_, record) => (
         <div className="flex space-x-2">
-          <Button size="small">Edit</Button>
+          <Button size="small" onClick={() => handleEdit(record)}>Edit</Button>
           <Button 
             size="small" 
             danger
@@ -101,6 +108,8 @@ const SubjectManagerPage = () => {
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
+  const [addModalVisible, setAddModalVisible] = useState(false);
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-6">
@@ -112,23 +121,32 @@ const SubjectManagerPage = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-64"
           />
-          <CreateSubjectForm>
-            <Button type="primary" icon={<PlusOutlined />}>
-              Create Subject
-            </Button>
-          </CreateSubjectForm>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModalVisible(true)}>
+            Create Subject
+          </Button>
         </div>
       </div>
-      
       <Table 
         columns={columns}
         dataSource={filteredData}
         loading={isLoading}
-        rowKey="id"
+        rowKey="_id"
         pagination={{ pageSize: 10 }}
         scroll={{ x: 800 }}
       />
-      
+      <SubjectForm
+        visible={addModalVisible}
+        onCancel={() => setAddModalVisible(false)}
+        onSuccess={() => setAddModalVisible(false)}
+        isEdit={false}
+      />
+      <SubjectForm
+        visible={editModalVisible}
+        onCancel={() => setEditModalVisible(false)}
+        onSuccess={() => setEditModalVisible(false)}
+        initialValues={editingSubject}
+        isEdit={true}
+      />
       <DeleteSubjectConfirmation
         visible={deleteModalVisible}
         onCancel={() => setDeleteModalVisible(false)}

@@ -55,7 +55,7 @@ const UserSchema = new Schema(
       ],
       // Chỉ có khi role === 'instructor'
       department: { type: String, default: '' },
-      expertise: { type: String, default: '' }
+      expertise: { type: [String], default: [] }
     }
     // timestamps sẽ tự động tạo ra createdAt / updatedAt
   },
