@@ -112,12 +112,12 @@ exports.getPreviousSubjectsByStudent = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid studentId' });
     }
 
-    // 1. Lấy tất cả enrollments của student
+    //  Lấy tất cả enrollments của student
     const enrolls = await Enrollment.find({ studentId })
       .select('term subjectId')
       .lean();
 
-    // 2. Nhóm enrollments theo subjectId, tìm latest enrolled term của mỗi môn
+    //  Nhóm enrollments theo subjectId, tìm latest enrolled term của mỗi môn
     const latestEnrollBySubject = enrolls.reduce((acc, e) => {
       const sid = e.subjectId?.toString();
       if (!sid) return acc;
@@ -134,10 +134,9 @@ exports.getPreviousSubjectsByStudent = async (req, res) => {
       return res.json({ success: true, data: [] });
     }
 
-    // 3. Với mỗi subjectId, lấy latest course term của môn
+    //  Với mỗi subjectId, lấy latest course term của môn
     const keepSubjectIds = [];
     for (let sid of subjectIds) {
-      // Lấy tất cả courses của môn này
       const courses = await Course.find({ subjectId: sid })
         .select('term')
         .lean();
@@ -162,7 +161,7 @@ exports.getPreviousSubjectsByStudent = async (req, res) => {
       return res.json({ success: true, data: [] });
     }
 
-    // 4. Trả về các subject đã approved
+    //  Trả về các subject đã approved
     const subjects = await Subject.find({
       _id:    { $in: keepSubjectIds },
       status: 'approved'
