@@ -212,40 +212,48 @@ const submissions = submissionsRaw.map(sub => {
     
     const now = new Date();
 
-    await Promise.all(submissions.map(async s => {
-      const asg = s.assignment;
-      if (
-        asg.type === 'quiz' &&
-        now > new Date(asg.dueDate) &&
-        (s.grade.score === null || s.grade.score === undefined)
-      ) {
-        // build answer map
-        const answersMap = new Map(
-          (s.answers || []).map(a => [a.questionId.toString(), a.selectedOption])
-        );
-        const totalQs = asg.questions.length || 1;
-        let correctCount = 0;
-        asg.questions.forEach(q => {
-          if (answersMap.get(q.questionId.toString()) === q.correctOption) {
-            correctCount++;
-          }
-        });
-        // scale to 10
-        const score = Math.round((correctCount / totalQs) * 10 * 100) / 100; 
-        const gradedAt = now;
+   await Promise.all(submissions.map(async s => {
+  const asg = s.assignment;
+  const assignmentTerms      = Array.isArray(asg.term) ? asg.term : [];
+const latestAssignmentTerm = assignmentTerms.length
+  ? assignmentTerms[assignmentTerms.length - 1]
+  : null;
+  if (
+    asg.type === 'quiz' &&
+    now > new Date(asg.dueDate||s.term !== latestAssignmentTerm ) &&
+    (s.grade.score === null || s.grade.score === undefined)
+  ) {
+    const answersMap = new Map(
+      (s.answers || []).map(a => [a.questionId.toString(), a.selectedOption])
+    );
 
-        // persist grade
-        await Submission.findByIdAndUpdate(s._id, {
-          'grade.score': score,
-          'grade.gradedAt': gradedAt,
-          'grade.graderId':  new mongoose.Types.ObjectId(courseRaw.instructorId)
-        });
+    // Tính tổng điểm của bài và tổng điểm đúng
+    let totalPoints   = 0;
+    let correctPoints = 0;
 
-        // update in-memory for response
-        s.grade.score    = score;
-        s.grade.gradedAt = gradedAt;
+    asg.questions.forEach(q => {
+      const pts = q.points || 0;
+      totalPoints   += pts;
+      if (answersMap.get(q.questionId.toString()) === q.correctOption) {
+        correctPoints += pts;
       }
-    }));
+    });
+
+    const rawScore = totalPoints > 0 ? (correctPoints / totalPoints) * 10 : 0;
+    const score    = Math.round(rawScore * 100) / 100;
+    const gradedAt = now;
+
+    await Submission.findByIdAndUpdate(s._id, {
+      'grade.score': score,
+      'grade.gradedAt': gradedAt,
+      'grade.graderId': new mongoose.Types.ObjectId(courseRaw.instructorId)
+    });
+
+    s.grade.score    = score;
+    s.grade.gradedAt = gradedAt;
+  }
+}));
+
 const courseTerms = Array.isArray(courseRaw.term) ? courseRaw.term : [];
     const latestCourseTerm = courseTerms.length
       ? courseTerms[courseTerms.length - 1]
