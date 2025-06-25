@@ -106,6 +106,7 @@ if (hasEnrolledSibling) {
       const enrolls = await Enrollment.find({ studentId })
         .sort({ enrolledAt: -1 })
         .lean();
+// Lấy term cuối cùng của course để so sánh
 
       let latestEnroll = null;
       for (let e of enrolls) {
@@ -122,7 +123,19 @@ if (hasEnrolledSibling) {
           message: `You must register for the subject courses "${ms.name}" before registering new key`
         });
       }
-
+      const courseDoc = await Course.findById(latestEnroll.courseId).select('term endDate').lean();
+const courseTerms = Array.isArray(courseDoc.term) ? courseDoc.term : [];
+const lastCourseTerm = courseTerms[courseTerms.length - 1];
+if (latestEnroll.term === lastCourseTerm) {
+  // và vẫn còn trong khoảng thời gian khóa chưa kết thúc
+  if (courseDoc.endDate && new Date() <= new Date(courseDoc.endDate)) {
+    const ms = await Subject.findById(prereqSubjId).select('name').lean();
+    return res.status(400).json({
+      success: false,
+      message: `You are still enrolled in semester ${lastCourseTerm} of course "${ms.name}" (until ${new Date(courseDoc.endDate).toLocaleDateString()}) so you cannot continue registering.`
+    });
+  }
+}
       // 6.2. Xác định term của enrollment đó
       const prereqTerm = latestEnroll.term;
 
@@ -130,18 +143,28 @@ if (hasEnrolledSibling) {
 const assignments = await Assignment.find({
   term: { $in: [prereqTerm] }
 })
-  .select('_id courseId')
+  .select('_id courseId term')
   .lean();
+console.log('assignments', assignments.length);
+// chỉ giữ mỗi assignmentId một lần
+const uniqueAids = Array.from(new Set(assignments.map(a => a._id.toString())));
 
 const filteredAids = [];
-for (let a of assignments) {
+for (let aidStr of uniqueAids) {
+  const aid = new mongoose.Types.ObjectId(aidStr);
+  const a = assignments.find(x => x._id.toString() === aidStr);
+ 
   const c = await Course.findById(a.courseId).select('subjectId credits').lean();
   if (c && c.subjectId.toString() === prereqSubjId.toString()) {
-    filteredAids.push({ assignmentId: a._id, credits: c.credits || 0 });
+    filteredAids.push({ assignmentId: aid, credits: c.credits || 0 , courseId: a.courseId});
   }
 }
-if (!filteredAids.length) {
-  continue;
+if(!filteredAids.length){
+  const ms = await Subject.findById(prereqSubjId).select('name').lean();
+  return res.status(400).json({
+    success: false,
+    message: `You must register for the subject courses "${ms.name}" before registering new key`
+  });
 }
 
 // 6.4. Tính điểm trung bình weighted từng course rồi tổng thành điểm subject
@@ -155,38 +178,40 @@ const byCourse = filteredAids.reduce((acc, { assignmentId, credits }) => {
   return acc;
 }, {});
 
-// nhưng ta cần theo từng khóa: rebuild map khóa → [aids] + credits
+// nhưng ta cần theo từng khóa: rebuild map khóa  [aids] + credits
 const courseMap = {};
-filteredAids.forEach(({ assignmentId, credits }) => {
-  const key = assignmentId.toString(); // tạm group 1:1, thay nếu muốn theo courseId hãy lưu courseId bên trên
+filteredAids.forEach(({ assignmentId,courseId, credits }) => {
+  const key = courseId.toString(); 
   if (!courseMap[key]) {
     courseMap[key] = { aids: [], credits };
   }
   courseMap[key].aids.push(assignmentId);
 });
-
+for (let [key, { aids, credits }] of Object.entries(courseMap)) {
+  console.log(`Course ${key} - Aids: ${aids?.length}, Credits: ${credits}`);
+}
 // tính cho mỗi course
 for (let { aids, credits } of Object.values(courseMap)) {
+  
   // lấy submissions (có graded hay không) cho mỗi assignment
   const subs = await Submission.find({
     assignmentId: { $in: aids },
-    studentId,
+    studentId:new mongoose.Types.ObjectId(studentId),
     term: prereqTerm
   })
-    .select('grade.score')
+    .select('grade.score assignmentId')
     .lean();
 
   // nếu không có submission nào, coi như tất cả 0 điểm
   const scores = aids.map(aid => {
-    const s = subs.find(x => x.assignmentId.toString() === aid.toString());
+    const s = subs.find(x =>  x.assignmentId && x.assignmentId.toString() === aid.toString());
     return s && s.grade && s.grade.score != null ? s.grade.score : 0;
   });
-
   const avgCourse = scores.reduce((sum, v) => sum + v, 0) / scores.length;
+  console.log('avgCourse', avgCourse);
   weightedSum += avgCourse * credits;
   creditSum   += credits;
 }
-
 const subjectAvg = creditSum ? weightedSum / creditSum : 0;
 if (subjectAvg <= 4) {
   const ms = await Subject.findById(prereqSubjId).select('name').lean();
