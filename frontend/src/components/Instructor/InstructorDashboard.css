@@ -1,0 +1,293 @@
+.instructor-dashboard {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 50%, #4c1d95 100%);
+}
+
+.dashboard-header {
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  padding: 0 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-info h3 {
+  color: white !important;
+  margin: 0;
+}
+
+.header-actions .ant-btn {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-success {
+  background: #10b981 !important;
+}
+
+.btn-success:hover {
+  background: #059669 !important;
+}
+
+.btn-warning {
+  background: #f59e0b !important;
+}
+
+.btn-warning:hover {
+  background: #d97706 !important;
+}
+
+.dashboard-content {
+  padding: 24px;
+  background: transparent;
+  margin-top: 80px; /* Để tránh bị che bởi sticky header */
+}
+
+.content-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.stats-row .ant-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+.stat-card .ant-statistic-title {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stat-card .ant-statistic-content {
+  color: #1f2937;
+}
+
+.stat-icon {
+  font-size: 20px;
+  margin-right: 8px;
+}
+
+.stat-icon.purple {
+  color: #7c3aed;
+}
+.stat-icon.green {
+  color: #10b981;
+}
+.stat-icon.orange {
+  color: #f59e0b;
+}
+.stat-icon.blue {
+  color: #3b82f6;
+}
+
+.main-content .ant-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+.course-list-card .ant-card-head {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.course-item {
+  cursor: pointer;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  padding: 16px !important;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.course-item:hover {
+  background: #f8fafc;
+  border-color: #e0e7ff;
+}
+
+.course-item.selected {
+  background: #eef2ff;
+  border-color: #7c3aed;
+}
+
+.course-content {
+  width: 100%;
+}
+
+.course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.course-title {
+  margin: 0 !important;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.course-code {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.course-stats {
+  margin-top: 12px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.stat-number.purple {
+  color: #7c3aed;
+}
+.stat-number.green {
+  color: #10b981;
+}
+.stat-number.orange {
+  color: #f59e0b;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.analytics-card .ant-card-body {
+  padding: 16px;
+}
+
+.analytics-tabs .ant-tabs-tab {
+  color: #6b7280;
+}
+
+.analytics-tabs .ant-tabs-tab.ant-tabs-tab-active {
+  color: #7c3aed;
+}
+
+.analytics-tabs .ant-tabs-ink-bar {
+  background: #7c3aed;
+}
+
+.analytics-tabs .ant-tabs-content-holder {
+  padding-top: 16px;
+}
+
+/* Chart containers */
+.chart-container {
+  height: 250px;
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .header-left {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .dashboard-content {
+    margin-top: 70px;
+    padding: 16px;
+  }
+
+  .course-stats {
+    margin-top: 8px;
+  }
+
+  .stat-number {
+    font-size: 16px;
+  }
+}
+
+/* Custom Ant Design overrides */
+.ant-progress-bg {
+  background: #10b981 !important;
+}
+
+.ant-tag {
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+.ant-list-item {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ant-list-item:last-child {
+  border-bottom: none;
+}
+
+.ant-card-head-title {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.ant-card-small .ant-card-head {
+  min-height: 48px;
+}
+
+.ant-card-small .ant-card-body {
+  padding: 16px;
+}
+
+/* Welcome Section */
+.welcome-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 0;
+  margin-bottom: 1rem;
+}
+
+.welcome-content h2 {
+  color: white !important;
+  margin: 0;
+  font-size: 2rem;
+}
+
+.welcome-actions .ant-btn {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive cho welcome section */
+@media (max-width: 768px) {
+  .welcome-section {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+}

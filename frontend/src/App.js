@@ -29,6 +29,7 @@ import ReportGeneratorPage from './pages/ReportGeneratorPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
 // --- Pages/Components for Instructor ---
+import InstructorDashboard from './components/Instructor/InstructorDashboard.jsx';
 import InstructorSubmissionList from './components/Instructor/InstructorSubmissionList';
 import GradeSubmission from './components/Instructor/GradeSubmission';
 import InstructorAppealList from './components/Instructor/InstructorAppealList';
@@ -51,7 +52,7 @@ import QuizList from './components/Student/QuizList';
 import GradeOverview from './components/Student/GradeOverview';
 import AppealListStudent from './components/Student/AppealListStudent';
 import AppealFormStudent from './components/Student/AppealFormStudent';
-import SidebarStudent from './Layouts/Student/SideBarStudent.js'; 
+import SidebarStudent from './Layouts/Student/SideBarStudent.js';
 import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 
 const queryClient = new QueryClient();
@@ -89,7 +90,7 @@ function App() {
               </PublicRoute>
             } />
           </Route>
-          
+
           {/* Admin Routes - Chỉ cho phép admin */}
           <Route element={<MainLayout />}>
             <Route path="/admin" element={
@@ -146,7 +147,7 @@ function App() {
             <Route path="grades/:courseId" element={<GradeOverview />} />
             <Route path="appeals" element={<AppealListStudent />} />
             <Route path="appeal/:submissionId" element={<AppealFormStudent />} />
-            
+
             <Route
               path="*"
               element={
@@ -159,24 +160,25 @@ function App() {
           </Route>
 
           {/* Parent Dashboard - Chỉ cho phép parent */}
-         <Route path="/" element={<Navigate to="/student/subjects" replace />} />
-        <Route path="/parent" element={<SideBarParent />} >
-        <Route path="dashboard" element={<ParentStatsDashboard />} />
-        <Route path="subjects" element={<SubjectOverView />} />
-        </Route>
+          <Route path="/" element={<Navigate to="/student/subjects" replace />} />
+          <Route path="/parent" element={<SideBarParent />} >
+            <Route path="dashboard" element={<ParentStatsDashboard />} />
+            <Route path="subjects" element={<SubjectOverView />} />
+          </Route>
 
-{/* --- INSTRUCTOR ROUTES --- */}
-        <Route path="/instructor/course" element={< CourseList />} />
-        <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
-        <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />
-        <Route path="/instructor/submission/:submissionId/grade" element={<GradeSubmission />} />
-        <Route path="/instructor/appeals" element={<InstructorAppealList />} />
-        <Route path="/instructor/appeal/review/:submissionId/:appealId" element={<ReviewAppeal />} />
-        <Route path="/instructor/course/:courseId/participants" element={<CourseParticipantsList />} />
-        <Route path="/instructor/course/:courseId/edit" element={<CourseEditor />} />
-        <Route path="/instructor/course/:courseId/deadlines" element={<DeadlineScheduler />} />
-        <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard1 />} />
-        <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
+          {/* --- INSTRUCTOR ROUTES --- */}
+          <Route path="/instructor/" element={< InstructorDashboard />} />
+          <Route path="/instructor/course" element={< CourseList />} />
+          <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
+          <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />
+          <Route path="/instructor/submission/:submissionId/grade" element={<GradeSubmission />} />
+          <Route path="/instructor/appeals" element={<InstructorAppealList />} />
+          <Route path="/instructor/appeal/review/:submissionId/:appealId" element={<ReviewAppeal />} />
+          <Route path="/instructor/course/:courseId/participants" element={<CourseParticipantsList />} />
+          <Route path="/instructor/course/:courseId/edit" element={<CourseEditor />} />
+          <Route path="/instructor/course/:courseId/deadlines" element={<DeadlineScheduler />} />
+          <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard1 />} />
+          <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
           {/* Fallback Route for Page Not Found */}
           <Route
             path="*"
@@ -197,6 +199,6 @@ function App() {
 
 
 }
-   
+
 
 export default App;
