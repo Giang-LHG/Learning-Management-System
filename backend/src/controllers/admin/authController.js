@@ -74,13 +74,13 @@ exports.login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
     
-    console.log('Login attempt:', { identifier, password: password ? '***' : 'undefined' });
+    // console.log('Login attempt:', { identifier, password: password ? '***' : 'undefined' });
 
     const user = await User.findOne({
       $or: [{ username: identifier }, { email: identifier }]
     }).select('+passwordHash');
 
-    console.log('User found:', user ? 'Yes' : 'No');
+    // console.log('User found:', user ? 'Yes' : 'No');
 
     if (!user) {
       console.log('No user found with identifier:', identifier);
@@ -88,7 +88,7 @@ exports.login = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    console.log('Password match:', isMatch);
+    // console.log('Password match:', isMatch);
 
     if (!isMatch) {
       console.log('Password does not match for user:', user.username);
@@ -105,7 +105,7 @@ exports.login = async (req, res) => {
     // Tạo JWT token
     const token = generateToken(user._id);
 
-    console.log('Login successful for user:', user.username);
+    // console.log('Login successful for user:', user.username);
 
     res.json({
       user: userResponse,
