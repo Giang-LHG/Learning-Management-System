@@ -6,6 +6,7 @@ import { Plus, Eye, Edit, Trash2, Calendar, User, BookOpen, GraduationCap, Searc
 import { motion } from "framer-motion"
 import Header from "../header/Header"
 import AddCourseModal from "./AddCourseModal"
+import EditCourseModal from "./EditCourseModal"
 import { useNavigate } from "react-router-dom"
 
 // Dữ liệu mẫu các khóa học
@@ -29,8 +30,21 @@ const coursesData = [
     credits: 3,
     term: ["Học kỳ 2", "2023-2024"],
     modules: [
-      { moduleId: "1", title: "Giới thiệu React", lessons: [{}, {}] },
-      { moduleId: "2", title: "State Management", lessons: [{}] },
+      {
+        moduleId: "1",
+        title: "Giới thiệu React",
+        isVisible: true,
+        lessons: [
+          { lessonId: "1", title: "Cài đặt môi trường", content: "", isVisible: true },
+          { lessonId: "2", title: "JSX và Components", content: "", isVisible: true },
+        ],
+      },
+      {
+        moduleId: "2",
+        title: "State Management",
+        isVisible: true,
+        lessons: [{ lessonId: "3", title: "useState và useEffect", content: "", isVisible: true }],
+      },
     ],
     createdAt: "2024-01-15T08:00:00.000Z",
     status: "active",
@@ -54,8 +68,25 @@ const coursesData = [
     credits: 4,
     term: ["Học kỳ 2", "2023-2024"],
     modules: [
-      { moduleId: "3", title: "SQL Cơ bản", lessons: [{}, {}, {}] },
-      { moduleId: "4", title: "Thiết kế CSDL", lessons: [{}, {}] },
+      {
+        moduleId: "3",
+        title: "SQL Cơ bản",
+        isVisible: true,
+        lessons: [
+          { lessonId: "4", title: "SELECT statements", content: "", isVisible: true },
+          { lessonId: "5", title: "JOIN operations", content: "", isVisible: true },
+          { lessonId: "6", title: "Subqueries", content: "", isVisible: true },
+        ],
+      },
+      {
+        moduleId: "4",
+        title: "Thiết kế CSDL",
+        isVisible: true,
+        lessons: [
+          { lessonId: "7", title: "ERD Modeling", content: "", isVisible: true },
+          { lessonId: "8", title: "Normalization", content: "", isVisible: true },
+        ],
+      },
     ],
     createdAt: "2024-01-20T09:00:00.000Z",
     status: "active",
@@ -79,8 +110,27 @@ const coursesData = [
     credits: 3,
     term: ["Học kỳ 2", "2023-2024"],
     modules: [
-      { moduleId: "5", title: "Machine Learning", lessons: [{}, {}, {}, {}] },
-      { moduleId: "6", title: "Deep Learning", lessons: [{}, {}, {}] },
+      {
+        moduleId: "5",
+        title: "Machine Learning",
+        isVisible: true,
+        lessons: [
+          { lessonId: "9", title: "Linear Regression", content: "", isVisible: true },
+          { lessonId: "10", title: "Decision Trees", content: "", isVisible: true },
+          { lessonId: "11", title: "Neural Networks", content: "", isVisible: true },
+          { lessonId: "12", title: "SVM", content: "", isVisible: true },
+        ],
+      },
+      {
+        moduleId: "6",
+        title: "Deep Learning",
+        isVisible: true,
+        lessons: [
+          { lessonId: "13", title: "CNN", content: "", isVisible: true },
+          { lessonId: "14", title: "RNN", content: "", isVisible: true },
+          { lessonId: "15", title: "LSTM", content: "", isVisible: true },
+        ],
+      },
     ],
     createdAt: "2024-01-25T10:00:00.000Z",
     status: "draft",
@@ -104,8 +154,25 @@ const coursesData = [
     credits: 3,
     term: ["Học kỳ 3", "2023-2024"],
     modules: [
-      { moduleId: "7", title: "React Native", lessons: [{}, {}] },
-      { moduleId: "8", title: "Flutter", lessons: [{}, {}, {}] },
+      {
+        moduleId: "7",
+        title: "React Native",
+        isVisible: true,
+        lessons: [
+          { lessonId: "16", title: "Setup Environment", content: "", isVisible: true },
+          { lessonId: "17", title: "Navigation", content: "", isVisible: true },
+        ],
+      },
+      {
+        moduleId: "8",
+        title: "Flutter",
+        isVisible: true,
+        lessons: [
+          { lessonId: "18", title: "Dart Language", content: "", isVisible: true },
+          { lessonId: "19", title: "Widgets", content: "", isVisible: true },
+          { lessonId: "20", title: "State Management", content: "", isVisible: true },
+        ],
+      },
     ],
     createdAt: "2024-02-01T11:00:00.000Z",
     status: "active",
@@ -118,7 +185,9 @@ const CourseList = () => {
   const [filterStatus, setFilterStatus] = useState("all")
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [courseToDelete, setCourseToDelete] = useState(null)
+  const [courseToEdit, setCourseToEdit] = useState(null)
   const navigate = useNavigate()
 
   const handleAddCourse = () => {
@@ -155,7 +224,23 @@ const CourseList = () => {
   }
 
   const handleEditCourse = (courseId) => {
-    console.log("Chỉnh sửa khóa học:", courseId)
+    const course = courses.find((c) => c._id === courseId)
+    if (course) {
+      setCourseToEdit(course)
+      setShowEditModal(true)
+    }
+  }
+
+  const handleSubmitEditCourse = (updatedCourseData) => {
+    if (courseToEdit) {
+      const updatedCourses = courses.map((course) =>
+        course._id === courseToEdit._id
+          ? { ...course, ...updatedCourseData, updatedAt: new Date().toISOString() }
+          : course,
+      )
+      setCourses(updatedCourses)
+      console.log("Khóa học đã được cập nhật:", updatedCourseData)
+    }
   }
 
   const handleDeleteCourse = (course) => {
@@ -466,6 +551,14 @@ const CourseList = () => {
 
         {/* Add Course Modal */}
         <AddCourseModal show={showAddModal} onHide={() => setShowAddModal(false)} onSubmit={handleSubmitCourse} />
+
+        {/* Edit Course Modal */}
+        <EditCourseModal
+          show={showEditModal}
+          onHide={() => setShowEditModal(false)}
+          onSubmit={handleSubmitEditCourse}
+          courseData={courseToEdit}
+        />
 
         {/* Delete Confirmation Modal */}
         <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>

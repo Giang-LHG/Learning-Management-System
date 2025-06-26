@@ -1,26 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Container, Row, Col, Card, Button, Badge, Modal, Alert, Table, Form, Accordion } from "react-bootstrap"
-import {
-    ArrowLeft,
-    Edit,
-    Trash2,
-    Calendar,
-    User,
-    BookOpen,
-    GraduationCap,
-    Users,
-    Search,
-    X,
-    Plus,
-    Save,
-    Eye,
-    EyeOff,
-} from "lucide-react"
+import { Container, Row, Col, Card, Button, Badge, Modal, Alert, Table, Form } from "react-bootstrap"
+import { ArrowLeft, Edit, Trash2, Calendar, User, BookOpen, GraduationCap, Users, Search, X } from "lucide-react"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import Header from "../header/Header"
+import EditCourseModal from "./EditCourseModal"
+
 // Dữ liệu mẫu khóa học
 const courseData = {
     _id: "64f8a1b2c3d4e5f6a7b8c9d0",
@@ -157,41 +144,20 @@ const CourseDetail = () => {
     const [searchStudent, setSearchStudent] = useState("")
     const [studentToRemove, setStudentToRemove] = useState(null)
     const [showRemoveStudentModal, setShowRemoveStudentModal] = useState(false)
-    const navigate = useNavigate();
-    // Edit form states
-    const [editForm, setEditForm] = useState({
-        title: "",
-        description: "",
-        startDate: "",
-        endDate: "",
-        credits: 0,
-        term: [],
-        modules: [],
-    })
+    const navigate = useNavigate()
 
     const handleEdit = () => {
-        // Initialize edit form with current course data
-        setEditForm({
-            title: course.title,
-            description: course.description,
-            startDate: course.startDate,
-            endDate: course.endDate,
-            credits: course.credits,
-            term: course.term,
-            modules: [...course.modules],
-        })
         setShowEditModal(true)
     }
 
-    const handleSaveEdit = () => {
+    const handleSaveEdit = (updatedCourseData) => {
         // Update course with edited data
         setCourse({
             ...course,
-            ...editForm,
+            ...updatedCourseData,
             updatedAt: new Date().toISOString(),
         })
-        setShowEditModal(false)
-        console.log("Khóa học đã được cập nhật:", editForm)
+        console.log("Khóa học đã được cập nhật:", updatedCourseData)
     }
 
     const handleDelete = () => {
@@ -215,20 +181,6 @@ const CourseDetail = () => {
         } catch (error) {
             console.error("Error formatting date:", error)
             return "Ngày không hợp lệ"
-        }
-    }
-
-    const formatDateForInput = (dateString) => {
-        if (!dateString) return ""
-        try {
-            const date = new Date(dateString)
-            if (isNaN(date.getTime())) {
-                return ""
-            }
-            return date.toISOString().split("T")[0]
-        } catch (error) {
-            console.error("Error formatting date for input:", error)
-            return ""
         }
     }
 
@@ -300,78 +252,6 @@ const CourseDetail = () => {
             student.email.toLowerCase().includes(searchStudent.toLowerCase()) ||
             student.username.toLowerCase().includes(searchStudent.toLowerCase()),
     )
-
-    // Module management functions
-    const addModule = () => {
-        const newModule = {
-            moduleId: Date.now().toString(),
-            title: "Chương mới",
-            isVisible: true,
-            lessons: [],
-        }
-        setEditForm({
-            ...editForm,
-            modules: [...editForm.modules, newModule],
-        })
-    }
-
-    const updateModule = (moduleIndex, field, value) => {
-        const updatedModules = [...editForm.modules]
-        updatedModules[moduleIndex] = {
-            ...updatedModules[moduleIndex],
-            [field]: value,
-        }
-        setEditForm({
-            ...editForm,
-            modules: updatedModules,
-        })
-    }
-
-    const removeModule = (moduleIndex) => {
-        const updatedModules = editForm.modules.filter((_, index) => index !== moduleIndex)
-        setEditForm({
-            ...editForm,
-            modules: updatedModules,
-        })
-    }
-
-    const addLesson = (moduleIndex) => {
-        const newLesson = {
-            lessonId: Date.now().toString(),
-            title: "Bài học mới",
-            content: "",
-            isVisible: true,
-        }
-        const updatedModules = [...editForm.modules]
-        updatedModules[moduleIndex].lessons.push(newLesson)
-        setEditForm({
-            ...editForm,
-            modules: updatedModules,
-        })
-    }
-
-    const updateLesson = (moduleIndex, lessonIndex, field, value) => {
-        const updatedModules = [...editForm.modules]
-        updatedModules[moduleIndex].lessons[lessonIndex] = {
-            ...updatedModules[moduleIndex].lessons[lessonIndex],
-            [field]: value,
-        }
-        setEditForm({
-            ...editForm,
-            modules: updatedModules,
-        })
-    }
-
-    const removeLesson = (moduleIndex, lessonIndex) => {
-        const updatedModules = [...editForm.modules]
-        updatedModules[moduleIndex].lessons = updatedModules[moduleIndex].lessons.filter(
-            (_, index) => index !== lessonIndex,
-        )
-        setEditForm({
-            ...editForm,
-            modules: updatedModules,
-        })
-    }
 
     return (
         <div>
@@ -611,258 +491,12 @@ const CourseDetail = () => {
                 </Container>
 
                 {/* Edit Course Modal */}
-                <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="xl" centered>
-                    <Modal.Header closeButton>
-                        <Modal.Title className="d-flex align-items-center">
-                            <Edit size={20} className="me-2" />
-                            Chỉnh sửa khóa học - {course.title}
-                        </Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
-                        <Form>
-                            {/* Basic Information */}
-                            <Card className="mb-4">
-                                <Card.Header>
-                                    <h5 className="mb-0">Thông tin cơ bản</h5>
-                                </Card.Header>
-                                <Card.Body>
-                                    <Row>
-                                        <Col md={12} className="mb-3">
-                                            <Form.Group>
-                                                <Form.Label>Tên khóa học *</Form.Label>
-                                                <Form.Control
-                                                    type="text"
-                                                    value={editForm.title}
-                                                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                                                    placeholder="Nhập tên khóa học"
-                                                />
-                                            </Form.Group>
-                                        </Col>
-                                        <Col md={12} className="mb-3">
-                                            <Form.Group>
-                                                <Form.Label>Mô tả khóa học</Form.Label>
-                                                <Form.Control
-                                                    as="textarea"
-                                                    rows={4}
-                                                    value={editForm.description}
-                                                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                                                    placeholder="Nhập mô tả khóa học"
-                                                />
-                                            </Form.Group>
-                                        </Col>
-                                        <Col md={4} className="mb-3">
-                                            <Form.Group>
-                                                <Form.Label>Số tín chỉ *</Form.Label>
-                                                <Form.Control
-                                                    type="number"
-                                                    min="1"
-                                                    max="10"
-                                                    value={editForm.credits}
-                                                    onChange={(e) => setEditForm({ ...editForm, credits: Number.parseInt(e.target.value) || 0 })}
-                                                />
-                                            </Form.Group>
-                                        </Col>
-                                        <Col md={4} className="mb-3">
-                                            <Form.Group>
-                                                <Form.Label>Ngày bắt đầu *</Form.Label>
-                                                <Form.Control
-                                                    type="date"
-                                                    value={formatDateForInput(editForm.startDate)}
-                                                    onChange={(e) => setEditForm({ ...editForm, startDate: e.target.value })}
-                                                />
-                                            </Form.Group>
-                                        </Col>
-                                        <Col md={4} className="mb-3">
-                                            <Form.Group>
-                                                <Form.Label>Ngày kết thúc *</Form.Label>
-                                                <Form.Control
-                                                    type="date"
-                                                    value={formatDateForInput(editForm.endDate)}
-                                                    onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })}
-                                                />
-                                            </Form.Group>
-                                        </Col>
-                                    </Row>
-                                </Card.Body>
-                            </Card>
-
-                            {/* Modules Management */}
-                            <Card>
-                                <Card.Header className="d-flex justify-content-between align-items-center">
-                                    <h5 className="mb-0">Quản lý chương học</h5>
-                                    <Button variant="success" size="sm" onClick={addModule}>
-                                        <Plus size={16} className="me-1" />
-                                        Thêm chương
-                                    </Button>
-                                </Card.Header>
-                                <Card.Body>
-                                    {editForm.modules.length === 0 ? (
-                                        <div className="text-center py-4">
-                                            <BookOpen size={48} className="text-muted mb-3" />
-                                            <h6 className="text-muted">Chưa có chương học nào</h6>
-                                            <p className="text-muted small">Nhấn "Thêm chương" để bắt đầu tạo nội dung khóa học</p>
-                                        </div>
-                                    ) : (
-                                        <Accordion>
-                                            {editForm.modules.map((module, moduleIndex) => (
-                                                <Accordion.Item key={module.moduleId} eventKey={moduleIndex.toString()}>
-                                                    <Accordion.Header>
-                                                        <div className="d-flex align-items-center justify-content-between w-100 me-3">
-                                                            <span>
-                                                                Chương {moduleIndex + 1}: {module.title}
-                                                            </span>
-                                                            <div className="d-flex align-items-center gap-2">
-                                                                <Badge bg={module.isVisible ? "success" : "secondary"}>
-                                                                    {module.isVisible ? "Hiển thị" : "Ẩn"}
-                                                                </Badge>
-                                                                <Badge bg="info">{module.lessons.length} bài học</Badge>
-                                                            </div>
-                                                        </div>
-                                                    </Accordion.Header>
-                                                    <Accordion.Body>
-                                                        <Row className="mb-3">
-                                                            <Col md={8}>
-                                                                <Form.Group>
-                                                                    <Form.Label>Tên chương *</Form.Label>
-                                                                    <Form.Control
-                                                                        type="text"
-                                                                        value={module.title}
-                                                                        onChange={(e) => updateModule(moduleIndex, "title", e.target.value)}
-                                                                        placeholder="Nhập tên chương"
-                                                                    />
-                                                                </Form.Group>
-                                                            </Col>
-                                                            <Col md={2}>
-                                                                <Form.Group>
-                                                                    <Form.Label>Hiển thị</Form.Label>
-                                                                    <Form.Check
-                                                                        type="switch"
-                                                                        checked={module.isVisible}
-                                                                        onChange={(e) => updateModule(moduleIndex, "isVisible", e.target.checked)}
-                                                                    />
-                                                                </Form.Group>
-                                                            </Col>
-                                                            <Col md={2} className="d-flex align-items-end">
-                                                                <Button
-                                                                    variant="outline-danger"
-                                                                    size="sm"
-                                                                    onClick={() => removeModule(moduleIndex)}
-                                                                    className="w-100"
-                                                                >
-                                                                    <Trash2 size={14} />
-                                                                </Button>
-                                                            </Col>
-                                                        </Row>
-
-                                                        <hr />
-
-                                                        <div className="d-flex justify-content-between align-items-center mb-3">
-                                                            <h6 className="mb-0">Bài học</h6>
-                                                            <Button variant="outline-primary" size="sm" onClick={() => addLesson(moduleIndex)}>
-                                                                <Plus size={14} className="me-1" />
-                                                                Thêm bài học
-                                                            </Button>
-                                                        </div>
-
-                                                        {module.lessons.length === 0 ? (
-                                                            <div className="text-center py-3" style={{ background: "#f8f9fa" }}>
-                                                                <p className="text-muted small mb-0">Chưa có bài học nào trong chương này</p>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="d-grid gap-3">
-                                                                {module.lessons.map((lesson, lessonIndex) => (
-                                                                    <div key={lesson.lessonId} className="p-3 border rounded">
-                                                                        <Row>
-                                                                            <Col md={6}>
-                                                                                <Form.Group className="mb-2">
-                                                                                    <Form.Label className="small">Tên bài học *</Form.Label>
-                                                                                    <Form.Control
-                                                                                        type="text"
-                                                                                        size="sm"
-                                                                                        value={lesson.title}
-                                                                                        onChange={(e) =>
-                                                                                            updateLesson(moduleIndex, lessonIndex, "title", e.target.value)
-                                                                                        }
-                                                                                        placeholder="Nhập tên bài học"
-                                                                                    />
-                                                                                </Form.Group>
-                                                                            </Col>
-                                                                            <Col md={4}>
-                                                                                <Form.Group className="mb-2">
-                                                                                    <Form.Label className="small">Hiển thị</Form.Label>
-                                                                                    <div className="d-flex align-items-center">
-                                                                                        <Form.Check
-                                                                                            type="switch"
-                                                                                            checked={lesson.isVisible}
-                                                                                            onChange={(e) =>
-                                                                                                updateLesson(moduleIndex, lessonIndex, "isVisible", e.target.checked)
-                                                                                            }
-                                                                                        />
-                                                                                        {lesson.isVisible ? (
-                                                                                            <Eye size={16} className="ms-2 text-success" />
-                                                                                        ) : (
-                                                                                            <EyeOff size={16} className="ms-2 text-muted" />
-                                                                                        )}
-                                                                                    </div>
-                                                                                </Form.Group>
-                                                                            </Col>
-                                                                            <Col md={2} className="d-flex align-items-start">
-                                                                                <Button
-                                                                                    variant="outline-danger"
-                                                                                    size="sm"
-                                                                                    onClick={() => removeLesson(moduleIndex, lessonIndex)}
-                                                                                    className="w-100"
-                                                                                >
-                                                                                    <Trash2 size={12} />
-                                                                                </Button>
-                                                                            </Col>
-                                                                            <Col md={12}>
-                                                                                <Form.Group>
-                                                                                    <Form.Label className="small">Nội dung bài học</Form.Label>
-                                                                                    <Form.Control
-                                                                                        as="textarea"
-                                                                                        rows={2}
-                                                                                        size="sm"
-                                                                                        value={lesson.content}
-                                                                                        onChange={(e) =>
-                                                                                            updateLesson(moduleIndex, lessonIndex, "content", e.target.value)
-                                                                                        }
-                                                                                        placeholder="Nhập nội dung bài học"
-                                                                                    />
-                                                                                </Form.Group>
-                                                                            </Col>
-                                                                        </Row>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </Accordion.Body>
-                                                </Accordion.Item>
-                                            ))}
-                                        </Accordion>
-                                    )}
-                                </Card.Body>
-                            </Card>
-                        </Form>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <div className="d-flex justify-content-between w-100 align-items-center">
-                            <div className="text-muted small">
-                                {editForm.modules.length} chương •{" "}
-                                {editForm.modules.reduce((total, module) => total + module.lessons.length, 0)} bài học
-                            </div>
-                            <div className="d-flex gap-2">
-                                <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-                                    Hủy
-                                </Button>
-                                <Button style={{ background: "#fbbf24", border: "none", color: "#000" }} onClick={handleSaveEdit}>
-                                    <Save size={16} className="me-2" />
-                                    Lưu thay đổi
-                                </Button>
-                            </div>
-                        </div>
-                    </Modal.Footer>
-                </Modal>
+                <EditCourseModal
+                    show={showEditModal}
+                    onHide={() => setShowEditModal(false)}
+                    onSubmit={handleSaveEdit}
+                    courseData={course}
+                />
 
                 {/* Students List Modal */}
                 <Modal show={showStudentsModal} onHide={() => setShowStudentsModal(false)} size="lg" centered>
