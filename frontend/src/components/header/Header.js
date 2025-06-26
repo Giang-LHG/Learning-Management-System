@@ -140,6 +140,14 @@ function Header() {
                 Appeals
               </Link>
             </li>
+            <li>
+              <Link
+                to="/instructor/course/:courseId/assignments/new"
+                className={`nav-link ${location.pathname === '/instructor/course/:courseId/assignments/new' ? 'active' : ''}`}
+              >
+                Assignment
+              </Link>
+            </li>
           </ul>
         </nav>
 
