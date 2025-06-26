@@ -113,18 +113,18 @@ exports.resubmitSubmission = async (req, res) => {
     const { submissionId } = req.params;
     const { content, answers } = req.body; // content cho essay, answers cho quiz
 
-    // 1. Validate ObjectId
+    // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(submissionId)) {
       return res.status(400).json({ success: false, message: 'Invalid submissionId' });
     }
 
-    // 2. Tìm submission hiện tại
+    // Tìm submission hiện tại
     const submission = await Submission.findById(submissionId);
     if (!submission) {
       return res.status(404).json({ success: false, message: 'Submission not found' });
     }
 
-    // 3. Lấy assignment để kiểm tra deadline
+    //  Lấy assignment để kiểm tra deadline
     const assignment = await Assignment.findById(submission.assignmentId).select('dueDate type');
     if (!assignment) {
       return res.status(404).json({ success: false, message: 'Assignment not found' });
@@ -137,7 +137,7 @@ exports.resubmitSubmission = async (req, res) => {
       });
     }
 
-    // 4. Cập nhật nội dung mới
+    //  Cập nhật nội dung mới
     if (assignment.type === 'essay') {
       if (typeof content !== 'string' || !content.trim()) {
         return res.status(400).json({
@@ -159,7 +159,7 @@ exports.resubmitSubmission = async (req, res) => {
       }));
     }
 
-    // 5. Đặt lại thời gian và xóa grade cũ
+    //  Đặt lại thời gian và xóa grade cũ
     submission.submittedAt = now;
     submission.grade = { score: null, gradedAt: null, graderId: null };
 
@@ -187,14 +187,12 @@ exports.getSubmissionsByCourse = async (req, res) => {
     }
 const courseRaw = await Course.findById(courseId).lean();
 
-    // 1. Fetch all assignment IDs for this course
     const assignments = await Assignment.find({ courseId }).select('_id').lean();
     const assignmentIds = assignments.map(a => a._id);
     if (!assignmentIds.length) {
       return res.json({ success: true, data: [] });
     }
 
-    // 2. Fetch submissions, with full assignment populated
  const submissionsRaw = await Submission.find({
   assignmentId: { $in: assignmentIds },
   studentId:{$in:studentId}
@@ -203,7 +201,6 @@ const courseRaw = await Course.findById(courseId).lean();
   .populate('studentId', 'name profile.email')
   .lean();
 
-// 3. Remap each submission
 const submissions = submissionsRaw.map(sub => {
   const { assignmentId, studentId: popStudent, ...rest } = sub;
   return {
@@ -215,41 +212,48 @@ const submissions = submissionsRaw.map(sub => {
     
     const now = new Date();
 
-    // 3. Auto-grade any quiz submissions past dueDate without a grade
-    await Promise.all(submissions.map(async s => {
-      const asg = s.assignment;
-      if (
-        asg.type === 'quiz' &&
-        now > new Date(asg.dueDate) &&
-        (s.grade.score === null || s.grade.score === undefined)
-      ) {
-        // build answer map
-        const answersMap = new Map(
-          (s.answers || []).map(a => [a.questionId.toString(), a.selectedOption])
-        );
-        const totalQs = asg.questions.length || 1;
-        let correctCount = 0;
-        asg.questions.forEach(q => {
-          if (answersMap.get(q.questionId.toString()) === q.correctOption) {
-            correctCount++;
-          }
-        });
-        // scale to 10
-        const score = Math.round((correctCount / totalQs) * 10 * 100) / 100; 
-        const gradedAt = now;
+   await Promise.all(submissions.map(async s => {
+  const asg = s.assignment;
+  const assignmentTerms      = Array.isArray(asg.term) ? asg.term : [];
+const latestAssignmentTerm = assignmentTerms.length
+  ? assignmentTerms[assignmentTerms.length - 1]
+  : null;
+  if (
+    asg.type === 'quiz' &&
+    now > new Date(asg.dueDate||s.term !== latestAssignmentTerm ) &&
+    (s.grade.score === null || s.grade.score === undefined)
+  ) {
+    const answersMap = new Map(
+      (s.answers || []).map(a => [a.questionId.toString(), a.selectedOption])
+    );
 
-        // persist grade
-        await Submission.findByIdAndUpdate(s._id, {
-          'grade.score': score,
-          'grade.gradedAt': gradedAt,
-          'grade.graderId':  new mongoose.Types.ObjectId(courseRaw.instructorId)
-        });
+    // Tính tổng điểm của bài và tổng điểm đúng
+    let totalPoints   = 0;
+    let correctPoints = 0;
 
-        // update in-memory for response
-        s.grade.score    = score;
-        s.grade.gradedAt = gradedAt;
+    asg.questions.forEach(q => {
+      const pts = q.points || 0;
+      totalPoints   += pts;
+      if (answersMap.get(q.questionId.toString()) === q.correctOption) {
+        correctPoints += pts;
       }
-    }));
+    });
+
+    const rawScore = totalPoints > 0 ? (correctPoints / totalPoints) * 10 : 0;
+    const score    = Math.round(rawScore * 100) / 100;
+    const gradedAt = now;
+
+    await Submission.findByIdAndUpdate(s._id, {
+      'grade.score': score,
+      'grade.gradedAt': gradedAt,
+      'grade.graderId': new mongoose.Types.ObjectId(courseRaw.instructorId)
+    });
+
+    s.grade.score    = score;
+    s.grade.gradedAt = gradedAt;
+  }
+}));
+
 const courseTerms = Array.isArray(courseRaw.term) ? courseRaw.term : [];
     const latestCourseTerm = courseTerms.length
       ? courseTerms[courseTerms.length - 1]
@@ -266,7 +270,6 @@ const courseTerms = Array.isArray(courseRaw.term) ? courseRaw.term : [];
         preTermSubmissions.push(s);
       }
     }
-    // 4. Return
     res.json({ success: true, data: onTermSubmissions, preTermSubmissions });
   } catch (err) {
     console.error('Error fetching submissions by course:', err);
@@ -311,7 +314,6 @@ exports.addAppeal = async (req, res) => {
     const { submissionId } = req.params;
     const { studentId, text } = req.body;
 
-    // 1. Validate IDs
     if (!mongoose.Types.ObjectId.isValid(submissionId)) {
       return res.status(400).json({ success: false, message: 'Invalid submissionId' });
     }
@@ -322,15 +324,12 @@ exports.addAppeal = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Comment text is required' });
     }
 
-    // 2. Load submission
     const submission = await Submission.findById(submissionId);
     if (!submission) {
       return res.status(404).json({ success: false, message: 'Submission not found' });
     }
 
-    // 3. Build new appeal entry
     const newAppeal = {
-      // appealId and createdAt auto-generated by schema defaults
       status: 'open',
       comments: [
         {
@@ -341,13 +340,10 @@ exports.addAppeal = async (req, res) => {
       ]
     };
 
-    // 4. Push into appeals array
     submission.appeals.push(newAppeal);
 
-    // 5. Save
     await submission.save();
 
-    // 6. Respond with the newly created appeal (last element)
     const created = submission.appeals[submission.appeals.length - 1];
     res.status(201).json({ success: true, data: created });
   } catch (err) {

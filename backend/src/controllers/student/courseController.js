@@ -68,18 +68,17 @@ exports.sortCourses = async (req, res) => {
  try {
     const { sortBy, order, subjectId, studentId } = req.query;
     
-    // 1. Xây dựng sortObj
     let sortObj = {};
     const validSortFields = ['title', 'startDate', 'credits', 'createdAt'];
     const field = validSortFields.includes(sortBy) ? sortBy : 'title';
     const direction = order === 'desc' ? -1 : 1;
     sortObj[field] = direction;
 
-    // 2. Lấy courses đã sort
+    //  Lấy courses đã sort
     const filter = subjectId ? { subjectId } : {};
     const courses = await Course.find(filter).sort(sortObj).lean();
 
-    // 3. Nếu có studentId hợp lệ → annotate
+    //  Nếu có studentId hợp lệ → annotate
     if (studentId && mongoose.Types.ObjectId.isValid(studentId)) {
       const courseIds = courses.map(c => c._id);
       const enrollments = await Enrollment.find({
@@ -95,7 +94,7 @@ exports.sortCourses = async (req, res) => {
       return res.json({ success: true, data: annotated });
     }
 
-    // 4. Nếu không có studentId → trả về nguyên bản
+    //  Nếu không có studentId → trả về nguyên bản
     return res.json({ success: true, data: courses });
 
   } catch (err) {
@@ -107,7 +106,7 @@ exports.getCoursesBySubjectForStudent = async (req, res) => {
  try {
     const { subjectId, studentId } = req.params;
 
-    // 1. Validate ObjectId
+    // Validate ObjectId
     if (
       !mongoose.Types.ObjectId.isValid(subjectId) ||
       !mongoose.Types.ObjectId.isValid(studentId)
@@ -117,9 +116,9 @@ exports.getCoursesBySubjectForStudent = async (req, res) => {
         .json({ success: false, message: 'Invalid subjectId or studentId' });
     }
 
-    // 2. Lấy tất cả courses của subject
+    //  Lấy tất cả courses của subject
     const courses = await Course.find({ subjectId })
-      .select('_id title term')
+      .select('_id title term credits')
       .lean();
     if (!courses.length) {
       return res.json({
@@ -146,9 +145,9 @@ for (let e of allEnrolls) {
   }
 }
 
-// 3. Chuyển map thành mảng dedupe xong
+// Chuyển map thành mảng dedupe xong
 const enrolls = Object.values(latestByCourse);
-    // 4. Nếu chưa enroll khóa nào
+    //  Nếu chưa enroll khóa nào
     if (!enrolls.length) {
       return res.json({
         success: true,
@@ -160,24 +159,22 @@ const enrolls = Object.values(latestByCourse);
       });
     }
 
-    // 5. Lấy term gần nhất
+    //  Lấy term gần nhất
     const latestTerm = enrolls[0].term;
 console.log(latestTerm);
-    // 6. Tạo set các courseId đã enroll (bất kể term)
+    //  Tạo set các courseId đã enroll (bất kể term)
     const enrolledSet = new Set(enrolls.map(e => e.courseId.toString()));
 
-    // 7. Phân nhóm courses theo term và trạng thái enroll
+    // Phân nhóm courses theo term và trạng thái enroll
    const sameTerm     = [];
 const otherTerms   = [];
 const noneEnrolled = [];
 
-// 1. Mình build nhanh lookup courseId → course object
 const courseById = courses.reduce((map, c) => {
   map[c._id.toString()] = c;
   return map;
 }, {});
 
-// 2. Duyệt từng enrollment
 for (let e of enrolls) {
   const cid      = e.courseId.toString();
   const lastTerm = e.term;               // lấy term của enrollment này
@@ -208,7 +205,7 @@ for (let e of enrolls) {
   delete courseById[cid];
 }
 
-// 3. Phần còn lại trong courseById là những course chưa bao giờ enroll
+//  Phần còn lại trong courseById là những course chưa bao giờ enroll
 for (let cid in courseById) {
   noneEnrolled.push({
     ...courseById[cid],
