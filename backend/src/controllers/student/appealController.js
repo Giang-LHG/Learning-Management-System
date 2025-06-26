@@ -15,13 +15,7 @@ exports.getAppealsByStudent = async (req, res) => {
         .json({ success: false, message: 'Query parameter "studentId" is required and must be valid.' });
     }
 
-    // Aggregation pipeline:
-    // 1. Lọc submissions của student
-    // 2. Unwind appeals
-    // 3. Lookup assignment để lấy courseId
-    // 4. Lookup course để lấy subjectId, course title
-    // 5. Lookup subject để lấy subject name
-    // 6. Project các trường cần thiết
+ 
     const results = await Submission.aggregate([
       // Chỉ lấy submission của student
       { $match:  { studentId: new mongoose.Types.ObjectId(studentId) } },
@@ -37,7 +31,6 @@ exports.getAppealsByStudent = async (req, res) => {
         }
       },
       { $unwind: { path: '$assignment', preserveNullAndEmptyArrays: true } },
-      // Lookup course từ assignment.courseId
       {
         $lookup: {
           from: 'courses',
@@ -47,7 +40,6 @@ exports.getAppealsByStudent = async (req, res) => {
         }
       },
       { $unwind: { path: '$course', preserveNullAndEmptyArrays: true } },
-      // Lookup subject từ course.subjectId
       {
         $lookup: {
           from: 'subjects',
@@ -57,7 +49,6 @@ exports.getAppealsByStudent = async (req, res) => {
         }
       },
       { $unwind: { path: '$subject', preserveNullAndEmptyArrays: true } },
-      // Lookup user để lấy student fullName (nếu cần)
       {
         $lookup: {
           from: 'users',
@@ -86,7 +77,6 @@ exports.getAppealsByStudent = async (req, res) => {
           studentName: '$student.profile.fullName'
         }
       },
-      // (Tùy chọn) sort theo appealCreatedAt giảm dần
       { $sort: { appealCreatedAt: -1 } }
     ]);
 
@@ -104,7 +94,6 @@ exports.addAppealComment = async (req, res) => {
     const { submissionId, appealId } = req.params;
     const { userId, text } = req.body;
 
-    // 1. Validate IDs and input
     if (!mongoose.Types.ObjectId.isValid(submissionId)) {
       return res.status(400).json({ success: false, message: 'Invalid submissionId' });
     }
@@ -118,14 +107,12 @@ exports.addAppealComment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Comment text is required' });
     }
 
-    // 2. Build the comment object
     const comment = {
       by: new mongoose.Types.ObjectId(userId),
       text: text.trim(),
       at: new Date()
     };
 
-    // 3. Use positional filtered update to push into the correct appeal
     const updated = await Submission.findOneAndUpdate(
       {
         _id: submissionId,
@@ -137,8 +124,8 @@ exports.addAppealComment = async (req, res) => {
         }
       },
       {
-        new: true,              // return the updated document
-        projection: { appeals: 1 } // only need appeals back
+        new: true,              
+        projection: { appeals: 1 } 
       }
     ).lean();
 
@@ -149,7 +136,6 @@ exports.addAppealComment = async (req, res) => {
       });
     }
 
-    // 4. Extract the newly‐updated appeal from the array
     const theAppeal = updated.appeals.find(a => a.appealId.toString() === appealId);
 
     return res.status(201).json({

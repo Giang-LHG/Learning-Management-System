@@ -17,19 +17,19 @@ exports.getSubjectsByStudent = async (req, res) => {
 try {
   const { studentId, term } = req.params;
 
-  // 1. Lấy enrollments của student (nếu có term thì filter thêm)
+  //  Lấy enrollments của student (nếu có term thì filter thêm)
   const filter = { studentId };
   if (term) filter.term = term;
 
   const enrollments = await Enrollment.find(filter).select('courseId term').lean();
   const courseIds = enrollments.map(e => e.courseId);
 
-  // 2. Lấy các course (bao gồm term là mảng)
+  // Lấy các course (bao gồm term là mảng)
   const courses = await Course.find({ _id: { $in: courseIds } })
                               .select('subjectId term')
                               .lean();
 
-  // 3. Chỉ giữ lại course mà enrollment.term === course.term.last
+  //  Chỉ giữ lại course mà enrollment.term === course.term.last
   const validSubjectIdSet = new Set();
   for (let enr of enrollments) {
     const course = courses.find(c => c._id.toString() === enr.courseId.toString());
@@ -43,7 +43,7 @@ try {
 
   const subjectIds = Array.from(validSubjectIdSet).map(id => new mongoose.Types.ObjectId(id));
 
-  // 4. Lấy subject documents (chỉ những cái approved)
+  //  Lấy subject documents (chỉ những cái approved)
   const subjects = await Subject.find({
     _id: { $in: subjectIds },
     status: 'approved'
@@ -107,45 +107,71 @@ exports.sortSubjects = async (req, res) => {
 };
 exports.getPreviousSubjectsByStudent = async (req, res) => {
  try {
-  const { studentId } = req.params;
+    const { studentId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid studentId' });
+    }
 
-  // 1. Lấy và populate tất cả enrollments của student
-  const enrolls = await Enrollment.find({ studentId })
-    .populate({
-      path: 'courseId',
-      select: 'term subjectId'
-    })
-    .lean();
+    //  Lấy tất cả enrollments của student
+    const enrolls = await Enrollment.find({ studentId })
+      .select('term subjectId')
+      .lean();
 
-  // 2. Lọc chỉ những enrollments có enrollment.term khác với course.term mới nhất
-  const mismatched = enrolls.filter(enr => {
-    const course = enr.courseId;
-    if (!course || !Array.isArray(course.term) || course.term.length === 0) return false;
+    //  Nhóm enrollments theo subjectId, tìm latest enrolled term của mỗi môn
+    const latestEnrollBySubject = enrolls.reduce((acc, e) => {
+      const sid = e.subjectId?.toString();
+      if (!sid) return acc;
+      if (!acc[sid] || acc[sid] < e.term) {
+        acc[sid] = e.term;
+      }
+      return acc;
+    }, {});
 
-    const latestTerm = course.term[course.term.length - 1]; // lấy term mới nhất
-    return enr.term !== latestTerm;
-  });
+    const subjectIds = Object.keys(latestEnrollBySubject)
+      .map(id => mongoose.Types.ObjectId(id));
 
-  // 3. Gom unique subjectId từ những course đã lọc ra
-  const subjectIdSet = new Set(
-    mismatched
-      .map(enr => enr.courseId?.subjectId?.toString())
-      .filter(id => id)
-  );
-  const subjectIds = Array.from(subjectIdSet).map(id => new mongoose.Types.ObjectId(id));
+    if (!subjectIds.length) {
+      return res.json({ success: true, data: [] });
+    }
 
-  // 4. Lấy về các Subject đã approved
-  const subjects = await Subject.find({
-    _id: { $in: subjectIds },
-    status: 'approved'
-  });
+    //  Với mỗi subjectId, lấy latest course term của môn
+    const keepSubjectIds = [];
+    for (let sid of subjectIds) {
+      const courses = await Course.find({ subjectId: sid })
+        .select('term')
+        .lean();
 
-  return res.json({ success: true, data: subjects });
+      // Gom tất cả term từ các course, chọn term lớn nhất (string compare)
+      const allTerms = courses
+        .flatMap(c => Array.isArray(c.term) ? c.term : [])
+        .filter(t => typeof t === 'string');
 
-} catch (error) {
-  console.error(error);
-  return res
-    .status(500)
-    .json({ success: false, message: 'Error fetching previous subjects' });
-}
+      if (!allTerms.length) continue;
+
+      const latestCourseTerm = allTerms.sort().pop();
+
+      // Nếu sinh viên đã enroll và kỳ enroll đó < latestCourseTerm thì giữ môn này
+      const latestEnrollTerm = latestEnrollBySubject[sid.toString()];
+      if (latestEnrollTerm && latestEnrollTerm < latestCourseTerm) {
+        keepSubjectIds.push(sid);
+      }
+    }
+
+    if (!keepSubjectIds.length) {
+      return res.json({ success: true, data: [] });
+    }
+
+    //  Trả về các subject đã approved
+    const subjects = await Subject.find({
+      _id:    { $in: keepSubjectIds },
+      status: 'approved'
+    }).lean();
+
+    return res.json({ success: true, data: subjects });
+
+  } catch (err) {
+    console.error('Error in getPreviousSubjects:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+
 };
