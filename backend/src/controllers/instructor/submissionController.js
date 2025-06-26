@@ -59,7 +59,8 @@ const getSubmissionDetail = async (req, res) => {
 const gradeSubmission = async (req, res) => {
   try {
     const { submissionId } = req.params;
-    const { score, instructorId } = req.body;
+    const { score } = req.body;
+    const instructorId = req.user._id;
 
     if (!mongoose.Types.ObjectId.isValid(submissionId) || !mongoose.Types.ObjectId.isValid(instructorId)) {
       return res.status(400).json({ success: false, message: 'Invalid ID' });

@@ -93,27 +93,6 @@ export default function AnalyticsDashboard() {
     }]
   };
 
-  const attendanceChartData = {
-    labels: ['Có mặt', 'Vắng mặt', 'Muộn', 'Có phép'],
-    datasets: [{
-      label: 'Điểm danh',
-      data: [
-        analytics.attendanceSummary.present,
-        analytics.attendanceSummary.absent,
-        analytics.attendanceSummary.late,
-        analytics.attendanceSummary.excused,
-      ],
-      backgroundColor: [
-        'rgba(67, 233, 123, 0.9)',
-        'rgba(245, 87, 108, 0.9)',
-        'rgba(255, 193, 7, 0.9)',
-        'rgba(108, 117, 125, 0.9)'
-      ],
-      borderWidth: 3,
-      borderColor: '#fff',
-    }]
-  };
-
   const StatCard = ({ icon, title, value, variant, gradient, delay = 0 }) => (
     <Card 
       className="h-100 border-0 shadow-lg position-relative overflow-hidden"
