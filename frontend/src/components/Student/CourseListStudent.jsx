@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { FiSearch, FiChevronDown, FiArrowLeft, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { 
+  FiSearch, 
+  FiChevronDown, 
+  FiArrowLeft, 
+  FiChevronLeft, 
+  FiChevronRight,
+  FiBook,
+  FiList,
+  FiEye,
+  FiPlus
+} from 'react-icons/fi';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -14,7 +24,11 @@ import {
   InputGroup,
   Nav,
   Tab,
-  Pagination
+  Pagination,
+  Badge,
+  Collapse,
+  ListGroup,
+  ButtonGroup
 } from 'react-bootstrap';
 
 export default function CourseList() {
@@ -23,35 +37,59 @@ export default function CourseList() {
   const params = new URLSearchParams(search);
   const subjectId = params.get('subjectId');
 
-
   const [studentId] = useState(
-    () => JSON.parse(localStorage.getItem('user') )._id
+    () => JSON.parse(localStorage.getItem('user'))._id
   );
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('title');
   const [order, setOrder] = useState('asc');
   
-  // Updated state to handle the 3 types of courses
   const [coursesData, setCoursesData] = useState({
     sameTerm: [],
     otherTerms: [],
     noneEnrolled: []
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('enrolled');
   
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [coursesPerPage] = useState(8);
+  const [subjects, setSubjects] = useState([]);
+  const [currentSubjectIndex, setCurrentSubjectIndex] = useState(0);
+  const [expandedCourses, setExpandedCourses] = useState(new Set());
+  const [coursesWithModules, setCoursesWithModules] = useState({});
+  
+  // Separate pagination states for each list
+  const [visibleCounts, setVisibleCounts] = useState({
+    enrolled: 8,
+    preEnrolled: 8,
+    available: 8
+  });
 
-  // Function to sort courses locally
+  const coursesPerPage = 8;
+
+  useEffect(() => {
+    const loadSubjects = async () => {
+      try {
+        const response = await axios.get(`/api/student/subjects/by-student/${studentId}`);
+        if (response.data.success) {
+          setSubjects(response.data.data || []);
+          const currentIndex = response.data.data.findIndex(s => s._id === subjectId);
+          setCurrentSubjectIndex(currentIndex >= 0 ? currentIndex : 0);
+        }
+      } catch (error) {
+        console.error('Error loading subjects:', error);
+      }
+    };
+
+    if (studentId) {
+      loadSubjects();
+    }
+  }, [studentId, subjectId]);
+
   const sortCourses = (coursesToSort, sortField, sortOrder) => {
     return [...coursesToSort].sort((a, b) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
 
-      // Handle different data types
       if (sortField === 'startDate') {
         aValue = new Date(aValue || 0);
         bValue = new Date(bValue || 0);
@@ -66,7 +104,6 @@ export default function CourseList() {
         bValue = String(bValue || '').toLowerCase();
       }
 
-      // Compare values
       let comparison = 0;
       if (aValue > bValue) {
         comparison = 1;
@@ -85,35 +122,84 @@ export default function CourseList() {
     return coursesToFilter.filter(course => 
       course.title?.toLowerCase().includes(searchTerm) ||
       course.description?.toLowerCase().includes(searchTerm) ||
-course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
+      course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   };
 
   const processedCourses = useMemo(() => {
-    const allEnrolled = [...coursesData.sameTerm, ...coursesData.otherTerms];
+    const filteredSameTerm = filterCourses(coursesData.sameTerm, searchQuery);
+    const filteredOtherTerms = filterCourses(coursesData.otherTerms, searchQuery);
+    const filteredNoneEnrolled = filterCourses(coursesData.noneEnrolled, searchQuery);
     
-    const filteredEnrolled = filterCourses(allEnrolled, searchQuery);
-    const filteredOther = filterCourses(coursesData.noneEnrolled, searchQuery);
-    
-    const sortedEnrolled = sortCourses(filteredEnrolled, sortBy, order);
-    const sortedOther = sortCourses(filteredOther, sortBy, order);
+    const sortedSameTerm = sortCourses(filteredSameTerm, sortBy, order);
+    const sortedOtherTerms = sortCourses(filteredOtherTerms, sortBy, order);
+    const sortedNoneEnrolled = sortCourses(filteredNoneEnrolled, sortBy, order);
     
     return {
-      enrolled: sortedEnrolled,
-      other: sortedOther
+      enrolled: sortedSameTerm,
+      preEnrolled: sortedOtherTerms,
+      available: sortedNoneEnrolled
     };
   }, [coursesData, searchQuery, sortBy, order]);
 
-  const getCurrentCourses = () => {
-    const courses = activeTab === 'enrolled' ? processedCourses.enrolled : processedCourses.other;
-    const indexOfLastCourse = currentPage * coursesPerPage;
-    const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
-    return courses.slice(indexOfFirstCourse, indexOfLastCourse);
+  const loadCourseModules = async (courseId) => {
+   try {
+    const { data } = await axios.get(`/api/student/courses/${courseId}`);
+   
+    if (data.success) {
+      const course = data.data;
+      const modules = course.modules || [];
+      setCoursesWithModules(prev => ({
+        ...prev,
+        [courseId]: modules
+      }));
+    } else {
+      setCoursesWithModules(prev => ({
+        ...prev,
+        [courseId]: []
+      }));
+    }
+  } catch (err) {
+    console.error('Error loading course & modules:', err);
+    setCoursesWithModules(prev => ({
+      ...prev,
+      [courseId]: []
+    }));
+  }
   };
 
-  const getTotalPages = () => {
-    const courses = activeTab === 'enrolled' ? processedCourses.enrolled : processedCourses.other;
-    return Math.ceil(courses.length / coursesPerPage);
+  const toggleCourseExpansion = (courseId) => {
+    const newExpanded = new Set(expandedCourses);
+    if (expandedCourses.has(courseId)) {
+      newExpanded.delete(courseId);
+    } else {
+      newExpanded.add(courseId);
+      if (!coursesWithModules[courseId]) {
+        loadCourseModules(courseId);
+      }
+    }
+    setExpandedCourses(newExpanded);
+  };
+
+  const showMoreCourses = (listType) => {
+    setVisibleCounts(prev => ({
+      ...prev,
+      [listType]: prev[listType] + coursesPerPage
+    }));
+  };
+
+  const goToNextSubject = () => {
+    if (currentSubjectIndex < subjects.length - 1) {
+      const nextSubject = subjects[currentSubjectIndex + 1];
+      navigate(`/student/course/?subjectId=${nextSubject._id}`);
+    }
+  };
+
+  const goToPrevSubject = () => {
+    if (currentSubjectIndex > 0) {
+      const prevSubject = subjects[currentSubjectIndex - 1];
+      navigate(`/student/course/?subjectId=${prevSubject._id}`);
+    }
   };
 
   useEffect(() => {
@@ -159,8 +245,12 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
   }, [subjectId, studentId]);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [activeTab, searchQuery, sortBy, order]);
+    setVisibleCounts({
+      enrolled: 8,
+      preEnrolled: 8,
+      available: 8
+    });
+  }, [searchQuery, sortBy, order]);
 
   const handleEnroll = async (courseId) => {
     try {
@@ -235,28 +325,22 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
         <Button
           variant="success"
           size="sm"
-          onClick={() => navigate(`/student/course/${course._id}`)}
+          onClick={() => navigate(`/student/subject/${subjectId}/course/${course._id}`)}
+          style={{ minWidth: '70px', width: '70px' }}
         >
           Detail
         </Button>
       );
     } else if (isFromOtherTerms) {
       return (
-         <>
         <Button
           variant="warning"
           size="sm"
           onClick={() => handleReEnroll(course._id)}
+          style={{ minWidth: '80px', width: '80px' }}
         >
           Re-Enroll
         </Button>
-           <Button
-          variant="success"
-          size="sm"
-          onClick={() => navigate(`/student/course/${course._id}`)}
-        >
-          Detail
-        </Button> </>
       );
     } else {
       return (
@@ -264,6 +348,7 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
           variant="primary"
           size="sm"
           onClick={() => handleEnroll(course._id)}
+          style={{ minWidth: '60px', width: '60px' }}
         >
           Enroll
         </Button>
@@ -277,26 +362,225 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
     setOrder(ord);
   };
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
+  const renderCourseList = (courses, listType, title, emptyMessage) => {
+    const visibleCourses = courses.slice(0, visibleCounts[listType]);
+    const hasMoreCourses = courses.length > visibleCounts[listType];
+
+    return (
+      <div className="mb-5">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h5 className="mb-0">{title}</h5>
+          <Badge bg="secondary">{courses.length} courses</Badge>
+        </div>
+        
+        {courses.length === 0 ? (
+          <p className="text-muted">{emptyMessage}</p>
+        ) : (
+          <>
+            <Row xs={1} sm={2} md={3} lg={4} className="g-3 mb-3">
+              {visibleCourses.map(c => {
+                const isFromSameTerm = coursesData.sameTerm.find(course => course._id === c._id);
+                const isFromOtherTerms = coursesData.otherTerms.find(course => course._id === c._id);
+                const isExpanded = expandedCourses.has(c._id);
+                const courseModules = coursesWithModules[c._id] || [];
+                
+                let borderVariant = 'secondary';
+                let statusBadge = null;
+                
+                if (isFromSameTerm) {
+                  borderVariant = 'success';
+                  statusBadge = <Badge bg="success">Current Term</Badge>;
+                } else if (isFromOtherTerms) {
+                  borderVariant = 'warning';
+                  statusBadge = <Badge bg="warning">Previously Enrolled</Badge>;
+                }
+
+                return (
+                  <Col key={c._id}>
+                    <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+                      <Card border={borderVariant} className="h-100">
+                        <Card.Body className="d-flex flex-column">
+                          {/* Card Header */}
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <Card.Title className="mb-1 flex-grow-1" style={{ fontSize: '1rem' }}>
+                              {c.title}
+                            </Card.Title>
+                            {statusBadge && (
+                              <div style={{ minWidth: 'fit-content' }}>
+                                {statusBadge}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Course Info */}
+                          <div className="mb-3 flex-grow-1">
+                            {c.term && (
+                              <Card.Text className="text-muted mb-1 small">
+                                <strong>Term:</strong> {c.term[c.term.length - 1]}
+                              </Card.Text>
+                            )}
+                            
+                            {c.credits && (
+                              <Card.Text className="text-muted mb-1 small">
+                                <strong>Credits:</strong> {c.credits}
+                              </Card.Text>
+                            )}
+                            
+                            {c.description && (
+                              <Card.Text className="text-muted mb-1 small">
+                                <strong>Description:</strong> {c.description.length > 60 ? c.description.substring(0, 60) + '...' : c.description}
+                              </Card.Text>
+                            )}
+                            
+                            {c.startDate && (
+                              <Card.Text className="text-muted small">
+                                <strong>Start:</strong> {new Date(c.startDate).toLocaleDateString()}
+                              </Card.Text>
+                            )}
+                          </div>
+                          
+                          {/* Fixed Button Area */}
+                          <div className="mt-auto">
+                            <div className="d-flex justify-content-between mb-2" style={{ height: '32px' }}>
+                              <div style={{ flex: '0 0 auto' }}>
+                                {getCourseButton(c)}
+                              </div>
+                              {isFromOtherTerms && (
+                                <div style={{ flex: '0 0 auto', marginLeft: '8px' }}>
+                                  <Button
+                                    variant="success"
+                                    size="sm"
+                                    onClick={() => navigate(`/student/subject/${subjectId}/course/${c._id}`)}
+                                    style={{ minWidth: '60px', width: '60px' }}
+                                  >
+                                    Detail
+                                  </Button>
+                                </div>
+                              )}
+                              <div style={{ flex: '0 0 auto', marginLeft: 'auto' }}>
+                                <Button
+                                  variant="outline-info"
+                                  size="sm"
+                                  onClick={() => toggleCourseExpansion(c._id)}
+                                  style={{ minWidth: '90px', width: '90px' }}
+                                >
+                                  <FiList /> {isExpanded ? 'Hide' : 'Modules'}
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            {/* Expandable Modules Section */}
+                            <Collapse in={isExpanded}>
+                              <div>
+                                {courseModules.length > 0 ? (
+                                  <div>
+                                    <ListGroup variant="flush" className="small">
+                                      {courseModules.slice(0, 5).map((module, index) => (
+                                        <ListGroup.Item 
+                                          key={module._id}
+                                          className="px-0 py-1 border-0"
+                                          action
+                                          onClick={() => navigate(`/student/course/${c._id}/module/${module.moduleId}`)}
+                                        >
+                                          <div className="d-flex justify-content-between align-items-center">
+                                            <small className="text-truncate">
+                                              {index + 1}. {module.title}
+                                            </small>
+                                            <FiEye className="text-muted" size={12} />
+                                          </div>
+                                        </ListGroup.Item>
+                                      ))}
+                                    </ListGroup>
+                                    {courseModules.length > 5 && (
+                                      <div className="text-center mt-2">
+                                        <Button
+                                          variant="link"
+                                          size="sm"
+                                          onClick={() => navigate(`/student/subject/${subjectId}/course/${c._id}`)}
+                                        >
+                                          Show All ({courseModules.length} modules)
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <small className="text-muted">No modules available</small>
+                                )}
+                              </div>
+                            </Collapse>
+                          </div>
+                        </Card.Body>
+                      </Card>
+                    </motion.div>
+                  </Col>
+                );
+              })}
+            </Row>
+            
+            {/* Show More Button */}
+            {hasMoreCourses && (
+              <div className="text-center">
+                <Button
+                  variant="outline-primary"
+                  onClick={() => showMoreCourses(listType)}
+                  className="px-4"
+                >
+                  <FiPlus className="me-2" />
+                  Show More ({Math.min(coursesPerPage, courses.length - visibleCounts[listType])} more courses)
+                </Button>
+              </div>
+            )}
+            
+            {/* Course Count Info */}
+            <div className="text-center text-muted mt-2">
+              <small>
+                Showing {visibleCourses.length} of {courses.length} courses
+              </small>
+            </div>
+          </>
+        )}
+      </div>
+    );
   };
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
-
-  const currentCourses = getCurrentCourses();
-  const totalPages = getTotalPages();
-  const currentTabCourses = activeTab === 'enrolled' ? processedCourses.enrolled : processedCourses.other;
+  const currentSubject = subjects[currentSubjectIndex];
 
   return (
     <Container className="py-4">
-      <Button variant="link" onClick={() => navigate('/student/subjects')} className="mb-4 p-0">
-        <FiArrowLeft /> Back to Subjects
-      </Button>
+      {/* Header Navigation */}
+      <Row className="align-items-center mb-4">
+        <Col>
+          <Button variant="link" onClick={() => navigate('/student/subjects')} className="p-0">
+            <FiArrowLeft /> Back to Subjects
+          </Button>
+        </Col>
+        <Col className="text-center">
+          <h4 className="mb-0">
+            {currentSubject ? currentSubject.title : 'Course List'}
+          </h4>
+        </Col>
+        <Col className="text-end">
+          <ButtonGroup>
+            <Button
+              variant="outline-primary"
+              onClick={goToPrevSubject}
+              disabled={currentSubjectIndex === 0}
+            >
+              <FiChevronLeft /> Prev Subject
+            </Button>
+            <Button
+              variant="outline-primary"
+              onClick={goToNextSubject}
+              disabled={currentSubjectIndex >= subjects.length - 1}
+            >
+              Next Subject <FiChevronRight />
+            </Button>
+          </ButtonGroup>
+        </Col>
+      </Row>
 
-      {/* Search + Sort */}
-      <Row className="align-items-center mb-3">
+      {/* Search and Sort Controls */}
+      <Row className="align-items-center mb-4">
         <Col md={8}>
           <InputGroup>
             <InputGroup.Text><FiSearch /></InputGroup.Text>
@@ -317,162 +601,46 @@ course.term?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
               <option value="credits:asc">Credits ↑</option>
               <option value="credits:desc">Credits ↓</option>
             </Form.Select>
-            <InputGroup.Text><FiChevronDown /></InputGroup.Text>
+          
           </InputGroup>
         </Col>
       </Row>
 
-      <Tab.Container activeKey={activeTab} onSelect={handleTabChange}>
-        <Nav variant="tabs" className="mb-3">
-          <Nav.Item>
-            <Nav.Link eventKey="enrolled">
-              Enrolled Courses ({processedCourses.enrolled.length})
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="other">
-              Available Courses ({processedCourses.other.length})
-            </Nav.Link>
-          </Nav.Item>
-        </Nav>
-
-        <Tab.Content>
-          <Tab.Pane eventKey="enrolled">
-            <h5>My Enrolled Courses</h5>
-          </Tab.Pane>
-          <Tab.Pane eventKey="other">
-            <h5>Available Courses</h5>
-          </Tab.Pane>
-        </Tab.Content>
-      </Tab.Container>
-
-      {/* Course List */}
+      {/* Course Content */}
       {isLoading ? (
         <div className="text-center py-5">
           <Spinner animation="border" />
         </div>
       ) : (coursesData.sameTerm.length + coursesData.otherTerms.length + coursesData.noneEnrolled.length) === 0 ? (
-        <p>No courses available for this subject.</p>
-      ) : currentTabCourses.length === 0 ? (
-        <p>No courses found in this category.</p>
+        <div className="text-center py-5">
+          <p className="text-muted">No courses available for this subject.</p>
+        </div>
       ) : (
-        <>
-          <Row xs={1} sm={2} md={3} lg={4} className="g-3 mb-4">
-            {currentCourses.map(c => {
-              const isFromSameTerm = coursesData.sameTerm.find(course => course._id === c._id);
-              const isFromOtherTerms = coursesData.otherTerms.find(course => course._id === c._id);
-              
-              let borderVariant = 'secondary';
-              let statusBadge = null;
-              
-              if (isFromSameTerm) {
-                borderVariant = 'success';
-                statusBadge = <small className="text-success">Current Term</small>;
-              } else if (isFromOtherTerms) {
-                borderVariant = 'warning';
-                statusBadge = <small className="text-warning">Previously Enrolled</small>;
-              }
-
-              return (
-                <Col key={c._id}>
-                  <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-                    <Card border={borderVariant} className="h-100">
-                      <Card.Body className="d-flex flex-column">
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <Card.Title className="mb-1">{c.title}</Card.Title>
-                          {statusBadge}
-                        </div>
-                        
-                        {c.term && (
-                          <Card.Text className="text-muted mb-2">
-                            <strong>Term:</strong> {c.term[c.term.length - 1]}
-                          </Card.Text>
-                        )}
-                        
-                        {c.credits && (
-                          <Card.Text className="text-muted mb-2">
-                            <strong>Credits:</strong> {c.credits}
-                          </Card.Text>
-                        )}
-                        
-                        {c.description && (
-                          <Card.Text className="text-muted mb-2">
-                            <strong>Description:</strong> {c.description}
-                          </Card.Text>
-                        )}
-                        
-                        {c.startDate && (
-                          <Card.Text className="text-muted small">
-                            <strong>Start:</strong> {new Date(c.startDate).toLocaleDateString()}
-                          </Card.Text>
-                        )}
-                        
-                        <div className="mt-auto d-flex justify-content-between">
-                          {getCourseButton(c)}
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  </motion.div>
-                </Col>
-              );
-            })}
-          </Row>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="d-flex justify-content-center">
-              <Pagination>
-                <Pagination.First 
-                  onClick={() => handlePageChange(1)}
-                  disabled={currentPage === 1}
-                />
-                <Pagination.Prev 
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                />
-                
-                {/* Page number */}
-                {[...Array(totalPages)].map((_, index) => {
-                  const pageNumber = index + 1;
-                  const isNearCurrent = Math.abs(pageNumber - currentPage) <= 2;
-                  const isFirstOrLast = pageNumber === 1 || pageNumber === totalPages;
-                  
-                  if (isNearCurrent || isFirstOrLast) {
-                    return (
-                      <Pagination.Item
-                        key={pageNumber}
-                        active={pageNumber === currentPage}
-                        onClick={() => handlePageChange(pageNumber)}
-                      >
-                        {pageNumber}
-                      </Pagination.Item>
-                    );
-                  } else if (pageNumber === currentPage - 3 || pageNumber === currentPage + 3) {
-                    return <Pagination.Ellipsis key={pageNumber} />;
-                  }
-                  return null;
-                })}
-                
-                <Pagination.Next 
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                />
-                <Pagination.Last 
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={currentPage === totalPages}
-                />
-              </Pagination>
-            </div>
+        <div>
+          {/* My Current Enrollments */}
+          {renderCourseList(
+            processedCourses.enrolled,
+            'enrolled',
+            'My Current Enrollments',
+            'No current enrollments found.'
           )}
 
-          {/* Pagination info */}
-          <div className="text-center text-muted mt-2">
-            <small>
-              Showing {currentCourses.length} of {currentTabCourses.length} courses
-              {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
-            </small>
-          </div>
-        </>
+          {/* Previously Enrolled Courses */}
+          {renderCourseList(
+            processedCourses.preEnrolled,
+            'preEnrolled',
+            'Previously Enrolled Courses',
+            'No previously enrolled courses found.'
+          )}
+
+          {/* Available Courses */}
+          {renderCourseList(
+            processedCourses.available,
+            'available',
+            'Available Courses for Enrollment',
+            'No available courses found.'
+          )}
+        </div>
       )}
     </Container>
   );

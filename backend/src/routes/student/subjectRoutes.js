@@ -5,7 +5,7 @@ const subjectController = require('../../controllers/student/subjectController')
 // GET /api/student/subjects
 router.get('/', subjectController.getAllSubjects);
 
-
+router.get('/recommentsubject/student/:studentId',subjectController.getSubjectRecommendations);
 // GET /api/student/subjects/search?q=keyword
 router.get('/search', subjectController.searchSubjects);
 router.get('/sort', subjectController.sortSubjects);

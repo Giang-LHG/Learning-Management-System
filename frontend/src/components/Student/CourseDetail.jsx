@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FiSearch, FiChevronDown, FiArrowLeft, FiBookOpen, FiClock, FiUser, FiPlay } from 'react-icons/fi';
+import { 
+  FiSearch, 
+  FiChevronDown, 
+  FiArrowLeft, 
+  FiBookOpen, 
+  FiClock, 
+  FiUser, 
+  FiPlay,
+  FiChevronLeft,
+  FiChevronRight,
+  FiList,
+  FiEye
+} from 'react-icons/fi';
 import axios from 'axios';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
@@ -13,6 +25,9 @@ import {
   Row,
   Col,
   Badge,
+  Dropdown,
+  Collapse,
+  Alert
 } from 'react-bootstrap';
 
 const sortOptions = [
@@ -22,26 +37,28 @@ const sortOptions = [
 ];
 
 export default function CourseDetail() {
-  const navigate    = useNavigate();
-  const { courseId }= useParams();
-  const location    = useLocation();
-  const searchParams= new URLSearchParams(location.search);
-  const subjectId   = searchParams.get('subjectId');
-  const enrolled    = searchParams.get('enrolled');
+  const navigate = useNavigate();
+  const { courseId, subjectId } = useParams();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const enrolled = searchParams.get('enrolled');
 
-  // course + modules
-  const [course, setCourse]             = useState(null);
-  const [modules, setModules]           = useState([]);
+  const [coursesList, setCoursesList] = useState({ sameTerm: [], otherTerms: [], noneEnrolled: [] });
+  const [currentCourseIndex, setCurrentCourseIndex] = useState(-1);
+
+  const [course, setCourse] = useState(null);
+  const [modules, setModules] = useState([]);
   const [filteredModules, setFilteredModules] = useState([]);
-  const [searchQuery, setSearchQuery]   = useState('');
-  const [sortBy, setSortBy]             = useState('order');
-  const [order, setOrder]               = useState('asc');
-  const [isLoading, setIsLoading]       = useState(true);
-
-  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('order');
+  const [order, setOrder] = useState('asc');
+  const [isLoading, setIsLoading] = useState(true);
   const [showAssignments, setShowAssignments] = useState(false);
 
-  // 1) lấy studentId
+const [expandedModuleId, setExpandedModuleId] = useState(null);
+  const [moduleLessons, setModuleLessons] = useState({});
+  const [loadingLessons, setLoadingLessons] = useState({});
+
   const getStudentId = () => {
     try {
       const stored = localStorage.getItem('user');
@@ -49,13 +66,30 @@ export default function CourseDetail() {
         const { _id } = JSON.parse(stored);
         return _id;
       }
-    } catch {
-     console.warn("Error parsing user from localStorage:", e);
+    } catch (e) {
+      console.warn("Error parsing user from localStorage:", e);
     }
-   
+    return null;
   };
 
-  // 2) Fetch course detail (và modules)
+  const fetchCoursesList = useCallback(async () => {
+    try {
+      const studentId = getStudentId();
+      if (!studentId || !subjectId) return;
+
+      const resp = await axios.get(`/api/student/courses/subject/${subjectId}/student/${studentId}`);
+      if (resp.data.success) {
+        const data = resp.data.data;
+        setCoursesList(data);
+        
+        const currentIndex = data.sameTerm.findIndex(c => c._id === courseId);
+        setCurrentCourseIndex(currentIndex);
+      }
+    } catch (err) {
+      console.error('Error fetching courses list:', err);
+    }
+  }, [subjectId, courseId]);
+
   const fetchCourseDetail = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -65,6 +99,7 @@ export default function CourseDetail() {
         setCourse(data);
         setModules(data.modules || []);
         setFilteredModules(data.modules || []);
+        
       }
     } catch (err) {
       console.error('Error fetching course detail:', err);
@@ -72,12 +107,40 @@ export default function CourseDetail() {
       setIsLoading(false);
     }
   }, [courseId]);
+console.log(modules)
+  
+
+const toggleModuleExpansion = (moduleId) => {
+  setExpandedModuleId(prev =>
+    prev === moduleId  
+      ? null
+      : moduleId     
+  );
+};
+
+  const goToPreviousCourse = () => {
+    if (currentCourseIndex > 0) {
+      const prevCourse = coursesList.sameTerm[currentCourseIndex - 1];
+      navigate(`/student/subject/${subjectId}/course/${prevCourse._id}`);
+    }
+  };
+
+  const goToNextCourse = () => {
+    if (currentCourseIndex < coursesList.sameTerm.length - 1) {
+      const nextCourse = coursesList.sameTerm[currentCourseIndex + 1];
+      navigate(`/student/subject/${subjectId}/course/${nextCourse._id}`);
+    }
+  };
+
+  const handleLessonClick = (moduleId, lessonId) => {
+    navigate(`/student/course/${courseId}/module/${moduleId}/lesson/${lessonId}`);
+  };
 
   useEffect(() => {
+    fetchCoursesList();
     fetchCourseDetail();
-  }, [fetchCourseDetail]);
+  }, [fetchCoursesList, fetchCourseDetail]);
 
-  // 3) Sau khi có course, fetch enrollment gần nhất
   useEffect(() => {
     if (!course) return;
     const studentId = getStudentId();
@@ -87,16 +150,10 @@ export default function CourseDetail() {
         if (!resp.data.success) return;
         const enrolls = resp.data.data;
         if (!enrolls.length) return;
-        // sort enrollment mới nhất trước
-        enrolls.sort((a, b) =>
-          new Date(b.enrolledAt) - new Date(a.enrolledAt)
-        );
+        enrolls.sort((a, b) => new Date(b.enrolledAt) - new Date(a.enrolledAt));
         const latestEnroll = enrolls[0];
-        // term cuối cùng của course
         const courseTerms = Array.isArray(course.term) ? course.term : [];
-        const latestCourseTerm = courseTerms.length
-          ? courseTerms[courseTerms.length - 1]
-          : null;
+        const latestCourseTerm = courseTerms.length ? courseTerms[courseTerms.length - 1] : null;
         if (latestEnroll.term === latestCourseTerm) {
           setShowAssignments(true);
         }
@@ -104,6 +161,7 @@ export default function CourseDetail() {
       .catch(err => console.error('Error fetching enrollment:', err));
   }, [course, courseId]);
 
+  // Filter and sort 
   useEffect(() => {
     let temp = [...modules];
     if (searchQuery.trim()) {
@@ -141,6 +199,7 @@ export default function CourseDetail() {
       </Container>
     );
   }
+
   if (!course) {
     return (
       <Container className="py-5 text-center">
@@ -148,9 +207,7 @@ export default function CourseDetail() {
           <Card.Body className="py-5">
             <FiBookOpen size={48} className="text-danger mb-3" />
             <h4 className="text-danger">Course not found</h4>
-            <p className="text-muted">
-              The course you're looking for doesn't exist.
-            </p>
+            <p className="text-muted">The course you're looking for doesn't exist.</p>
             <Button onClick={() => navigate(-1)} className="px-4">
               <FiArrowLeft className="me-2" /> Go Back
             </Button>
@@ -160,20 +217,181 @@ export default function CourseDetail() {
     );
   }
 
+  const ModuleCard = ({ mod, idx }) => {
+    const moduleId = mod.moduleId ;
+const isExpanded = expandedModuleId === moduleId;
+  const lessons = mod.lessons || [];
+
+    const isLoadingLessons = loadingLessons[moduleId];
+ const displayedLessons = lessons.slice(0, 5);
+  const hasMore = lessons.length > 5;
+    return (
+      <motion.div
+        initial={{opacity:0,y:20}}
+        animate={{opacity:1,y:0}}
+        transition={{delay: idx*0.1}}
+        whileHover={{scale:1.02}}
+      >
+        <Card className="shadow-sm">
+          <Card.Body>
+            <Row>
+              <Col xs="auto" className="text-primary me-3">
+                <FiBookOpen size={24} />
+              </Col>
+              <Col>
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <h5 className="fw-bold mb-0">{mod.title}</h5>
+                  <div className="d-flex gap-2">
+                    <Button
+                      variant="outline-info"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleModuleExpansion(moduleId);
+                      }}
+                    >
+                      <FiList size={16} />
+                      <FiChevronDown 
+                        size={16} 
+                        className={`ms-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                      />
+                    </Button>
+                  </div>
+                </div>
+                
+                
+                <div className="d-flex gap-3 mb-2">
+                 
+                  {lessons.length > 0&& (
+                    <small className="text-muted">
+                      <FiBookOpen className="me-1" />
+                      {lessons.length} lessons
+                    </small>
+                  )}
+                </div>
+
+                {/* Lessons List */}
+              
+          <Collapse in={isExpanded}>
+            <div className="mt-3">
+              {isLoadingLessons ? (
+                <div className="text-center py-2">
+                  <Spinner size="sm" animation="border" />
+                  <small className="text-muted ms-2">Loading lessons...</small>
+                </div>
+              ) : lessons.length > 0 ? (
+                <div className="border rounded p-2 bg-light">
+                  <small className="text-muted fw-bold mb-2 d-block">
+                    Lessons:
+                  </small>
+
+                  {displayedLessons.map((lesson) => (
+                    <div
+                      key={lesson._id}
+                      className="d-flex align-items-center justify-content-between py-1 px-2 rounded hover-bg-white"
+                      onClick={() =>
+                        navigate(
+                          `/student/course/${courseId}/module/${moduleId}/lesson/${lesson.lessonId}`
+                        )
+                      }
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="d-flex align-items-center">
+                        <FiPlay size={12} className="text-primary me-2" />
+                        <small className="text-dark">{lesson.title}</small>
+                      </div>
+                      <FiEye size={12} className="text-muted" />
+                    </div>
+                  ))}
+
+                  {hasMore && (
+                    <div className="text-center mt-2">
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() =>
+                          navigate(`/student/course/${courseId}/module/${moduleId}`)
+                        }
+                      >
+                        View all {lessons.length} lessons →
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Alert variant="info" className="py-2 mb-0">
+                  <small>No lessons available for this module.</small>
+                </Alert>
+              )}
+            </div>
+          </Collapse>
+              </Col>
+              <Col xs="auto" className="text-primary">
+                <Button
+                  variant="link"
+                  className="p-0 text-primary"
+                  onClick={() => handleModuleClick(moduleId)}
+                >
+                  <FiPlay size={24} />
+                </Button>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+      </motion.div>
+    );
+  };
+
   return (
     <Container className="py-4">
-      {/* Back */}
+      {/* Navigation Controls */}
       <motion.div initial={{opacity:0,x:-20}} animate={{opacity:1,x:0}}>
-        <Button
-          variant="outline-primary"
-          className="mb-4"
-          onClick={() =>
-            navigate(`/student/courses?subjectId=${course.subjectId}&enrolled=true`)
-          }
-        >
-          <FiArrowLeft className="me-2" /> Back to Courses
-        </Button>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <Button
+            variant="outline-primary"
+            onClick={() => navigate(`/student/courses?subjectId=${course.subjectId}&enrolled=true`)}
+          >
+            <FiArrowLeft className="me-2" /> Back to Courses List
+          </Button>
+          
+          <div className="d-flex gap-2">
+            <Button
+              variant="outline-secondary"
+              disabled={currentCourseIndex <= 0}
+              onClick={goToPreviousCourse}
+            >
+              <FiChevronLeft className="me-1" /> Previous Course
+            </Button>
+            <Button
+              variant="outline-secondary"
+              disabled={currentCourseIndex >= coursesList.sameTerm.length - 1}
+              onClick={goToNextCourse}
+            >
+              Next Course <FiChevronRight className="ms-1" />
+            </Button>
+          </div>
+        </div>
       </motion.div>
+
+      {/* Course Progress Indicator */}
+      {coursesList.sameTerm.length > 1 && (
+        <motion.div initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}}>
+          <Alert variant="info" className="mb-4">
+            <div className="d-flex justify-content-between align-items-center">
+              <small>
+                Course {currentCourseIndex + 1} of {coursesList.sameTerm.length} enrollment in this term
+              </small>
+              <div className="progress" style={{ width: '200px', height: '4px' }}>
+                <div 
+                  className="progress-bar" 
+                  style={{ width: `${((currentCourseIndex + 1) / coursesList.sameTerm.length) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          </Alert>
+        </motion.div>
+      )}
 
       {/* Header */}
       <motion.div initial={{opacity:0,y:-20}} animate={{opacity:1,y:0}}>
@@ -230,7 +448,7 @@ export default function CourseDetail() {
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </Form.Select>
-                  <InputGroup.Text><FiChevronDown /></InputGroup.Text>
+                
                 </InputGroup>
               </Col>
             </Row>
@@ -238,69 +456,36 @@ export default function CourseDetail() {
         </Card>
       </motion.div>
 
-      {/* Module List */}
-      {filteredModules.length === 0 ? (
-        <Card className="text-center py-5">
-          <FiBookOpen size={48} className="text-muted mb-3" />
-          <h5 className="text-muted mb-2">No modules found</h5>
-          <p className="text-muted">
-            {searchQuery
-              ? 'Try adjusting your search terms'
-              : 'This course has no modules yet'}
-          </p>
-        </Card>
-      ) : (
-        <div className="row g-3">
-          {filteredModules.map((mod, idx) => (
-            <div key={mod.moduleId||mod._id} className="col-12">
-              <motion.div
-                initial={{opacity:0,y:20}}
-                animate={{opacity:1,y:0}}
-                transition={{delay: idx*0.1}}
-                whileHover={{scale:1.02}}
-              >
-                <Card
-                  className="shadow-sm"
-                  onClick={() => handleModuleClick(mod.moduleId||mod._id)}
-                  style={{cursor:'pointer'}}
-                >
-                  <Card.Body>
-                    <Row>
-                      <Col xs="auto" className="text-primary me-3">
-                        <FiBookOpen size={24} />
-                      </Col>
-                      <Col>
-                        <h5 className="fw-bold">{mod.title}</h5>
-                        {mod.description && <p className="text-muted">{mod.description}</p>}
-                        <div className="d-flex gap-3">
-                          {mod.duration && (
-                            <small className="text-muted">
-                              <FiClock className="me-1" />
-                              {mod.duration}
-                            </small>
-                          )}
-                          {mod.lessonsCount && (
-                            <small className="text-muted">
-                              <FiBookOpen className="me-1" />
-                              {mod.lessonsCount} lessons
-                            </small>
-                          )}
-                        </div>
-                      </Col>
-                      <Col xs="auto" className="text-primary">
-                        <FiPlay size={24} />
-                      </Col>
-                    </Row>
-                  </Card.Body>
-                </Card>
-              </motion.div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* All Modules */}
+      <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.3}}>
+        <h4 className="mb-3">
+          <FiBookOpen className="me-2" />
+          All Modules ({filteredModules.length})
+        </h4>
+        
+        {filteredModules.length === 0 ? (
+          <Card className="text-center py-5">
+            <FiBookOpen size={48} className="text-muted mb-3" />
+            <h5 className="text-muted mb-2">No modules found</h5>
+            <p className="text-muted">
+              {searchQuery
+                ? 'Try adjusting your search terms'
+                : 'This course has no modules yet'}
+            </p>
+          </Card>
+        ) : (
+          <div className="row g-3">
+            {filteredModules.map((mod, idx) => (
+              <div key={mod.moduleId||mod._id} className="col-12">
+                <ModuleCard mod={mod} idx={idx} />
+              </div>
+            ))}
+          </div>
+        )}
+      </motion.div>
 
       {/* Quick Actions */}
-      <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.3}} className="mt-5">
+      <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.4}} className="mt-5">
         <Card className="shadow-sm">
           <Card.Body>
             <h5 className="mb-3">Quick Actions</h5>
@@ -327,7 +512,6 @@ export default function CourseDetail() {
           </Card.Body>
         </Card>
       </motion.div>
-      
     </Container>
   );
 }
