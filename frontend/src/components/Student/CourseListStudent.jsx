@@ -9,8 +9,11 @@ import {
   FiBook,
   FiList,
   FiEye,
-  FiPlus
+  FiPlus,
+  FiRefreshCw
+
 } from 'react-icons/fi';
+
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -28,7 +31,9 @@ import {
   Badge,
   Collapse,
   ListGroup,
-  ButtonGroup
+  ButtonGroup,
+  Tooltip ,
+  OverlayTrigger
 } from 'react-bootstrap';
 
 export default function CourseList() {
@@ -52,12 +57,9 @@ export default function CourseList() {
   });
   const [isLoading, setIsLoading] = useState(true);
   
-  const [subjects, setSubjects] = useState([]);
-  const [currentSubjectIndex, setCurrentSubjectIndex] = useState(0);
   const [expandedCourses, setExpandedCourses] = useState(new Set());
   const [coursesWithModules, setCoursesWithModules] = useState({});
   
-  // Separate pagination states for each list
   const [visibleCounts, setVisibleCounts] = useState({
     enrolled: 8,
     preEnrolled: 8,
@@ -66,24 +68,7 @@ export default function CourseList() {
 
   const coursesPerPage = 8;
 
-  useEffect(() => {
-    const loadSubjects = async () => {
-      try {
-        const response = await axios.get(`/api/student/subjects/by-student/${studentId}`);
-        if (response.data.success) {
-          setSubjects(response.data.data || []);
-          const currentIndex = response.data.data.findIndex(s => s._id === subjectId);
-          setCurrentSubjectIndex(currentIndex >= 0 ? currentIndex : 0);
-        }
-      } catch (error) {
-        console.error('Error loading subjects:', error);
-      }
-    };
-
-    if (studentId) {
-      loadSubjects();
-    }
-  }, [studentId, subjectId]);
+ 
 
   const sortCourses = (coursesToSort, sortField, sortOrder) => {
     return [...coursesToSort].sort((a, b) => {
@@ -188,19 +173,7 @@ export default function CourseList() {
     }));
   };
 
-  const goToNextSubject = () => {
-    if (currentSubjectIndex < subjects.length - 1) {
-      const nextSubject = subjects[currentSubjectIndex + 1];
-      navigate(`/student/course/?subjectId=${nextSubject._id}`);
-    }
-  };
-
-  const goToPrevSubject = () => {
-    if (currentSubjectIndex > 0) {
-      const prevSubject = subjects[currentSubjectIndex - 1];
-      navigate(`/student/course/?subjectId=${prevSubject._id}`);
-    }
-  };
+ 
 
   useEffect(() => {
     if (!subjectId) return;
@@ -316,46 +289,174 @@ export default function CourseList() {
     }
   };
 
-  const getCourseButton = (course) => {
-    const isFromSameTerm = coursesData.sameTerm.find(c => c._id === course._id);
-    const isFromOtherTerms = coursesData.otherTerms.find(c => c._id === course._id);
-    
-    if (isFromSameTerm) {
-      return (
-        <Button
-          variant="success"
-          size="sm"
-          onClick={() => navigate(`/student/subject/${subjectId}/course/${course._id}`)}
-          style={{ minWidth: '70px', width: '70px' }}
+ const getCourseButton = (course) => {
+  const isFromSameTerm = coursesData.sameTerm.find(c => c._id === course._id);
+  const isFromOtherTerms = coursesData.otherTerms.find(c => c._id === course._id);
+  const isExpanded = expandedCourses[course._id];
+  
+  if (isFromSameTerm) {
+    return (
+      <div className="d-flex align-items-center">
+        <OverlayTrigger
+          placement="top"
+          overlay={
+            <Tooltip id={`tooltip-detail-${course._id}`}>
+              View details
+            </Tooltip>
+          }
         >
-          Detail
-        </Button>
-      );
-    } else if (isFromOtherTerms) {
-      return (
-        <Button
-          variant="warning"
-          size="sm"
-          onClick={() => handleReEnroll(course._id)}
-          style={{ minWidth: '80px', width: '80px' }}
+          <Button
+            variant="success"
+            size="sm"
+            onClick={() => navigate(`/student/subject/${subjectId}/course/${course._id}`)}
+            className="d-flex align-items-center justify-content-center"
+            style={{ 
+              minWidth: '40px', 
+              width: '40px', 
+              height: '36px',
+              borderRadius: '8px'
+            }}
+          >
+            <FiEye size={16} />
+          </Button>
+        </OverlayTrigger>
+        
+        <div style={{ flex: '0 0 auto', marginLeft: '8px' }}>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id={`tooltip-modules-${course._id}`}>
+                {isExpanded ? 'Hide modules' : 'Show modules'}
+              </Tooltip>
+            }
+          >
+            <Button
+              variant="outline-info"
+              size="sm"
+              onClick={() => toggleCourseExpansion(course._id)}
+              className="d-flex align-items-center justify-content-center"
+              style={{ minWidth: '90px', width: '90px' }}
+            >
+              <FiList style={{ marginRight: '4px' }} /> 
+              {isExpanded ? 'Hide' : 'Modules'}
+            </Button>
+          </OverlayTrigger>
+        </div>
+      </div>
+    );
+  } else if (isFromOtherTerms) {
+    return (
+      <div className="d-flex align-items-center">
+        <div style={{ flex: '0 0 auto', marginRight: '8px' }}>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id={`tooltip-detail-other-${course._id}`}>
+                View details
+              </Tooltip>
+            }
+          >
+           <OverlayTrigger
+          placement="top"
+          overlay={
+            <Tooltip id={`tooltip-detail-${course._id}`}>
+              View details
+            </Tooltip>
+          }
         >
-          Re-Enroll
-        </Button>
-      );
-    } else {
-      return (
+          <Button
+            variant="success"
+            size="sm"
+            onClick={() => navigate(`/student/subject/${subjectId}/course/${course._id}`)}
+            className="d-flex align-items-center justify-content-center"
+            style={{ 
+              minWidth: '40px', 
+              width: '40px', 
+              height: '36px',
+              borderRadius: '8px'
+            }}
+          >
+            <FiEye size={16} />
+          </Button>
+        </OverlayTrigger>
+          </OverlayTrigger>
+        </div>
+        
+        <OverlayTrigger
+          placement="top"
+          overlay={
+            <Tooltip id={`tooltip-reenroll-${course._id}`}>
+              Re-enroll
+            </Tooltip>
+          }
+        >
+          <Button
+            variant="warning"
+            size="sm"
+            onClick={() => handleReEnroll(course._id)}
+            className="d-flex align-items-center justify-content-center"
+            style={{ 
+              minWidth: '40px', 
+              width: '40px', 
+              height: '36px',
+              borderRadius: '8px'
+            }}
+          >
+            <FiRefreshCw size={16} />
+          </Button>
+        </OverlayTrigger>
+        
+        <div style={{ flex: '0 0 auto', marginLeft: '8px' }}>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id={`tooltip-modules-other-${course._id}`}>
+                {isExpanded ? 'Hide modules' : 'Show modules'}
+              </Tooltip>
+            }
+          >
+            <Button
+              variant="outline-info"
+              size="sm"
+              onClick={() => toggleCourseExpansion(course._id)}
+              className="d-flex align-items-center justify-content-center"
+              style={{ minWidth: '90px', width: '90px' }}
+            >
+              <FiList style={{ marginRight: '4px' }} /> 
+              {isExpanded ? 'Hide' : 'Modules'}
+            </Button>
+          </OverlayTrigger>
+        </div>
+      </div>
+    );
+  } else {
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={
+          <Tooltip id={`tooltip-enroll-${course._id}`}>
+            Enroll
+          </Tooltip>
+        }
+      >
         <Button
           variant="primary"
           size="sm"
           onClick={() => handleEnroll(course._id)}
-          style={{ minWidth: '60px', width: '60px' }}
+          className="d-flex align-items-center justify-content-center"
+          style={{ 
+            minWidth: '40px', 
+            width: '40px', 
+            height: '36px',
+            borderRadius: '8px'
+          }}
         >
-          Enroll
+          <FiPlus size={16} />
         </Button>
-      );
-    }
-  };
-
+      </OverlayTrigger>
+    );
+  }
+};
   const onSortChange = (value) => {
     const [field, ord] = value.split(':');
     setSortBy(field);
@@ -400,7 +501,6 @@ export default function CourseList() {
                     <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
                       <Card border={borderVariant} className="h-100">
                         <Card.Body className="d-flex flex-column">
-                          {/* Card Header */}
                           <div className="d-flex justify-content-between align-items-start mb-2">
                             <Card.Title className="mb-1 flex-grow-1" style={{ fontSize: '1rem' }}>
                               {c.title}
@@ -426,11 +526,7 @@ export default function CourseList() {
                               </Card.Text>
                             )}
                             
-                            {c.description && (
-                              <Card.Text className="text-muted mb-1 small">
-                                <strong>Description:</strong> {c.description.length > 60 ? c.description.substring(0, 60) + '...' : c.description}
-                              </Card.Text>
-                            )}
+                           
                             
                             {c.startDate && (
                               <Card.Text className="text-muted small">
@@ -439,37 +535,14 @@ export default function CourseList() {
                             )}
                           </div>
                           
-                          {/* Fixed Button Area */}
                           <div className="mt-auto">
                             <div className="d-flex justify-content-between mb-2" style={{ height: '32px' }}>
                               <div style={{ flex: '0 0 auto' }}>
                                 {getCourseButton(c)}
                               </div>
-                              {isFromOtherTerms && (
-                                <div style={{ flex: '0 0 auto', marginLeft: '8px' }}>
-                                  <Button
-                                    variant="success"
-                                    size="sm"
-                                    onClick={() => navigate(`/student/subject/${subjectId}/course/${c._id}`)}
-                                    style={{ minWidth: '60px', width: '60px' }}
-                                  >
-                                    Detail
-                                  </Button>
-                                </div>
-                              )}
-                              <div style={{ flex: '0 0 auto', marginLeft: 'auto' }}>
-                                <Button
-                                  variant="outline-info"
-                                  size="sm"
-                                  onClick={() => toggleCourseExpansion(c._id)}
-                                  style={{ minWidth: '90px', width: '90px' }}
-                                >
-                                  <FiList /> {isExpanded ? 'Hide' : 'Modules'}
-                                </Button>
-                              </div>
+                             
                             </div>
                             
-                            {/* Expandable Modules Section */}
                             <Collapse in={isExpanded}>
                               <div>
                                 {courseModules.length > 0 ? (
@@ -516,8 +589,7 @@ export default function CourseList() {
                 );
               })}
             </Row>
-            
-            {/* Show More Button */}
+       
             {hasMoreCourses && (
               <div className="text-center">
                 <Button
@@ -543,43 +615,77 @@ export default function CourseList() {
     );
   };
 
-  const currentSubject = subjects[currentSubjectIndex];
+const getFirstAvailableCourse = (coursesData) => {
+  if (!coursesData) return null;
 
+  if (coursesData.sameTerm && coursesData.sameTerm.length > 0) {
+    return coursesData.sameTerm[0];
+  }
+
+  if (coursesData.otherTerm && coursesData.otherTerm.length > 0) {
+    return coursesData.otherTerm[0];
+  }
+
+  if (coursesData.noneEnrolled && coursesData.noneEnrolled.length > 0) {
+    return coursesData.noneEnrolled[0];
+  }
+
+  return null;
+};
+
+const firstCourse = getFirstAvailableCourse(coursesData);
+console.log(firstCourse);
   return (
     <Container className="py-4">
-      {/* Header Navigation */}
       <Row className="align-items-center mb-4">
         <Col>
-          <Button variant="link" onClick={() => navigate('/student/subjects')} className="p-0">
-            <FiArrowLeft /> Back to Subjects
-          </Button>
-        </Col>
-        <Col className="text-center">
-          <h4 className="mb-0">
-            {currentSubject ? currentSubject.title : 'Course List'}
-          </h4>
-        </Col>
-        <Col className="text-end">
-          <ButtonGroup>
-            <Button
-              variant="outline-primary"
-              onClick={goToPrevSubject}
-              disabled={currentSubjectIndex === 0}
-            >
-              <FiChevronLeft /> Prev Subject
-            </Button>
-            <Button
-              variant="outline-primary"
-              onClick={goToNextSubject}
-              disabled={currentSubjectIndex >= subjects.length - 1}
-            >
-              Next Subject <FiChevronRight />
-            </Button>
-          </ButtonGroup>
+   <Button 
+  onClick={() => navigate('/student/subjects')} 
+  className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-all duration-200 ease-in-out shadow-sm hover:shadow-md active:scale-98 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
+>
+  <FiArrowLeft className="w-4 h-4" /> 
+  Back to Subjects
+</Button>
         </Col>
       </Row>
 
-      {/* Search and Sort Controls */}
+ <Row className="align-items-center mb-4">
+    <Col>
+      <Card className="border-0 shadow-sm h-100">
+        <Card.Body className="p-4">
+          <div className="d-flex justify-content-between align-items-start">
+            <div className="flex-grow-1">
+              <div className="d-flex align-items-center mb-3">
+                <div className="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                  <i className="fas fa-graduation-cap text-primary fs-4"></i>
+                </div>
+                <div>
+                  <h4 className="mb-1 text-dark fw-bold">
+                    {firstCourse?.subjectId?.name}
+                  </h4>
+                  <Badge bg="light" text="dark" className="px-3 py-2">
+                    {firstCourse?.subjectId?.code}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div className="ps-5">
+                <small className="text-muted fw-semibold d-block mb-2">
+                  Course Description
+                </small>
+                <p className="text-secondary mb-0 lh-base">
+                  {firstCourse?.subjectId?.description}
+                </p>
+              </div>
+            </div>
+            
+          
+          </div>
+        </Card.Body>
+      </Card>
+    </Col>
+  </Row>
+
       <Row className="align-items-center mb-4">
         <Col md={8}>
           <InputGroup>
@@ -606,7 +712,7 @@ export default function CourseList() {
         </Col>
       </Row>
 
-      {/* Course Content */}
+      {/* Course  */}
       {isLoading ? (
         <div className="text-center py-5">
           <Spinner animation="border" />
@@ -617,15 +723,14 @@ export default function CourseList() {
         </div>
       ) : (
         <div>
-          {/* My Current Enrollments */}
+         
           {renderCourseList(
             processedCourses.enrolled,
             'enrolled',
             'My Current Enrollments',
             'No current enrollments found.'
           )}
-
-          {/* Previously Enrolled Courses */}
+        
           {renderCourseList(
             processedCourses.preEnrolled,
             'preEnrolled',
@@ -633,7 +738,6 @@ export default function CourseList() {
             'No previously enrolled courses found.'
           )}
 
-          {/* Available Courses */}
           {renderCourseList(
             processedCourses.available,
             'available',

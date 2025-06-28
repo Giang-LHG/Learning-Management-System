@@ -3,7 +3,7 @@ import {
   Container, Row, Col, Card, Button,
   Form, InputGroup, Spinner, Nav
 } from 'react-bootstrap';
-import { FiSearch, FiBookOpen, FiClock } from 'react-icons/fi';
+import { FiSearch, FiBookOpen, FiClock, FiTrendingUp, FiUsers } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 // sort options
@@ -27,7 +27,6 @@ function useDebounce(value, delay) {
 export default function StudentSubjects() {
   const navigate = useNavigate();
   
-
   const [studentId, setStudentId] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,6 +38,13 @@ export default function StudentSubjects() {
   const [enrolledIds, setEnrolledIds] = useState(new Set());
   const [previousSubjects, setPreviousSubjects] = useState([]);
   
+  const [mostEnrolledSubjects, setMostEnrolledSubjects] = useState([]);
+  const [peerInstructorSubjects, setPeerInstructorSubjects] = useState([]);
+  const [isRecommendationsLoading, setIsRecommendationsLoading] = useState(false);
+  
+  const [showMoreMostEnrolled, setShowMoreMostEnrolled] = useState(4);
+  const [showMorePeerInstructor, setShowMorePeerInstructor] = useState(4);
+  
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [isPreviousLoading, setIsPreviousLoading] = useState(false);
@@ -47,12 +53,31 @@ export default function StudentSubjects() {
 
   useEffect(() => {
     try {
-      const u = JSON.parse(localStorage.getItem('user') );
-     if (u._id) setStudentId(u._id);
-    } catch { console.warn("Error parsing user from localStorage:", e);}
+      const u = JSON.parse(localStorage.getItem('user'));
+      if (u._id) setStudentId(u._id);
+    } catch (e) { 
+      console.warn("Error parsing user from localStorage:", e);
+    }
   }, []);
 
-  // Load previous subjects
+  const loadRecommendations = async () => {
+    if (!studentId) return;
+    
+    setIsRecommendationsLoading(true);
+    try {
+      const res = await fetch(`/api/student/subjects/recommentsubject/student/${studentId}`);
+      const body = await res.json();
+      if (body.success) {
+        setMostEnrolledSubjects(body.data.mostEnrolledSubjects || []);
+        setPeerInstructorSubjects(body.data.peerInstructorSubjects || []);
+      }
+    } catch (err) {
+      console.error('Error fetching recommendations:', err);
+    } finally {
+      setIsRecommendationsLoading(false);
+    }
+  };
+
   const loadPreviousSubjects = async () => {
     if (!studentId) return;
     
@@ -92,6 +117,8 @@ export default function StudentSubjects() {
           .catch(err => console.error('Error fetching subjects:', err));
 
         await Promise.all([enrolledPromise, subjectsPromise]);
+        
+        await loadRecommendations();
       } finally {
         setIsInitialLoading(false);
       }
@@ -100,7 +127,6 @@ export default function StudentSubjects() {
     loadInitialData();
   }, [studentId]); 
 
-  // Load previous subjects when tab is switched
   useEffect(() => {
     if (activeTab === 'previous' && studentId && previousSubjects.length === 0) {
       loadPreviousSubjects();
@@ -132,8 +158,6 @@ export default function StudentSubjects() {
     
     fetchSubjects();
   }, [studentId, debouncedSearch, sortBy, order, isInitialLoading, activeTab]);
-
-  // Filter previous subjects based on search
   const filteredPreviousSubjects = useMemo(() => {
     if (!debouncedSearch.trim()) return previousSubjects;
     return previousSubjects.filter(subject => 
@@ -193,6 +217,32 @@ export default function StudentSubjects() {
     </Row>
   );
 
+  const renderRecommendationSection = (title, icon, subjects, showMore, setShowMore, variant, btnVariant) => (
+    <div className="mb-4">
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h4 className="d-flex align-items-center mb-0">
+          {icon}
+          {title}
+        </h4>
+        {subjects.length > showMore && (
+          <Button 
+            variant="outline-secondary" 
+            size="sm"
+            onClick={() => setShowMore(prev => prev + 8)}
+          >
+            Show More ({subjects.length - showMore} remaining)
+          </Button>
+        )}
+      </div>
+      
+      {subjects.length === 0 ? (
+        <p className="text-muted">No recommendations available at the moment.</p>
+      ) : (
+        renderCards(subjects.slice(0, showMore), variant, btnVariant, false)
+      )}
+    </div>
+  );
+
   const renderCurrentSubjects = () => (
     <>
       <h4 className="d-flex align-items-center">
@@ -203,6 +253,35 @@ export default function StudentSubjects() {
         <p>You have not enrolled in any subject yet.</p>
       ) : (
         renderCards(enrolled, 'primary', 'primary', true)
+      )}
+
+      {isRecommendationsLoading ? (
+        <div className="text-center py-4 my-4">
+          <Spinner animation="border" className="me-2" />
+          <span>Loading recommendations...</span>
+        </div>
+      ) : (
+        <div className="my-5">
+          {renderRecommendationSection(
+            'Most Popular Subjects',
+            <FiTrendingUp className="me-2" />,
+            mostEnrolledSubjects,
+            showMoreMostEnrolled,
+            setShowMoreMostEnrolled,
+            'info',
+            'info'
+          )}
+
+          {renderRecommendationSection(
+            'Recommended Subjects For You',
+            <FiUsers className="me-2" />,
+            peerInstructorSubjects,
+            showMorePeerInstructor,
+            setShowMorePeerInstructor,
+            'secondary',
+            'secondary'
+          )}
+        </div>
       )}
 
       <h4 className="mt-4 d-flex align-items-center">
@@ -247,7 +326,6 @@ export default function StudentSubjects() {
 
   return (
     <Container className="py-4">
-      {/* Navigation Tabs */}
       <Nav variant="tabs" className="mb-4">
         <Nav.Item>
           <Nav.Link 
@@ -271,7 +349,6 @@ export default function StudentSubjects() {
         </Nav.Item>
       </Nav>
 
-      {/* Search and Sort Controls */}
       <Row className="align-items-center mb-3">
         <Col md={8}>
           <InputGroup>
@@ -305,7 +382,6 @@ export default function StudentSubjects() {
         )}
       </Row>
 
-      {/* Loading Indicator */}
       {(isSearchLoading || (activeTab === 'previous' && isPreviousLoading)) && (
         <div className="text-center mb-3">
           <Spinner animation="border" size="sm" className="me-2" />
@@ -313,7 +389,6 @@ export default function StudentSubjects() {
         </div>
       )}
 
-      {/* Content based on active tab */}
       {activeTab === 'current' ? renderCurrentSubjects() : renderPreviousSubjects()}
     </Container>
   );

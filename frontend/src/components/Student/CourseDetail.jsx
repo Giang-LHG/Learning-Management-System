@@ -29,7 +29,7 @@ import {
   Collapse,
   Alert
 } from 'react-bootstrap';
-
+import {useMemo} from 'react';
 const sortOptions = [
   { label: 'Title A→Z',       value: 'title:asc' },
   { label: 'Title Z→A',       value: 'title:desc' },
@@ -58,6 +58,7 @@ export default function CourseDetail() {
 const [expandedModuleId, setExpandedModuleId] = useState(null);
   const [moduleLessons, setModuleLessons] = useState({});
   const [loadingLessons, setLoadingLessons] = useState({});
+  const [currentListKey, setCurrentListKey] = useState('sameTerm');
 
   const getStudentId = () => {
     try {
@@ -82,13 +83,21 @@ const [expandedModuleId, setExpandedModuleId] = useState(null);
         const data = resp.data.data;
         setCoursesList(data);
         
-        const currentIndex = data.sameTerm.findIndex(c => c._id === courseId);
-        setCurrentCourseIndex(currentIndex);
+        const keys = ['sameTerm', 'otherTerms', 'noneEnrolled'];
+      for (const key of keys) {
+        const idx = data[key].findIndex(c => c._id === courseId);
+        if (idx >= 0) {
+          setCurrentListKey(key);
+          setCurrentCourseIndex(idx);
+          break;
+        }
+      }
       }
     } catch (err) {
       console.error('Error fetching courses list:', err);
     }
   }, [subjectId, courseId]);
+  const currentList = useMemo(() => coursesList[currentListKey] || [], [coursesList, currentListKey]);
 
   const fetchCourseDetail = useCallback(async () => {
     try {
@@ -120,14 +129,14 @@ const toggleModuleExpansion = (moduleId) => {
 
   const goToPreviousCourse = () => {
     if (currentCourseIndex > 0) {
-      const prevCourse = coursesList.sameTerm[currentCourseIndex - 1];
+      const prevCourse = currentList[currentCourseIndex - 1];
       navigate(`/student/subject/${subjectId}/course/${prevCourse._id}`);
     }
   };
 
   const goToNextCourse = () => {
-    if (currentCourseIndex < coursesList.sameTerm.length - 1) {
-      const nextCourse = coursesList.sameTerm[currentCourseIndex + 1];
+    if (currentCourseIndex < currentList.length - 1) {
+      const nextCourse = currentList[currentCourseIndex + 1];
       navigate(`/student/subject/${subjectId}/course/${nextCourse._id}`);
     }
   };
@@ -161,7 +170,6 @@ const toggleModuleExpansion = (moduleId) => {
       .catch(err => console.error('Error fetching enrollment:', err));
   }, [course, courseId]);
 
-  // Filter and sort 
   useEffect(() => {
     let temp = [...modules];
     if (searchQuery.trim()) {
@@ -271,7 +279,7 @@ const isExpanded = expandedModuleId === moduleId;
                   )}
                 </div>
 
-                {/* Lessons List */}
+                {/* Lessons list */}
               
           <Collapse in={isExpanded}>
             <div className="mt-3">
@@ -345,7 +353,6 @@ const isExpanded = expandedModuleId === moduleId;
 
   return (
     <Container className="py-4">
-      {/* Navigation Controls */}
       <motion.div initial={{opacity:0,x:-20}} animate={{opacity:1,x:0}}>
         <div className="d-flex justify-content-between align-items-center mb-4">
           <Button
@@ -374,13 +381,16 @@ const isExpanded = expandedModuleId === moduleId;
         </div>
       </motion.div>
 
-      {/* Course Progress Indicator */}
       {coursesList.sameTerm.length > 1 && (
         <motion.div initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}}>
           <Alert variant="info" className="mb-4">
             <div className="d-flex justify-content-between align-items-center">
               <small>
-                Course {currentCourseIndex + 1} of {coursesList.sameTerm.length} enrollment in this term
+                Course {currentCourseIndex + 1} of {currentList.length}
+                {currentListKey==='noneEnrolled' && ' (not enrolled)'}
+                {currentListKey==='otherTerms' && ' (enrolled  in other terms)'}
+              {currentListKey==='sameTerm' && ' (enroll in same term)'}
+                
               </small>
               <div className="progress" style={{ width: '200px', height: '4px' }}>
                 <div 
@@ -393,7 +403,6 @@ const isExpanded = expandedModuleId === moduleId;
         </motion.div>
       )}
 
-      {/* Header */}
       <motion.div initial={{opacity:0,y:-20}} animate={{opacity:1,y:0}}>
         <Card className="mb-4 text-white" style={{
           background: 'linear-gradient(135deg,#007bff 0%,#0056b3 100%)'
@@ -423,7 +432,6 @@ const isExpanded = expandedModuleId === moduleId;
         </Card>
       </motion.div>
 
-      {/* Search + Sort */}
       <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.1}}>
         <Card className="mb-4">
           <Card.Body>
@@ -456,7 +464,6 @@ const isExpanded = expandedModuleId === moduleId;
         </Card>
       </motion.div>
 
-      {/* All Modules */}
       <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.3}}>
         <h4 className="mb-3">
           <FiBookOpen className="me-2" />
@@ -484,7 +491,6 @@ const isExpanded = expandedModuleId === moduleId;
         )}
       </motion.div>
 
-      {/* Quick Actions */}
       <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.4}} className="mt-5">
         <Card className="shadow-sm">
           <Card.Body>

@@ -128,7 +128,7 @@ exports.getPreviousSubjectsByStudent = async (req, res) => {
     }, {});
 
     const subjectIds = Object.keys(latestEnrollBySubject)
-      .map(id => mongoose.Types.ObjectId(id));
+      .map(id => new mongoose.Types.ObjectId(id));
 
     if (!subjectIds.length) {
       return res.json({ success: true, data: [] });
