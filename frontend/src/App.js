@@ -4,7 +4,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'; // Added Navigate im
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider } from 'react-redux';
 import store from './store/store';
-
+// --- Header----
+import Header from './components/header/Header.js';
 // --- Layouts ---
 import MainLayout from './Layouts/MainLayout.jsx';
 import AuthLayout from './Layouts/AuthLayout.jsx';
@@ -132,6 +133,7 @@ function App() {
           {/* Student Routes - Chỉ cho phép student */}
           <Route path="/student" element={
             <ProtectedRoute allowedRoles={['student']}>
+              <Header />
               <SidebarStudent />
             </ProtectedRoute>
           }>
@@ -143,7 +145,7 @@ function App() {
             <Route path="course/:courseId/module/:moduleId/lesson/:lessonId" element={<LessonDetailStudent />} />
             <Route path="assignments/:courseId" element={<AssignmentList />} />
             <Route path="quiz/:assignmentId" element={<QuizList />} />
-            <Route path="grades/:courseId" element={<GradeOverview />} />
+            <Route path="subject/:subjectId/grades/:courseId" element={<GradeOverview />} />
             <Route path="appeals" element={<AppealListStudent />} />
             <Route path="appeal/:submissionId" element={<AppealFormStudent />} />
             

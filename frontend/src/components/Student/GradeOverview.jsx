@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { Container, Row, Col, Card, Button, Spinner, Form, InputGroup, Badge, Nav, Tab, Dropdown } from 'react-bootstrap';
 
-import { FiArrowLeft, FiSearch, FiChevronDown, FiMoreVertical, FiCalendar, FiUser, FiAward, FiClock, FiBookOpen, FiFilter } from "react-icons/fi";
+import { FiArrowLeft, FiSearch, FiChevronDown, FiMoreVertical, FiCalendar, FiUser, FiAward, FiClock, FiBookOpen, FiFilter, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { motion } from "framer-motion";
 
 const sortOptions = [
@@ -42,7 +42,7 @@ const getTermColor = (term) => {
 
 export default function GradeOverview() {
   const navigate = useNavigate();
-  const { courseId } = useParams(); 
+  const { courseId, subjectId } = useParams(); 
  
   const [studentId, setStudentId] = useState('');
    
@@ -64,16 +64,50 @@ export default function GradeOverview() {
   const [filteredOnTerm, setFilteredOnTerm] = useState([]);             
   const [filteredPreTerm, setFilteredPreTerm] = useState([]);
   
+  // Separate graded and pending submissions for current term
+  const [gradedSubmissions, setGradedSubmissions] = useState([]);
+  const [pendingSubmissions, setPendingSubmissions] = useState([]);
+  const [filteredGraded, setFilteredGraded] = useState([]);
+  const [filteredPending, setFilteredPending] = useState([]);
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("grade");
   const [order, setOrder] = useState("desc");
   const [isLoading, setIsLoading] = useState(true);
   const [courseTitle, setCourseTitle] = useState("");       
   const [assignments, setAssignments] = useState([]);
-  const [activeTab, setActiveTab] = useState("current");
+  const [activeTab, setActiveTab] = useState("graded");
   
   const [availableTerms, setAvailableTerms] = useState([]);
   const [selectedTerm, setSelectedTerm] = useState("all");
+
+  // Course navigation states
+  const [allCourses, setAllCourses] = useState([]);
+  const [currentCourseIndex, setCurrentCourseIndex] = useState(-1);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(false);
+
+  // Fetch all courses for navigation
+  const fetchCourses = useCallback(async () => {
+    if (!studentId || !subjectId) return;
+    
+    try {
+      setIsLoadingCourses(true);
+      const resp = await axios.get(`/api/student/courses/subject/${subjectId}/student/${studentId}`);
+      if (resp.data.success) {
+        const { sameTerm, otherTerms, noneEnrolled } = resp.data.data;
+        const courses = [...sameTerm, ...otherTerms, ...noneEnrolled];
+        setAllCourses(courses);
+        
+        // Find current course index
+        const currentIndex = courses.findIndex(course => course._id === courseId);
+        setCurrentCourseIndex(currentIndex);
+      }
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+    } finally {
+      setIsLoadingCourses(false);
+    }
+  }, [studentId, subjectId, courseId]);
 
   const fetchGrades = useCallback(async () => {
     try {
@@ -85,8 +119,16 @@ export default function GradeOverview() {
         
         setOnTermSubmissions(currentTermData);
         setPreTermSubmissions(previousTermData);
-        setFilteredOnTerm(currentTermData);
         setFilteredPreTerm(previousTermData);
+
+        // Separate graded and pending submissions for current term
+        const graded = currentTermData.filter(s => s.grade?.score != null);
+        const pending = currentTermData.filter(s => s.grade?.score == null);
+        
+        setGradedSubmissions(graded);
+        setPendingSubmissions(pending);
+        setFilteredGraded(graded);
+        setFilteredPending(pending);
 
         const terms = [...new Set(previousTermData.map(s => s.term).filter(Boolean))];
         setAvailableTerms(terms.sort().reverse()); 
@@ -110,6 +152,10 @@ export default function GradeOverview() {
       setIsLoading(false);
     }
   }, [courseId, studentId]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
 
   useEffect(() => {
     fetchGrades();
@@ -162,9 +208,10 @@ export default function GradeOverview() {
   }, [searchQuery, sortBy, order, activeTab, selectedTerm]);
 
   useEffect(() => {
-    setFilteredOnTerm(filterAndSort(onTermSubmissions));
+    setFilteredGraded(filterAndSort(gradedSubmissions));
+    setFilteredPending(filterAndSort(pendingSubmissions));
     setFilteredPreTerm(filterAndSort(preTermSubmissions));
-  }, [onTermSubmissions, preTermSubmissions, filterAndSort]);
+  }, [gradedSubmissions, pendingSubmissions, preTermSubmissions, filterAndSort]);
 
   const handleSortChange = (value) => {
     const [field, ord] = value.split(":");
@@ -177,7 +224,7 @@ export default function GradeOverview() {
   };
 
   const goBack = () => {
-    navigate(-1);
+    navigate(`/student/subject/${subjectId}/course/${courseId}`);
   };
 
   const getGradeColor = (score) => {
@@ -186,6 +233,78 @@ export default function GradeOverview() {
     if (score >= 7) return "warning";
     if (score >= 6) return "info";
     return "danger";
+  };
+
+  // Navigation functions
+  const goToPreviousCourse = () => {
+    if (currentCourseIndex > 0) {
+      const prevCourse = allCourses[currentCourseIndex - 1];
+      navigate(`/student/subject/${subjectId}/grades/${prevCourse._id}`);
+    }
+  };
+
+  const goToNextCourse = () => {
+    if (currentCourseIndex < allCourses.length - 1) {
+      const nextCourse = allCourses[currentCourseIndex + 1];
+      navigate(`/student/subject/${subjectId}/grades/${nextCourse._id}`);
+    }
+  };
+
+  const renderCourseNavigation = () => {
+    if (allCourses.length <= 1) return null;
+
+    const currentCourse = allCourses[currentCourseIndex];
+    const prevCourse = currentCourseIndex > 0 ? allCourses[currentCourseIndex - 1] : null;
+    const nextCourse = currentCourseIndex < allCourses.length - 1 ? allCourses[currentCourseIndex + 1] : null;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="mb-4"
+      >
+        <Card className="border-0 shadow-sm" style={{ borderRadius: '15px' }}>
+          <Card.Body className="p-3">
+            <div className="d-flex justify-content-between align-items-center">
+              <Button
+                variant="outline-primary"
+                onClick={goToPreviousCourse}
+                disabled={!prevCourse || isLoadingCourses}
+                className="d-flex align-items-center px-3 py-2 rounded-pill"
+                style={{ minWidth: '120px' }}
+              >
+                <FiChevronLeft className="me-2" />
+                Previous
+              </Button>
+
+              <div className="text-center flex-grow-1 mx-3">
+                <div className="text-muted small">Course Navigation</div>
+                <div className="fw-bold">
+                  {currentCourseIndex + 1} of {allCourses.length}
+                </div>
+                {currentCourse && (
+                  <div className="text-primary small">
+                    {currentCourse.title}
+                  </div>
+                )}
+              </div>
+
+              <Button
+                variant="outline-primary"
+                onClick={goToNextCourse}
+                disabled={!nextCourse || isLoadingCourses}
+                className="d-flex align-items-center px-3 py-2 rounded-pill"
+                style={{ minWidth: '120px' }}
+              >
+                Next
+                <FiChevronRight className="ms-2" />
+              </Button>
+            </div>
+          </Card.Body>
+        </Card>
+      </motion.div>
+    );
   };
 
   const renderTermStatistics = () => {
@@ -257,7 +376,7 @@ export default function GradeOverview() {
     );
   };
 
-  const renderSubmissions = (submissions, tabKey) => {
+  const renderSubmissions = (submissions, tabKey, showAppealButton = true) => {
     if (submissions.length === 0) {
       return (
         <motion.div
@@ -268,15 +387,17 @@ export default function GradeOverview() {
           <Card className="text-center py-5 border-0 shadow-sm" style={{ borderRadius: '15px' }}>
             <Card.Body>
               <div className="text-muted mb-3">
-                {tabKey === 'current' ? <FiBookOpen size={48} /> : <FiClock size={48} />}
+                {tabKey === 'graded' ? <FiAward size={48} /> : 
+                 tabKey === 'pending' ? <FiClock size={48} /> : <FiBookOpen size={48} />}
               </div>
               <h5 className="text-muted">
-                {tabKey === 'current' ? 'No current term submissions found' : 'No submissions found'}
+                {tabKey === 'graded' ? 'No graded submissions found' : 
+                 tabKey === 'pending' ? 'No pending submissions found' : 'No submissions found'}
               </h5>
               <p className="text-muted">
                 {searchQuery || selectedTerm !== 'all' 
                   ? 'Try adjusting your search or filter criteria' 
-                  : 'No submissions available for this term'
+                  : 'No submissions available for this category'
                 }
               </p>
             </Card.Body>
@@ -309,19 +430,22 @@ export default function GradeOverview() {
                   </Badge>
                 )}
                 
-                <Button
-                  variant="light"
-                  className="position-absolute top-0 end-0 m-3 rounded-circle p-2 shadow-sm"
-                  onClick={() => goToAppeal(s._id)}
-                  style={{ 
-                    width: '40px', 
-                    height: '40px',
-                    border: 'none',
-                    zIndex: 2
-                  }}
-                >
-                  <FiMoreVertical />
-                </Button>
+                {/* Appeal Button - Only show for graded submissions */}
+                {showAppealButton && s.grade?.score != null && (
+                  <Button
+                    variant="light"
+                    className="position-absolute top-0 end-0 m-3 rounded-circle p-2 shadow-sm"
+                    onClick={() => goToAppeal(s._id)}
+                    style={{ 
+                      width: '40px', 
+                      height: '40px',
+                      border: 'none',
+                      zIndex: 2
+                    }}
+                  >
+                    <FiMoreVertical />
+                  </Button>
+                )}
 
                 <Card.Body className="p-4 d-flex flex-column">
                   <Card.Title className="h6 mb-3 fw-bold text-primary" 
@@ -399,7 +523,18 @@ export default function GradeOverview() {
     );
   };
 
-  const getCurrentSubmissions = () => activeTab === 'current' ? filteredOnTerm : filteredPreTerm;
+  const getCurrentSubmissions = () => {
+    switch (activeTab) {
+      case 'graded':
+        return filteredGraded;
+      case 'pending':
+        return filteredPending;
+      case 'previous':
+        return filteredPreTerm;
+      default:
+        return filteredGraded;
+    }
+  };
 
   return (
     <div style={{ backgroundColor: '#f8f9fc', minHeight: '100vh' }}>
@@ -418,6 +553,9 @@ export default function GradeOverview() {
             <FiArrowLeft className="me-2" /> Back to Course Detail
           </Button>
         </motion.div>
+
+        {/* Course Navigation */}
+        {renderCourseNavigation()}
 
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -519,7 +657,7 @@ export default function GradeOverview() {
           </Card>
         </motion.div>
 
-        {/* Tab Navigation */}
+        {/* Updated Tab Navigation */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -534,16 +672,30 @@ export default function GradeOverview() {
                 <Nav variant="pills" className="p-3 gap-2">
                   <Nav.Item>
                     <Nav.Link 
-                      eventKey="current" 
+                      eventKey="graded" 
                       className="px-4 py-2 rounded-pill fw-medium"
                       style={{ 
-                        backgroundColor: activeTab === 'current' ? '#667eea' : 'transparent',
-                        color: activeTab === 'current' ? 'white' : '#667eea',
-                        border: activeTab === 'current' ? 'none' : '2px solid #667eea'
+                        backgroundColor: activeTab === 'graded' ? '#28a745' : 'transparent',
+                        color: activeTab === 'graded' ? 'white' : '#28a745',
+                        border: activeTab === 'graded' ? 'none' : '2px solid #28a745'
                       }}
                     >
-                      <FiBookOpen className="me-2" />
-                      Current Term ({filteredOnTerm.length})
+                      <FiAward className="me-2" />
+                      Graded ({filteredGraded.length})
+                    </Nav.Link>
+                  </Nav.Item>
+                  <Nav.Item>
+                    <Nav.Link 
+                      eventKey="pending"
+                      className="px-4 py-2 rounded-pill fw-medium"
+                      style={{ 
+                        backgroundColor: activeTab === 'pending' ? '#ffc107' : 'transparent',
+                        color: activeTab === 'pending' ? 'white' : '#ffc107',
+                        border: activeTab === 'pending' ? 'none' : '2px solid #ffc107'
+                      }}
+                    >
+                      <FiClock className="me-2" />
+                      Pending ({filteredPending.length})
                     </Nav.Link>
                   </Nav.Item>
                   <Nav.Item>
@@ -556,7 +708,7 @@ export default function GradeOverview() {
                         border: activeTab === 'previous' ? 'none' : '2px solid #764ba2'
                       }}
                     >
-                      <FiClock className="me-2" />
+                      <FiBookOpen className="me-2" />
                       Previous Terms ({filteredPreTerm.length})
                     </Nav.Link>
                   </Nav.Item>
@@ -568,41 +720,6 @@ export default function GradeOverview() {
 
         {/* Term Statistics - Only show for previous tab */}
         {renderTermStatistics()}
-
-        {!isLoading && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="mb-4"
-          >
-            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <h5 className="text-muted mb-0">
-                Found {getCurrentSubmissions().length} submission{getCurrentSubmissions().length !== 1 ? 's' : ''} 
-                {activeTab === 'current' ? ' (Current Term)' : ' (Previous Terms)'}
-              </h5>
-              <div className="d-flex gap-2 flex-wrap">
-                {searchQuery && (
-                  <Badge bg="primary" pill className="px-3 py-2">
-                    Assignment: {searchQuery}
-                  </Badge>
-                )}
-                {activeTab === 'previous' && selectedTerm !== 'all' && (
-                  <Badge 
-                    pill 
-                    className="px-3 py-2"
-                    style={{ 
-                      backgroundColor: getTermColor(selectedTerm),
-                      color: 'white'
-                    }}
-                  >
-                    Term: {selectedTerm}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
 
         {isLoading ? (
           <div className="text-center py-5">

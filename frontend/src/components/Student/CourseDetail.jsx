@@ -499,7 +499,7 @@ const isExpanded = expandedModuleId === moduleId;
               <Button
                 variant="primary"
                 size="lg"
-                onClick={() => navigate(`/student/grades/${course._id}`)}
+                onClick={() => navigate(`/student/subject/${subjectId}/grades/${course._id}`)}
               >
                 <FiBookOpen className="me-2" />
                 Grade Overview
