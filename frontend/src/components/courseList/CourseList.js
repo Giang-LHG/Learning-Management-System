@@ -7,68 +7,48 @@ import {
   FiArrowRight
 } from 'react-icons/fi';
 import './CourseList.css';
-
+import { useNavigate } from 'react-router-dom';
 function CourseList() {
-  const [courses, setCourses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    // Simulate API fetch with delay
     setTimeout(() => {
-      const dummyCourses = [
+   const dummySubjects = [
         { 
-          id: 1, 
-          title: "Web Development Bootcamp", 
-          instructor: "John Doe", 
-          rating: 4.8,
-          badge: "Bestseller",
-          price: 89.99,
-          discountedPrice: 59.99,
-          duration: "32 hours",
-          lessons: 245,
-          category: "Development",
-          image: "web-dev"
+          _id: "60b000000000000000000001", 
+          code: "CS101", 
+          name: "Lập trình căn bản", 
+          description: "Khóa học nhập môn lập trình cơ bản (Ngôn ngữ Python).",
+   badge: "Hot",
+          prerequisites: [],
+          numberCourse:6,
+            image: "",
         },
         { 
-          id: 2, 
-          title: "Data Science Mastery", 
-          instructor: "Jane Smith", 
-          rating: 4.7,
-          badge: "New",
-          price: 99.99,
-          discountedPrice: 79.99,
-          duration: "45 hours",
-          lessons: 320,
-          category: "Data Science",
-          image: "data-science"
+          _id: "60b000000000000000000002", 
+          code: "CS102", 
+          name: "Cấu trúc dữ liệu", 
+             badge: "Hot",
+          description: "Khóa học về cấu trúc dữ liệu, yêu cầu phải hoàn thành Lập trình căn bản trước.",
+          prerequisites: ["60b000000000000000000001"],
+           numberCourse:6,
+                image: "",
         },
         { 
-          id: 3, 
-          title: "Digital Marketing Strategy", 
-          instructor: "Alex Johnson", 
-          rating: 4.5,
-          price: 79.99,
-          discountedPrice: 49.99,
-          duration: "28 hours",
-          lessons: 180,
-          category: "Marketing",
-          image: "digital-marketing"
-        },
-        { 
-          id: 4, 
-          title: "UI/UX Design Fundamentals", 
-          instructor: "Emily Chen", 
-          rating: 4.9,
-          badge: "Hot",
-          price: 89.99,
-          discountedPrice: 69.99,
-          duration: "36 hours",
-          lessons: 210,
-          category: "Design",
-          image: "ui-ux"
+          _id: "68462da3733701e65633bec0", 
+          code: "CS103", 
+          name: "Lập trình căn bản", 
+             badge: "Hot",
+          description: "Khóa học nhập môn lập trình cơ bản (Ngôn ngữ Python).",
+          prerequisites: [],
+           numberCourse:6,
+           
+                image: "",
+     
         }
       ];
-      setCourses(dummyCourses);
+      setSubjects(dummySubjects);
       setLoading(false);
     }, 800);
   }, []);
@@ -119,73 +99,50 @@ function CourseList() {
           </div>
         ) : (
           <div className="course-grid">
-            {courses.map((course) => (
+            {subjects.map((subject) => (
               <div 
-                key={course.id} 
+                key={subject._id} 
                 className="course-card"
               >
                 <div className="course-image-container">
                   <div 
                     className="course-image"
-                    style={getGradientStyle(course.image)}
+                    style={getGradientStyle(subject.image)}
                   >
                     <div className="course-acronym">
-                      {course.title.split(' ').map(word => word[0]).join('')}
+                      {subject.code.split(' ').map(word => word[0]).join('')}
                     </div>
                   </div>
                   
-                  {course.badge && (
+                  {subject.badge && (
                     <span 
                       className="course-badge"
-                      style={getBadgeStyle(course.badge)}
+                      style={getBadgeStyle(subject.badge)}
                     >
-                      {course.badge}
+                      {subject.badge}
                     </span>
                   )}
                   
-                  <div className="course-category">
-                    {course.category}
-                  </div>
+                 
                 </div>
                 
                 <div className="course-content">
-                  <h3>{course.title}</h3>
+                  <h3>{subject.name}</h3>
                   
-                  <div className="course-meta">
-                    <div className="course-instructor">
-                      <FiBarChart2 className="instructor-icon" />
-                      <span>{course.instructor}</span>
-                    </div>
-                    <div className="course-rating">
-                      <span className="rating-star">★</span>
-                      <span>{course.rating}</span>
-                    </div>
-                  </div>
+                  
                   
                   <div className="course-details">
-                    <div className="course-duration">
-                      <FiClock className="detail-icon" />
-                      <span>{course.duration}</span>
-                    </div>
+                    
                     <div className="course-lessons">
                       <FiBook className="detail-icon" />
-                      <span>{course.lessons} Lessons</span>
+                      <span>{subject.numberCourse} Courses</span>
                     </div>
                   </div>
                   
-                  <div className="course-pricing">
-                    {course.discountedPrice ? (
-                      <>
-                        <div className="discounted-price">${course.discountedPrice}</div>
-                        <div className="original-price">${course.price}</div>
-                      </>
-                    ) : (
-                      <div className="course-price">${course.price}</div>
-                    )}
-                  </div>
+                
                   
-                  <button className="btn-enroll">
-                    <FiShoppingCart className="enroll-icon" />
+                  <button className="btn-enroll"   onClick={() => navigate(`/student/courses?subjectId=${subject._id}`)}>
+                 
                     Enroll Now
                   </button>
                 </div>
@@ -195,8 +152,8 @@ function CourseList() {
         )}
         
         <div className="view-all-container">
-          <button className="btn-view-all">
-            View All Courses
+          <button className="btn-view-all" onClick={() => navigate('/student/subjects')}>
+            View All Subjects
             <FiArrowRight className="view-all-icon" />
           </button>
         </div>
