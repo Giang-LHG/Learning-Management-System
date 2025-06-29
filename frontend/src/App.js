@@ -6,9 +6,9 @@ import { Provider } from 'react-redux';
 import store from './store/store';
 // --- Header----
 import Header from './components/header/Header.js';
-// --- Layouts ---
-import MainLayout from './Layouts/MainLayout.jsx';
-import AuthLayout from './Layouts/AuthLayout.jsx';
+// --- layouts ---
+import MainLayout from './layouts/MainLayout.jsx';
+import AuthLayout from './layouts/AuthLayout.jsx';
 
 // --- Components ---
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
@@ -47,8 +47,8 @@ import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 const queryClient = new QueryClient();
 
 import SubjectOverView from './components/parent/SubjectOverView';
-import SideBarParent from './Layouts/parent/SideBarParent';
-import SidebarParent from './Layouts/parent/SideBarParent';
+import SideBarParent from './layouts/parent/SideBarParent';
+import SidebarParent from './layouts/parent/SideBarParent';
 function App() {
   return (
     <Provider store={store}>
@@ -161,22 +161,22 @@ function App() {
 </Route>
 
           {/* --- INSTRUCTOR ROUTES --- */}
-          <Route path="/instructor/" element={< InstructorDashboard />} />
-          <Route path="/instructor/course" element={< CourseList />} />
-          <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
-          <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />
-          <Route path="/instructor/submission/:submissionId/grade" element={<GradeSubmission />} />
-          <Route path="/instructor/appeals" element={<InstructorAppealList />} />
+          {/* <Route path="/instructor/" element={< InstructorDashboard />} /> */}
+          {/* <Route path="/instructor/course" element={< CourseList />} /> */}
+          {/* <Route path="/instructor/course/:id" element={< CourseDetail1 />} /> */}
+          {/* <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} /> */}
+          {/* <Route path="/instructor/submission/:submissionId/grade" element={<GradeSubmission />} /> */}
+          {/* <Route path="/instructor/appeals" element={<InstructorAppealList />} />
           <Route path="/instructor/appeal/review/:submissionId/:appealId" element={<ReviewAppeal />} />
           <Route path="/instructor/course/:courseId/participants" element={<CourseParticipantsList />} />
           <Route path="/instructor/course/:courseId/edit" element={<CourseEditor />} />
           <Route path="/instructor/course/:courseId/deadlines" element={<DeadlineScheduler />} />
           <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard1 />} />
-          <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
+          <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} /> */}
 
 {/* --- INSTRUCTOR ROUTES --- */}
-        <Route path="/instructor/course" element={< CourseList />} />
-        <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
+        {/* <Route path="/instructor/course" element={< CourseList />} />  */}
+        {/* <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
         <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />
         <Route path="/instructor/submission/:submissionId/grade" element={<GradeSubmission />} />
         <Route path="/instructor/appeals" element={<InstructorAppealList />} />
@@ -185,7 +185,7 @@ function App() {
         <Route path="/instructor/course/:courseId/edit" element={<CourseEditor />} />
         <Route path="/instructor/course/:courseId/deadlines" element={<DeadlineScheduler />} />
         <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard1 />} />
-        <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
+        <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} /> */}
           {/* Fallback Route for Page Not Found */}
           <Route
             path="*"
