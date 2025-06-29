@@ -108,7 +108,7 @@ function Header() {
         {/* Desktop Navigation */}
         <nav className="desktop-nav">
           <ul className="nav-links">
-            {["admin", "parent", "student", "instructor"].includes(user.role || '') && (<>
+            {["admin", "parent", "student", "instructor"].includes(user?.role || '') && (<>
               <li>
                 <Link
                   to="/"
@@ -128,7 +128,7 @@ function Header() {
               </li>
             </>)}
 
-            {["admin", "student", "instructor"].includes(user.role || '') && (<>
+            {["admin", "student", "instructor"].includes(user?.role || '') && (<>
               <li>
                 <Link
                   to="/"
@@ -139,7 +139,7 @@ function Header() {
               </li>
             </>)}
 
-            {["admin", "student", "instructor"].includes(user.role || '') && (<>
+            {["admin", "student", "instructor"].includes(user?.role || '') && (<>
               <li>
                 <Link
                   to="/courses"
@@ -150,7 +150,7 @@ function Header() {
               </li>
             </>)}
 
-            {["admin"].includes(user.role || '') && (<>
+            {["admin"].includes(user?.role || '') && (<>
               <li>
                 <Link
                   to="/instructors"
