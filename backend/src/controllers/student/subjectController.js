@@ -128,7 +128,7 @@ exports.getPreviousSubjectsByStudent = async (req, res) => {
     }, {});
 
     const subjectIds = Object.keys(latestEnrollBySubject)
-      .map(id => mongoose.Types.ObjectId(id));
+      .map(id => new mongoose.Types.ObjectId(id));
 
     if (!subjectIds.length) {
       return res.json({ success: true, data: [] });
@@ -174,4 +174,87 @@ exports.getPreviousSubjectsByStudent = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 
+};
+exports.getSubjectRecommendations = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid studentId' });
+    }
+
+    // 1. Lấy tất cả enrollments của student
+  const enrolls = await Enrollment.find({ studentId })
+  .populate({
+    path: 'courseId',
+    select: 'subjectId instructorId'
+  })
+  .lean();
+
+    // A. ===== mostEnrolledSubjects =====
+    // Đếm số enroll theo subjectId
+    const countBySubject = enrolls.reduce((acc, e) => {
+      const sid = e.subjectId?.toString();
+      if (!sid) return acc;
+      acc[sid] = (acc[sid] || 0) + 1;
+      return acc;
+    }, {});
+    // Chuyển về mảng và sort giảm dần
+    const sortedSubjectIds = Object
+      .entries(countBySubject)
+      .sort((a, b) => b[1] - a[1])
+      .map(([sid]) => new mongoose.Types.ObjectId(sid));
+
+    // Nạp chi tiết những môn đó
+    const mostEnrolledSubjects = await Subject.find({
+      _id: { $in: sortedSubjectIds }
+    })
+      .lean()
+      .then(rows => {
+        // giữ thứ tự giống sortedSubjectIds
+        const byId = rows.reduce((m, s) => (m[s._id.toString()] = s, m), {});
+        return sortedSubjectIds.map(id => byId[id.toString()]);
+      });
+
+    // B. ===== peerInstructorSubjects =====
+    // Tìm tất cả courseId đã enroll, nạp lên để lấy instructorId
+    const instructorIds = Array.from(new Set(
+      enrolls
+        .map(e => e.courseId?.instructorId?.toString())
+        .filter(id => id)
+    )).map(id => new mongoose.Types.ObjectId(id));
+
+    // Từ enrolls giữ sẵn subjectId đã học để loại ra
+    const enrolledSubjectIds = new Set(
+      enrolls.map(e => e.subjectId?.toString()).filter(id => id)
+    );
+console.log(enrolledSubjectIds);
+console.log(instructorIds);
+    // Tìm các Subject do những instructor đó đảm nhiệm,
+    // thông qua Course rồi lấy subjectId và loại ra những môn đã học
+    const peerInstructorSubjects = await Course.aggregate([
+      { $match: { instructorId: { $in: instructorIds } } },
+      { $group: { _id: '$subjectId' } },
+      { $match: { _id: { $nin: Array.from(enrolledSubjectIds).map(id => new mongoose.Types.ObjectId(id)) } } },
+      { $lookup: {
+          from: 'subjects',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'subject'
+      }},
+      { $unwind: '$subject' },
+      { $match: { 'subject.status': 'approved' } },
+      { $replaceRoot: { newRoot: '$subject' } }
+    ]);
+console.log(peerInstructorSubjects);
+    return res.json({
+      success: true,
+      data: {
+        mostEnrolledSubjects,
+        peerInstructorSubjects
+      }
+    });
+  } catch (err) {
+    console.error('Error in getSubjectRecommendations:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
 };

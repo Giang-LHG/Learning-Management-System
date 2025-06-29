@@ -3,11 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { 
   FiArrowLeft, 
+  FiArrowRight,
   FiSearch, 
   FiChevronDown, 
   FiBookOpen, 
   FiPlay, 
-  FiFileText
+  FiFileText,
+  FiChevronLeft,
+  FiChevronRight
 } from "react-icons/fi";
 import { motion } from "framer-motion";
 import {
@@ -20,6 +23,7 @@ import {
   Row,
   Col,
   Badge,
+  ButtonGroup
 } from 'react-bootstrap';
 
 const sortOptions = [
@@ -32,9 +36,11 @@ export default function ModuleDetail() {
   const navigate = useNavigate();
   const { courseId, moduleId } = useParams(); 
 
-  // State
   const [courseTitle, setCourseTitle] = useState("");
+  const [subjectId, setSubjectId] = useState("");
   const [module, setModule] = useState(null);
+  const [allModules, setAllModules] = useState([]);
+  const [currentModuleIndex, setCurrentModuleIndex] = useState(-1);
   const [lessons, setLessons] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,22 +48,29 @@ export default function ModuleDetail() {
   const [order, setOrder] = useState("asc");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch course & module details
   const fetchModule = useCallback(async () => {
     try {
       setIsLoading(true);
       const courseResp = await axios.get(`/api/student/courses/${courseId}`);
       if (courseResp.data.success) {
-        setCourseTitle(courseResp.data.data.title);
-        const mod = courseResp.data.data.modules.find(
+        const courseData = courseResp.data.data;
+        setCourseTitle(courseData.title);
+        setSubjectId(courseData.subjectId || "");
+        setAllModules(courseData.modules || []);
+        
+        const moduleIndex = courseData.modules.findIndex(
           (m) => m.moduleId === moduleId || m._id === moduleId
         );
-        if (mod) {
+        
+        if (moduleIndex !== -1) {
+          const mod = courseData.modules[moduleIndex];
           setModule(mod);
+          setCurrentModuleIndex(moduleIndex);
           setLessons(mod.lessons || []);
           setFiltered(mod.lessons || []);
         } else {
           setModule(null);
+          setCurrentModuleIndex(-1);
           setLessons([]);
           setFiltered([]);
         }
@@ -73,22 +86,18 @@ export default function ModuleDetail() {
     fetchModule();
   }, [fetchModule]);
 
-  // Filter + Sort lessons
   useEffect(() => {
     let temp = [...lessons];
 
-    // Search by lesson title
     if (searchQuery.trim()) {
       const regex = new RegExp(searchQuery, "i");
       temp = temp.filter((l) => regex.test(l.title));
     }
 
-    // Sort
     temp.sort((a, b) => {
       let fieldA, fieldB;
       
       if (sortBy === 'order') {
-        // Sử dụng index làm order mặc định nếu không có order field
         fieldA = a.order || lessons.indexOf(a);
         fieldB = b.order || lessons.indexOf(b);
       } else {
@@ -110,7 +119,22 @@ export default function ModuleDetail() {
     setOrder(ord);
   };
 
-  // Handler click lesson
+  const goToNextModule = () => {
+    if (currentModuleIndex < allModules.length - 1) {
+      const nextModule = allModules[currentModuleIndex + 1];
+      const nextModuleId = nextModule.moduleId || nextModule._id;
+      navigate(`/student/course/${courseId}/module/${nextModuleId}`);
+    }
+  };
+
+  const goToPrevModule = () => {
+    if (currentModuleIndex > 0) {
+      const prevModule = allModules[currentModuleIndex - 1];
+      const prevModuleId = prevModule.moduleId || prevModule._id;
+      navigate(`/student/course/${courseId}/module/${prevModuleId}`);
+    }
+  };
+
   const handleLessonClick = (lessonId) => {
     navigate(`/student/course/${courseId}/module/${moduleId}/lesson/${lessonId}`);
   };
@@ -141,7 +165,7 @@ export default function ModuleDetail() {
               onClick={() => navigate(`/student/course/${courseId}`)}
               className="px-4"
             >
-              <FiArrowLeft className="me-2" /> Back to Course
+              <FiArrowLeft className="me-2" /> Back to Course Detail
             </Button>
           </Card.Body>
         </Card>
@@ -151,22 +175,40 @@ export default function ModuleDetail() {
 
   return (
     <Container className="py-4">
-      {/* Back Button */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
+        className="d-flex justify-content-between align-items-center mb-4"
       >
         <Button
           variant="outline-primary"
-          className="mb-4 shadow-sm"
-          onClick={() => navigate(`/student/course/${courseId}`)}
+          className="shadow-sm"
+          onClick={() => navigate(`/student/subject/${subjectId}/course/${courseId}`)}
         >
-          <FiArrowLeft className="me-2" /> Back to Course Detail
+          <FiArrowLeft className="me-2" /> Back to Course
         </Button>
+
+        <ButtonGroup>
+          <Button
+            variant="outline-secondary"
+            disabled={currentModuleIndex <= 0}
+            onClick={goToPrevModule}
+            className="d-flex align-items-center"
+          >
+            <FiChevronLeft className="me-1" /> Previous Module
+          </Button>
+          <Button
+            variant="outline-secondary"
+            disabled={currentModuleIndex >= allModules.length - 1}
+            onClick={goToNextModule}
+            className="d-flex align-items-center"
+          >
+            Next Module <FiChevronRight className="ms-1" />
+          </Button>
+        </ButtonGroup>
       </motion.div>
 
-      {/* Module Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -181,7 +223,10 @@ export default function ModuleDetail() {
                 <div className="d-flex align-items-center gap-3">
                   <Badge bg="light" text="dark" className="px-3 py-2">
                     <FiBookOpen className="me-1" />
-                    {filtered.length} Lessons
+                    {lessons.length} Total Lessons
+                  </Badge>
+                  <Badge bg="info" text="dark" className="px-3 py-2">
+                    Module {currentModuleIndex + 1} of {allModules.length}
                   </Badge>
                 </div>
               </div>
@@ -193,7 +238,6 @@ export default function ModuleDetail() {
         </Card>
       </motion.div>
 
-      {/* Search + Sort Controls */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -228,9 +272,7 @@ export default function ModuleDetail() {
                       </option>
                     ))}
                   </Form.Select>
-                  <InputGroup.Text className="bg-light border-start-0">
-                    <FiChevronDown className="text-muted" />
-                  </InputGroup.Text>
+               
                 </InputGroup>
               </Col>
             </Row>
@@ -238,7 +280,6 @@ export default function ModuleDetail() {
         </Card>
       </motion.div>
 
-      {/* Lesson List */}
       {filtered.length === 0 ? (
         <motion.div
           initial={{ opacity: 0 }}
@@ -252,80 +293,83 @@ export default function ModuleDetail() {
               </div>
               <h5 className="text-muted mb-2">No lessons found</h5>
               <p className="text-muted">
-                {searchQuery ? 'Try adjusting your search terms' : 'This module has no lessons yet'}
+                {searchQuery 
+                  ? 'Try adjusting your search terms' 
+                  : 'This module has no lessons yet'
+                }
               </p>
             </Card.Body>
           </Card>
         </motion.div>
       ) : (
         <div className="row g-4">
-          {filtered.map((lesson, index) => (
-            <div key={lesson.lessonId || lesson._id} className="col-12 col-md-6 col-lg-4">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                whileHover={{ scale: 1.02, y: -3 }}
-                whileTap={{ scale: 0.98 }}
-                className="h-100"
-              >
-                <Card 
-                  className="h-100 shadow-sm border-0 cursor-pointer hover-shadow-lg transition-all lesson-card"
-                  onClick={() => handleLessonClick(lesson.lessonId || lesson._id)}
-                  style={{ cursor: 'pointer' }}
+          {filtered.map((lesson, index) => {
+            const lessonId = lesson.lessonId || lesson._id;
+            
+            return (
+              <div key={lessonId} className="col-12 col-md-6 col-lg-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -3 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="h-100"
                 >
-                  <Card.Body className="p-4 d-flex flex-column">
-                    {/* Lesson Header */}
-                    <div className="d-flex align-items-start mb-3">
-                      <div className="bg-primary text-white rounded-circle p-2 me-3 flex-shrink-0">
-                        <FiFileText size={18} />
+                  <Card 
+                    className="h-100 shadow-sm border-0 cursor-pointer hover-shadow-lg transition-all lesson-card"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleLessonClick(lessonId)}
+                  >
+                    <Card.Body className="p-4 d-flex flex-column">
+                      <div className="d-flex align-items-start mb-3">
+                        <div className="bg-primary text-white rounded-circle p-2 me-3 flex-shrink-0">
+                          <FiFileText size={18} />
+                        </div>
+                        <div className="flex-grow-1 min-width-0">
+                          <h5 className="mb-1 fw-bold text-truncate" title={lesson.title}>
+                            {lesson.title}
+                          </h5>
+                          <small className="text-muted">
+                            Lesson #{index + 1}
+                          </small>
+                        </div>
                       </div>
-                      <div className="flex-grow-1 min-width-0">
-                        <h5 className="mb-1 fw-bold text-truncate" title={lesson.title}>
-                          {lesson.title}
-                        </h5>
-                        <small className="text-muted">
-                          Lesson #{index + 1}
-                        </small>
+                      
+                      {lesson.content && (
+                        <div className="flex-grow-1 mb-3">
+                          <p className="text-muted mb-0" style={{ 
+                            fontSize: '0.9rem',
+                            lineHeight: '1.4',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}>
+                            {lesson.content}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="d-flex align-items-center justify-content-between mt-auto pt-2 border-top">
+                        <Badge bg="primary" className="px-2 py-1">
+                          <FiBookOpen size={12} className="me-1" />
+                          Lesson
+                        </Badge>
+                        <div className="text-primary d-flex align-items-center">  
+                          <span className="me-2 small text-muted">Start</span>
+                          <FiPlay size={18} />
+                        </div>
                       </div>
-                    </div>
-                    
-                    {/* Lesson Content Preview */}
-                    {lesson.content && (
-                      <div className="flex-grow-1 mb-3">
-                        <p className="text-muted mb-0" style={{ 
-                          fontSize: '0.9rem',
-                          lineHeight: '1.4',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden'
-                        }}>
-                          {lesson.content}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Lesson Footer */}
-                    <div className="d-flex align-items-center justify-content-between mt-auto pt-2 border-top">
-                      <Badge bg="primary" className="px-2 py-1">
-                        <FiBookOpen size={12} className="me-1" />
-                        Lesson
-                      </Badge>
-                      <div className="text-primary d-flex align-items-center">
-                        <span className="me-2 small text-muted">Start</span>
-                        <FiPlay size={18} />
-                      </div>
-                    </div>
-                  </Card.Body>
-                </Card>
-              </motion.div>
-            </div>
-          ))}
+                    </Card.Body>
+                  </Card>
+                </motion.div>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Custom CSS for hover effects */}
       <style jsx>{`
         .cursor-pointer {
           cursor: pointer;

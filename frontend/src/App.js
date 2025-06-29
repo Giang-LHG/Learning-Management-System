@@ -4,10 +4,11 @@ import { Routes, Route, Navigate } from 'react-router-dom'; // Added Navigate im
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider } from 'react-redux';
 import store from './store/store';
-
-// --- layouts ---
-import MainLayout from './layouts/MainLayout.jsx';
-import AuthLayout from './layouts/AuthLayout.jsx';
+// --- Header----
+import Header from './components/header/Header.js';
+// --- Layouts ---
+import MainLayout from './Layouts/MainLayout.jsx';
+import AuthLayout from './Layouts/AuthLayout.jsx';
 
 // --- Components ---
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
@@ -58,7 +59,8 @@ import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 const queryClient = new QueryClient();
 
 import SubjectOverView from './components/parent/SubjectOverView';
-import SideBarParent from './layouts/parent/SideBarParent';
+import SideBarParent from './Layouts/parent/SideBarParent';
+import SidebarParent from './Layouts/parent/SideBarParent';
 function App() {
   return (
     <Provider store={store}>
@@ -133,18 +135,19 @@ function App() {
           {/* Student Routes - Chỉ cho phép student */}
           <Route path="/student" element={
             <ProtectedRoute allowedRoles={['student']}>
+              <Header />
               <SidebarStudent />
             </ProtectedRoute>
           }>
             <Route index element={<Navigate to="subjects" replace />} />
             <Route path="subjects" element={<StudentSubjects />} />
             <Route path="courses" element={<CourseListStudent />} />
-            <Route path="course/:courseId" element={<CourseDetail />} />
+            <Route path="subject/:subjectId/course/:courseId" element={<CourseDetail />} />
             <Route path="course/:courseId/module/:moduleId" element={<ModuleDetailStudent />} />
             <Route path="course/:courseId/module/:moduleId/lesson/:lessonId" element={<LessonDetailStudent />} />
             <Route path="assignments/:courseId" element={<AssignmentList />} />
             <Route path="quiz/:assignmentId" element={<QuizList />} />
-            <Route path="grades/:courseId" element={<GradeOverview />} />
+            <Route path="subject/:subjectId/grades/:courseId" element={<GradeOverview />} />
             <Route path="appeals" element={<AppealListStudent />} />
             <Route path="appeal/:submissionId" element={<AppealFormStudent />} />
 
@@ -160,11 +163,14 @@ function App() {
           </Route>
 
           {/* Parent Dashboard - Chỉ cho phép parent */}
-          <Route path="/" element={<Navigate to="/student/subjects" replace />} />
-          <Route path="/parent" element={<SideBarParent />} >
-            <Route path="dashboard" element={<ParentStatsDashboard />} />
-            <Route path="subjects" element={<SubjectOverView />} />
-          </Route>
+     
+        <Route path="/parent" element={ <ProtectedRoute allowedRoles={['parent']}>
+              <Header />
+              <SidebarParent />
+            </ProtectedRoute>} >
+  <Route path="dashboard" element={<ParentStatsDashboard />} />
+  <Route path="subjects" element={<SubjectOverView />} />
+</Route>
 
           {/* --- INSTRUCTOR ROUTES --- */}
           <Route path="/instructor/" element={< InstructorDashboard />} />
@@ -179,6 +185,19 @@ function App() {
           <Route path="/instructor/course/:courseId/deadlines" element={<DeadlineScheduler />} />
           <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard1 />} />
           <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
+
+{/* --- INSTRUCTOR ROUTES --- */}
+        <Route path="/instructor/course" element={< CourseList />} />
+        <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
+        <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />
+        <Route path="/instructor/submission/:submissionId/grade" element={<GradeSubmission />} />
+        <Route path="/instructor/appeals" element={<InstructorAppealList />} />
+        <Route path="/instructor/appeal/review/:submissionId/:appealId" element={<ReviewAppeal />} />
+        <Route path="/instructor/course/:courseId/participants" element={<CourseParticipantsList />} />
+        <Route path="/instructor/course/:courseId/edit" element={<CourseEditor />} />
+        <Route path="/instructor/course/:courseId/deadlines" element={<DeadlineScheduler />} />
+        <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard1 />} />
+        <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
           {/* Fallback Route for Page Not Found */}
           <Route
             path="*"

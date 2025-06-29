@@ -118,7 +118,8 @@ exports.getCoursesBySubjectForStudent = async (req, res) => {
 
     //  Lấy tất cả courses của subject
     const courses = await Course.find({ subjectId })
-      .select('_id title term credits')
+      .select('_id title term credits startDate endDate')
+       .populate('subjectId', 'name code description') 
       .lean();
     if (!courses.length) {
       return res.json({
