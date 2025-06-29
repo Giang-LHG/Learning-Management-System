@@ -42,6 +42,7 @@ import AnalyticsDashboard1 from './components/Instructor/AnalyticsDashboard';
 import AssignmentCreate from './components/Instructor/AssignmentCreate';
 import CourseList from './components/Instructor/CourseList1';
 import CourseDetail1 from './components/Instructor/CourseDetail1';
+import InstructorDashboard from './components/Instructor/InstructorDashboard';
 
 // --- Pages/Components for Student ---
 import StudentSubjects from './components/Student/StudentSubjects';
@@ -174,7 +175,7 @@ function App() {
 </Route>
 
           {/* --- INSTRUCTOR ROUTES --- */}
-          {/* <Route path="/instructor/" element={< InstructorDashboard />} /> */}
+          <Route path="/instructor/" element={< InstructorDashboard />} />
           <Route path="/instructor/course" element={< CourseList />} />
           <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
           <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />
@@ -188,7 +189,7 @@ function App() {
           <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
 
 {/* --- INSTRUCTOR ROUTES --- */}
-        {/* <Route path="/instructor/course" element={< CourseList />} />  */}
+        <Route path="/instructor/course" element={< CourseList />} /> 
         <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
         <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />
         <Route path="/instructor/submission/:submissionId/grade" element={<GradeSubmission />} />
