@@ -214,24 +214,7 @@ const ParentStatsDashboard = () => {
       {/* Header */}
       <div style={{ backgroundColor: '#0d6efd', color: 'white', padding: '2rem' }}>
         <Container>
-          <div className="d-flex align-items-center justify-content-between mb-3">
-            <div className="d-flex align-items-center">
-              <ArrowLeft size={20} className="me-2" style={{ cursor: 'pointer' }} />
-              <small>Back to Dashboard</small>
-            </div>
-            <Dropdown>
-              <Dropdown.Toggle variant="light" size="sm" className="d-flex align-items-center">
-                <User size={16} className="me-2" />
-                {user?.profile?.fullName || user?.username || 'Parent'}
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.Item onClick={handleLogout} className="text-danger">
-                  <LogOut size={16} className="me-2" />
-                  Logout
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          </div>
+          
           <h1 className="h2 mb-2">Student Progress Overview</h1>
           <p className="text-light">Track your children's academic performance</p>
           <div className="d-flex align-items-center mt-3">

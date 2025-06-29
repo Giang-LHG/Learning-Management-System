@@ -59,6 +59,7 @@ const queryClient = new QueryClient();
 
 import SubjectOverView from './components/parent/SubjectOverView';
 import SideBarParent from './Layouts/parent/SideBarParent';
+import SidebarParent from './Layouts/parent/SideBarParent';
 function App() {
   return (
     <Provider store={store}>
@@ -161,11 +162,15 @@ function App() {
           </Route>
 
           {/* Parent Dashboard - Chỉ cho phép parent */}
-         <Route path="/" element={<Navigate to="/student/subjects" replace />} />
-        <Route path="/parent" element={<SideBarParent />} >
-        <Route path="dashboard" element={<ParentStatsDashboard />} />
-        <Route path="subjects" element={<SubjectOverView />} />
-        </Route>
+     
+        <Route path="/parent" element={ <ProtectedRoute allowedRoles={['parent']}>
+              <Header />
+              <SidebarParent />
+            </ProtectedRoute>} >
+  <Route path="dashboard" element={<ParentStatsDashboard />} />
+  <Route path="subjects" element={<SubjectOverView />} />
+</Route>
+
 
 {/* --- INSTRUCTOR ROUTES --- */}
         <Route path="/instructor/course" element={< CourseList />} />

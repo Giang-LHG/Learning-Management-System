@@ -33,9 +33,23 @@ console.log("student",students);
         .lean();
 
       const assignments = await Assignment.find({})
-        .select('_id courseId')
-        .lean();
+  .select('_id courseId term') // đảm bảo có trường term
+  .lean();
 
+let totalAssignCount = 0;
+
+for (let e of enrolls) {
+  const courseId = e.courseId.toString();
+  const term = e.term;
+
+  // Lọc assignment đúng course + đúng term
+  const assignInThisTerm = assignments.filter(
+     a => a.courseId.toString() === courseId && Array.isArray(a.term) && a.term.includes(term)
+  );
+
+  totalAssignCount += assignInThisTerm.length;
+}
+console.log("totalAssignCount",totalAssignCount);
       const totalCourses = enrolls.length;
 
       const gradedSubs = submissions.filter(s => s.grade && s.grade.score != null);
@@ -62,7 +76,6 @@ console.log("student",students);
 const avgGrade = creditSum ? +avg.toFixed(2) : null; 
 
       const completedCount = gradedSubs.length;
-      const totalAssignCount = assignments.length;
       const completionRate = totalAssignCount
         ? (completedCount / totalAssignCount * 100).toFixed(1) + '%'
         : 'N/A';
