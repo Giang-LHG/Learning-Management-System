@@ -81,12 +81,10 @@ export default function GradeOverview() {
   const [availableTerms, setAvailableTerms] = useState([]);
   const [selectedTerm, setSelectedTerm] = useState("all");
 
-  // Course navigation states
   const [allCourses, setAllCourses] = useState([]);
   const [currentCourseIndex, setCurrentCourseIndex] = useState(-1);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
 
-  // Fetch all courses for navigation
   const fetchCourses = useCallback(async () => {
     if (!studentId || !subjectId) return;
     
@@ -98,7 +96,6 @@ export default function GradeOverview() {
         const courses = [...sameTerm, ...otherTerms, ...noneEnrolled];
         setAllCourses(courses);
         
-        // Find current course index
         const currentIndex = courses.findIndex(course => course._id === courseId);
         setCurrentCourseIndex(currentIndex);
       }
@@ -121,7 +118,6 @@ export default function GradeOverview() {
         setPreTermSubmissions(previousTermData);
         setFilteredPreTerm(previousTermData);
 
-        // Separate graded and pending submissions for current term
         const graded = currentTermData.filter(s => s.grade?.score != null);
         const pending = currentTermData.filter(s => s.grade?.score == null);
         
@@ -235,7 +231,6 @@ export default function GradeOverview() {
     return "danger";
   };
 
-  // Navigation functions
   const goToPreviousCourse = () => {
     if (currentCourseIndex > 0) {
       const prevCourse = allCourses[currentCourseIndex - 1];
@@ -501,7 +496,6 @@ export default function GradeOverview() {
                   </div>
                 </Card.Body>
 
-                {/* Enhanced Hover Effect with Term Color */}
                 <div 
                   className="position-absolute top-0 start-0 w-100 h-100" 
                   style={{ 
@@ -554,7 +548,6 @@ export default function GradeOverview() {
           </Button>
         </motion.div>
 
-        {/* Course Navigation */}
         {renderCourseNavigation()}
 
         <motion.div
@@ -613,7 +606,6 @@ export default function GradeOverview() {
                   </div>
                 </Col>
                 
-                {/* Term Filter - Only show for previous tab */}
                 {activeTab === 'previous' && availableTerms.length > 0 && (
                   <Col md={3}>
                     <InputGroup size="lg" className="shadow-sm">
@@ -657,7 +649,6 @@ export default function GradeOverview() {
           </Card>
         </motion.div>
 
-        {/* Updated Tab Navigation */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -718,7 +709,6 @@ export default function GradeOverview() {
           </Card>
         </motion.div>
 
-        {/* Term Statistics - Only show for previous tab */}
         {renderTermStatistics()}
 
         {isLoading ? (

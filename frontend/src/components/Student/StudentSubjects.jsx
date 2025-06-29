@@ -188,20 +188,50 @@ export default function StudentSubjects() {
   const handleSearch = () => {
     console.log("Searching for:", searchQuery);
   };
-
+const getCodeBoxColor = (code,name) => {
+  const colors = [
+    '#6366f1', 
+    '#8b5cf6',
+    '#ec4899', 
+    '#f59e0b', 
+    '#10b981', 
+    '#3b82f6', 
+    '#ef4444', 
+    '#84cc16', 
+    '#f97316', 
+    '#06b6d4', 
+  ];
+  
+  if (!code) return colors[0];
+  const index = (code.length * name.length) % colors.length;
+  return colors[index];
+};
   const renderCards = (list, variant, btnVariant, flag, showCompletionDate = false) => (
     <Row xs={1} sm={2} md={3} lg={4} className="g-3">
       {list.map(sub => (
         <Col key={sub._id}>
           <Card className={`h-100 border-${variant}`}>
+                  <div
+    className="text-white p-3 position-relative rounded-top"
+    style={{
+      background: getCodeBoxColor(sub.code, sub.name), 
+      minHeight: '100px', 
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '1.5rem',
+      fontWeight: 'bold',
+    }}
+  >
+    {sub.code || 'NO-CODE'}
+
+  </div>
             <Card.Body className="d-flex flex-column">
               <Card.Title className="d-flex align-items-center">
                 {showCompletionDate ? <FiClock className="me-2" /> : <FiBookOpen className="me-2" />}
                 {sub.name}
               </Card.Title>
-              <Card.Subtitle className="mb-2 text-muted">
-                Code: {sub.code || '—'}
-              </Card.Subtitle>
+          
              
               <Button
                 variant={btnVariant}

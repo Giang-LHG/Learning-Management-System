@@ -512,7 +512,7 @@ export default function CourseList() {
                             )}
                           </div>
                           
-                          {/* Course Info */}
+                
                           <div className="mb-3 flex-grow-1">
                             {c.term && (
                               <Card.Text className="text-muted mb-1 small">
@@ -525,12 +525,15 @@ export default function CourseList() {
                                 <strong>Credits:</strong> {c.credits}
                               </Card.Text>
                             )}
-                            
                            
-                            
                             {c.startDate && (
-                              <Card.Text className="text-muted small">
+                              <Card.Text className="text-muted mb-1 small">
                                 <strong>Start:</strong> {new Date(c.startDate).toLocaleDateString()}
+                              </Card.Text>
+                            )}
+                             {c.endDate && (
+                              <Card.Text className="text-muted small">
+                                <strong>End:</strong> {new Date(c.endDate).toLocaleDateString()}
                               </Card.Text>
                             )}
                           </div>
