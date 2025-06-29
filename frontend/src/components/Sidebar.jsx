@@ -43,9 +43,9 @@ const Sidebar = ({ collapsed }) => {
       label: 'Generate Report',
     },
     {
-      key: '/settings',
+      key: '/profile',
       icon: <SettingOutlined />,
-      label: 'Settings',
+      label: 'Profile',
     },
   ];
 

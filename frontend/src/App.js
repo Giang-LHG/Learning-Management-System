@@ -27,21 +27,9 @@ import UserManagementPage from './pages/UserManagementPage.jsx';
 import SubjectManagerPage from './pages/SubjectManagerPage.jsx';
 import AnalyticsDashboard from './pages/AnalyticsDashboard.jsx';
 import ReportGeneratorPage from './pages/ReportGeneratorPage.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
 import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
-// --- Pages/Components for Instructor ---
-import InstructorDashboard from './components/Instructor/InstructorDashboard.jsx';
-import InstructorSubmissionList from './components/Instructor/InstructorSubmissionList';
-import GradeSubmission from './components/Instructor/GradeSubmission';
-import InstructorAppealList from './components/Instructor/InstructorAppealList';
-import ReviewAppeal from './components/Instructor/ReviewAppeal';
-import CourseParticipantsList from './components/Instructor/CourseParticipantsList';
-import DeadlineScheduler from './components/Instructor/DeadlineScheduler';
-import CourseEditor from './components/Instructor/CourseEditor';
-import AnalyticsDashboard1 from './components/Instructor/AnalyticsDashboard';
-import AssignmentCreate from './components/Instructor/AssignmentCreate';
-import CourseList from './components/Instructor/CourseList1';
-import CourseDetail1 from './components/Instructor/CourseDetail1';
+import Profile from './pages/Profile.jsx';
+
 // --- Pages/Components for Student ---
 import StudentSubjects from './components/Student/StudentSubjects';
 import CourseListStudent from './components/Student/CourseListStudent';
@@ -120,17 +108,17 @@ function App() {
                 <ReportGeneratorPage />
               </ProtectedRoute>
             } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            } />
             <Route path="/change-password" element={
               <ProtectedRoute>
                 <ChangePasswordPage />
               </ProtectedRoute>
             } />
           </Route>
+             <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
 
           {/* Student Routes - Chỉ cho phép student */}
           <Route path="/student" element={
