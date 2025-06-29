@@ -224,13 +224,7 @@ export default function AppealForm() {
                         </span>
                       </div>
                       
-                      {/* Chỉ hiển thị đáp án đúng khi đã có điểm */}
-                      {hasGrade && (
-                        <div>
-                          <span className="text-muted">Correct answer:</span> 
-                          <span className="ms-2 text-success fw-bold">{q.correctOption}</span>
-                        </div>
-                      )}
+                   
                       
                       {/* Thông báo khi chưa có điểm */}
                       {!hasGrade && (
