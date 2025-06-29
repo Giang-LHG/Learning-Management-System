@@ -108,38 +108,58 @@ function Header() {
         {/* Desktop Navigation */}
         <nav className="desktop-nav">
           <ul className="nav-links">
-            <li>
-              <Link
-                to="/"
-                className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
-              >
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/courses"
-                className={`nav-link ${location.pathname === '/courses' ? 'active' : ''}`}
-              >
-                Courses
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/instructors"
-                className={`nav-link ${location.pathname === '/instructors' ? 'active' : ''}`}
-              >
-                Instructors
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/pricing"
-                className={`nav-link ${location.pathname === '/pricing' ? 'active' : ''}`}
-              >
-                Pricing
-              </Link>
-            </li>
+            {["admin", "parent", "student", "instructor"].includes(user.role || '') && (<>
+              <li>
+                <Link
+                  to="/"
+                  className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
+                >
+                  Home
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  to="/pricing"
+                  className={`nav-link ${location.pathname === '/pricing' ? 'active' : ''}`}
+                >
+                  Pricing
+                </Link>
+              </li>
+            </>)}
+
+            {["admin", "student", "instructor"].includes(user.role || '') && (<>
+              <li>
+                <Link
+                  to="/"
+                  className={`nav-link ${location.pathname === '/subject' ? 'active' : ''}`}
+                >
+                  subjects
+                </Link>
+              </li>
+            </>)}
+
+            {["admin", "student", "instructor"].includes(user.role || '') && (<>
+              <li>
+                <Link
+                  to="/courses"
+                  className={`nav-link ${location.pathname === '/courses' ? 'active' : ''}`}
+                >
+                  Courses
+                </Link>
+              </li>
+            </>)}
+
+            {["admin"].includes(user.role || '') && (<>
+              <li>
+                <Link
+                  to="/instructors"
+                  className={`nav-link ${location.pathname === '/instructors' ? 'active' : ''}`}
+                >
+                  Instructors
+                </Link>
+              </li>
+            </>)}
           </ul>
         </nav>
 
