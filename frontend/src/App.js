@@ -25,8 +25,8 @@ import UserManagementPage from './pages/UserManagementPage.jsx';
 import SubjectManagerPage from './pages/SubjectManagerPage.jsx';
 import AnalyticsDashboard from './pages/AnalyticsDashboard.jsx';
 import ReportGeneratorPage from './pages/ReportGeneratorPage.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
 import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
+import Profile from './pages/Profile.jsx';
 
 // --- Pages/Components for Student ---
 import StudentSubjects from './components/Student/StudentSubjects';
@@ -105,17 +105,17 @@ function App() {
                 <ReportGeneratorPage />
               </ProtectedRoute>
             } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            } />
             <Route path="/change-password" element={
               <ProtectedRoute>
                 <ChangePasswordPage />
               </ProtectedRoute>
             } />
           </Route>
+             <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
 
           {/* Student Routes - Chỉ cho phép student */}
           <Route path="/student" element={
