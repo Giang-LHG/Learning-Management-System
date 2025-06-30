@@ -285,7 +285,7 @@ const InstructorDashboard = () => {
                                     Giảng Viên
                                 </Title>
                                 <Text style={{ color: "#E0E7FF", fontSize: "16px" }}>
-                                    Chào mừng trở lại, {mockData.instructor.name}
+                                    Chào mừng trở lại
                                 </Text>
                             </div>
                             {/* <div className="welcome-actions">
