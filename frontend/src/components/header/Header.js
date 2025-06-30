@@ -131,7 +131,7 @@ function Header() {
             {["admin", "student", "instructor"].includes(user?.role || '') && (<>
               <li>
                 <Link
-                  to="/"
+                  to="/student/subjects"
                   className={`nav-link ${location.pathname === '/subject' ? 'active' : ''}`}
                 >
                   subjects
@@ -139,7 +139,7 @@ function Header() {
               </li>
             </>)}
 
-            {["admin", "student", "instructor"].includes(user?.role || '') && (<>
+            {["admin", "instructor"].includes(user?.role || '') && (<>
               <li>
                 <Link
                   to="/courses"
@@ -148,15 +148,31 @@ function Header() {
                   Courses
                 </Link>
               </li>
-            </>)}
-
-            {["admin"].includes(user?.role || '') && (<>
-              <li>
+                  <li>
                 <Link
                   to="/instructors"
                   className={`nav-link ${location.pathname === '/instructors' ? 'active' : ''}`}
                 >
                   Instructors
+                </Link>
+              </li>
+            </>)}
+
+            {["instructor"].includes(user?.role || '') && (<>
+              <li>
+                <Link
+                  to="/instructor/course/:courseId/assignments/new"
+                  className={`nav-link ${location.pathname === '/instructors' ? 'active' : ''}`}
+                >
+                  assignments
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/instructor/appeals"
+                  className={`nav-link ${location.pathname === '/instructors' ? 'active' : ''}`}
+                >
+                  Appeals
                 </Link>
               </li>
             </>)}
