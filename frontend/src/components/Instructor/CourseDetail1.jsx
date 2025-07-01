@@ -1,8 +1,25 @@
 "use client"
 
 import { useState } from "react"
-import { Container, Row, Col, Card, Button, Badge, Modal, Alert, Table, Form } from "react-bootstrap"
-import { ArrowLeft, Edit, Trash2, Calendar, User, BookOpen, GraduationCap, Users, Search, X } from "lucide-react"
+import { Container, Row, Col, Card, Button, Badge, Modal, Alert, Table, Form, Nav, Tab } from "react-bootstrap"
+import {
+    ArrowLeft,
+    Edit,
+    Trash2,
+    Calendar,
+    User,
+    BookOpen,
+    GraduationCap,
+    Users,
+    Search,
+    X,
+    Plus,
+    FileText,
+    Clock,
+    CheckCircle,
+    Eye,
+    BarChart3,
+} from "lucide-react"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import Header from "../header/Header"
@@ -65,6 +82,75 @@ const courseData = {
     createdAt: "2024-01-15T08:00:00.000Z",
     updatedAt: "2024-01-20T10:30:00.000Z",
 }
+
+// Dữ liệu mẫu assignments
+const assignmentsData = [
+    {
+        _id: "64f8a1b2c3d4e5f6a7b8c9a1",
+        courseId: "64f8a1b2c3d4e5f6a7b8c9d0",
+        title: "Bài tập React Components",
+        description: "Tạo một ứng dụng React đơn giản với các components cơ bản",
+        type: "essay",
+        dueDate: "2024-03-15T23:59:59.000Z",
+        isVisible: true,
+        term: ["Học kỳ 2", "2023-2024"],
+        createdAt: "2024-02-10T08:00:00.000Z",
+        submissions: 15,
+        totalStudents: 25,
+    },
+    {
+        _id: "64f8a1b2c3d4e5f6a7b8c9a2",
+        courseId: "64f8a1b2c3d4e5f6a7b8c9d0",
+        title: "Quiz: JavaScript ES6",
+        description: "Kiểm tra kiến thức về các tính năng mới của JavaScript ES6",
+        type: "quiz",
+        dueDate: "2024-03-20T23:59:59.000Z",
+        isVisible: true,
+        term: ["Học kỳ 2", "2023-2024"],
+        questions: [
+            {
+                questionId: "q1",
+                text: "Arrow function trong ES6 có đặc điểm gì?",
+                options: [
+                    { key: "A", text: "Không có context riêng" },
+                    { key: "B", text: "Có thể hoisting" },
+                    { key: "C", text: "Luôn return undefined" },
+                    { key: "D", text: "Không thể sử dụng với callback" },
+                ],
+                correctOption: "A",
+                points: 2,
+            },
+            {
+                questionId: "q2",
+                text: "Destructuring assignment được sử dụng để làm gì?",
+                options: [
+                    { key: "A", text: "Tạo object mới" },
+                    { key: "B", text: "Trích xuất dữ liệu từ array/object" },
+                    { key: "C", text: "Xóa thuộc tính object" },
+                    { key: "D", text: "Sao chép array" },
+                ],
+                correctOption: "B",
+                points: 2,
+            },
+        ],
+        createdAt: "2024-02-12T10:00:00.000Z",
+        submissions: 22,
+        totalStudents: 25,
+    },
+    {
+        _id: "64f8a1b2c3d4e5f6a7b8c9a3",
+        courseId: "64f8a1b2c3d4e5f6a7b8c9d0",
+        title: "Project: Todo App với React",
+        description: "Xây dựng một ứng dụng Todo hoàn chỉnh sử dụng React hooks và local storage",
+        type: "essay",
+        dueDate: "2024-04-01T23:59:59.000Z",
+        isVisible: false,
+        term: ["Học kỳ 2", "2023-2024"],
+        createdAt: "2024-02-15T14:00:00.000Z",
+        submissions: 0,
+        totalStudents: 25,
+    },
+]
 
 // Thêm dữ liệu mẫu học sinh tham gia khóa học
 const enrolledStudents = [
@@ -137,6 +223,7 @@ const enrolledStudents = [
 
 const CourseDetail = () => {
     const [course, setCourse] = useState(courseData)
+    const [assignments, setAssignments] = useState(assignmentsData)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [showStudentsModal, setShowStudentsModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
@@ -144,6 +231,7 @@ const CourseDetail = () => {
     const [searchStudent, setSearchStudent] = useState("")
     const [studentToRemove, setStudentToRemove] = useState(null)
     const [showRemoveStudentModal, setShowRemoveStudentModal] = useState(false)
+    const [activeTab, setActiveTab] = useState("overview")
     const navigate = useNavigate()
 
     const handleEdit = () => {
@@ -184,7 +272,59 @@ const CourseDetail = () => {
         }
     }
 
+    const formatDateTime = (dateString) => {
+        if (!dateString) return "Chưa xác định"
+        try {
+            return new Date(dateString).toLocaleDateString("vi-VN", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            })
+        } catch (error) {
+            console.error("Error formatting datetime:", error)
+            return "Thời gian không hợp lệ"
+        }
+    }
+
+    const isOverdue = (dueDate) => {
+        return new Date(dueDate) < new Date()
+    }
+
+    const getDaysUntilDue = (dueDate) => {
+        const now = new Date()
+        const due = new Date(dueDate)
+        const diffTime = due - now
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        return diffDays
+    }
+
+    const getAssignmentStatusBadge = (assignment) => {
+        if (!assignment.isVisible) {
+            return <Badge bg="secondary">Ẩn</Badge>
+        }
+
+        if (isOverdue(assignment.dueDate)) {
+            return <Badge bg="danger">Quá hạn</Badge>
+        }
+
+        const daysLeft = getDaysUntilDue(assignment.dueDate)
+        if (daysLeft <= 3) {
+            return <Badge bg="warning">Sắp hết hạn</Badge>
+        }
+
+        return <Badge bg="success">Đang mở</Badge>
+    }
+
+    const getSubmissionRate = (assignment) => {
+        if (assignment.totalStudents === 0) return 0
+        return Math.round((assignment.submissions / assignment.totalStudents) * 100)
+    }
+
     const totalLessons = course.modules.reduce((total, module) => total + module.lessons.length, 0)
+    const totalAssignments = assignments.length
+    const activeAssignments = assignments.filter((a) => a.isVisible && !isOverdue(a.dueDate)).length
 
     const containerStyle = {
         minHeight: "100vh",
@@ -227,22 +367,6 @@ const CourseDetail = () => {
             setStudents(students.filter((student) => student._id !== studentToRemove._id))
             setShowRemoveStudentModal(false)
             setStudentToRemove(null)
-        }
-    }
-
-    const formatDateTime = (dateString) => {
-        if (!dateString) return "Chưa xác định"
-        try {
-            return new Date(dateString).toLocaleDateString("vi-VN", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            })
-        } catch (error) {
-            console.error("Error formatting datetime:", error)
-            return "Thời gian không hợp lệ"
         }
     }
 
@@ -364,60 +488,214 @@ const CourseDetail = () => {
                                 </Card>
                             </motion.div>
 
-                            {/* Modules Card */}
+                            {/* Tabs Navigation */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5, delay: 0.2 }}
+                                transition={{ duration: 0.5, delay: 0.1 }}
                             >
                                 <Card style={cardStyle}>
-                                    <Card.Header className="border-0">
-                                        <div className="d-flex align-items-center justify-content-between">
-                                            <div className="d-flex align-items-center">
-                                                <BookOpen size={20} className="me-2" />
-                                                <Card.Title className="mb-0 h5">Nội dung khóa học</Card.Title>
-                                            </div>
-                                            <Badge bg="secondary">{course.modules.length} chương</Badge>
-                                        </div>
+                                    <Card.Header className="border-0 pb-0">
+                                        <Nav variant="tabs" activeKey={activeTab} onSelect={setActiveTab}>
+                                            <Nav.Item>
+                                                <Nav.Link eventKey="overview" className="d-flex align-items-center">
+                                                    <BookOpen size={16} className="me-2" />
+                                                    Nội dung khóa học
+                                                </Nav.Link>
+                                            </Nav.Item>
+                                            <Nav.Item>
+                                                <Nav.Link eventKey="assignments" className="d-flex align-items-center">
+                                                    <FileText size={16} className="me-2" />
+                                                    Bài tập ({totalAssignments})
+                                                </Nav.Link>
+                                            </Nav.Item>
+                                        </Nav>
                                     </Card.Header>
                                     <Card.Body>
-                                        <div className="d-grid gap-3">
-                                            {course.modules.map((module, index) => (
-                                                <div key={module.moduleId} className="p-3 rounded" style={{ background: "#f8f9fa" }}>
-                                                    <div className="d-flex justify-content-between align-items-center mb-3">
-                                                        <h6 className="fw-semibold text-dark mb-0">
-                                                            Chương {index + 1}: {module.title}
-                                                        </h6>
-                                                        <Badge bg={module.isVisible ? "success" : "secondary"}>
-                                                            {module.isVisible ? "Hiển thị" : "Ẩn"}
-                                                        </Badge>
+                                        <Tab.Content>
+                                            {/* Overview Tab */}
+                                            <Tab.Pane active={activeTab === "overview"}>
+                                                <div className="d-flex align-items-center justify-content-between mb-3">
+                                                    <div className="d-flex align-items-center">
+                                                        <BookOpen size={20} className="me-2" />
+                                                        <h5 className="mb-0">Chương trình học</h5>
                                                     </div>
-                                                    <div className="d-grid gap-2">
-                                                        {module.lessons.map((lesson, lessonIndex) => (
-                                                            <div key={lesson.lessonId} className="d-flex align-items-center">
-                                                                <div
-                                                                    className="rounded-circle d-flex align-items-center justify-content-center me-3 fw-medium small"
-                                                                    style={{
-                                                                        width: "24px",
-                                                                        height: "24px",
-                                                                        background: "#e0e7ff",
-                                                                        color: "#6366f1",
-                                                                    }}
-                                                                >
-                                                                    {lessonIndex + 1}
-                                                                </div>
-                                                                <span className="text-muted small">{lesson.title}</span>
-                                                                {!lesson.isVisible && (
-                                                                    <Badge bg="light" text="dark" className="ms-2 small">
-                                                                        Ẩn
-                                                                    </Badge>
-                                                                )}
+                                                    <Badge bg="secondary">{course.modules.length} chương</Badge>
+                                                </div>
+                                                <div className="d-grid gap-3">
+                                                    {course.modules.map((module, index) => (
+                                                        <div key={module.moduleId} className="p-3 rounded" style={{ background: "#f8f9fa" }}>
+                                                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                                                <h6 className="fw-semibold text-dark mb-0">
+                                                                    Chương {index + 1}: {module.title}
+                                                                </h6>
+                                                                <Badge bg={module.isVisible ? "success" : "secondary"}>
+                                                                    {module.isVisible ? "Hiển thị" : "Ẩn"}
+                                                                </Badge>
                                                             </div>
+                                                            <div className="d-grid gap-2">
+                                                                {module.lessons.map((lesson, lessonIndex) => (
+                                                                    <div key={lesson.lessonId} className="d-flex align-items-center">
+                                                                        <div
+                                                                            className="rounded-circle d-flex align-items-center justify-content-center me-3 fw-medium small"
+                                                                            style={{
+                                                                                width: "24px",
+                                                                                height: "24px",
+                                                                                background: "#e0e7ff",
+                                                                                color: "#6366f1",
+                                                                            }}
+                                                                        >
+                                                                            {lessonIndex + 1}
+                                                                        </div>
+                                                                        <span className="text-muted small">{lesson.title}</span>
+                                                                        {!lesson.isVisible && (
+                                                                            <Badge bg="light" text="dark" className="ms-2 small">
+                                                                                Ẩn
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </Tab.Pane>
+
+                                            {/* Assignments Tab */}
+                                            <Tab.Pane active={activeTab === "assignments"}>
+                                                <div className="d-flex align-items-center justify-content-between mb-4">
+                                                    <div className="d-flex align-items-center">
+                                                        <FileText size={20} className="me-2" />
+                                                        <h5 className="mb-0">Danh sách bài tập</h5>
+                                                    </div>
+                                                    <Button style={{ background: "#fbbf24", border: "none", color: "#000" }} size="sm">
+                                                        <Plus size={16} className="me-2" />
+                                                        Thêm bài tập
+                                                    </Button>
+                                                </div>
+
+                                                {assignments.length === 0 ? (
+                                                    <div className="text-center py-5">
+                                                        <div className="p-4 rounded-circle d-inline-flex mb-3" style={{ background: "#f8f9fa" }}>
+                                                            <FileText size={32} className="text-muted" />
+                                                        </div>
+                                                        <h5 className="text-muted mb-2">Chưa có bài tập nào</h5>
+                                                        <p className="text-muted mb-3">Tạo bài tập đầu tiên để học sinh có thể luyện tập</p>
+                                                        <Button style={{ background: "#fbbf24", border: "none", color: "#000" }}>
+                                                            <Plus size={16} className="me-2" />
+                                                            Tạo bài tập đầu tiên
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="d-grid gap-3">
+                                                        {assignments.map((assignment, index) => (
+                                                            <motion.div
+                                                                key={assignment._id}
+                                                                initial={{ opacity: 0, x: -20 }}
+                                                                animate={{ opacity: 1, x: 0 }}
+                                                                transition={{ duration: 0.3, delay: index * 0.1 }}
+                                                            >
+                                                                <Card className="border">
+                                                                    <Card.Body>
+                                                                        <Row className="align-items-center">
+                                                                            <Col md={8}>
+                                                                                <div className="d-flex align-items-start">
+                                                                                    <div
+                                                                                        className="p-2 rounded me-3 flex-shrink-0"
+                                                                                        style={{
+                                                                                            background: assignment.type === "quiz" ? "#e0f2fe" : "#f3e8ff",
+                                                                                        }}
+                                                                                    >
+                                                                                        {assignment.type === "quiz" ? (
+                                                                                            <CheckCircle size={20} style={{ color: "#0891b2" }} />
+                                                                                        ) : (
+                                                                                            <FileText size={20} style={{ color: "#7c3aed" }} />
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <div className="flex-grow-1">
+                                                                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                                                                            <h6 className="fw-semibold mb-0">{assignment.title}</h6>
+                                                                                            {getAssignmentStatusBadge(assignment)}
+                                                                                            <Badge
+                                                                                                bg={assignment.type === "quiz" ? "info" : "primary"}
+                                                                                                className="small"
+                                                                                            >
+                                                                                                {assignment.type === "quiz" ? "Trắc nghiệm" : "Tự luận"}
+                                                                                            </Badge>
+                                                                                        </div>
+                                                                                        <p className="text-muted small mb-2 lh-sm">{assignment.description}</p>
+                                                                                        <div className="d-flex align-items-center gap-3 small text-muted">
+                                                                                            <div className="d-flex align-items-center">
+                                                                                                <Clock size={14} className="me-1" />
+                                                                                                <span>
+                                                                                                    Hạn nộp: {formatDateTime(assignment.dueDate)}
+                                                                                                    {!isOverdue(assignment.dueDate) && (
+                                                                                                        <span className="ms-1">
+                                                                                                            ({getDaysUntilDue(assignment.dueDate)} ngày)
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            {assignment.type === "quiz" && assignment.questions && (
+                                                                                                <div className="d-flex align-items-center">
+                                                                                                    <FileText size={14} className="me-1" />
+                                                                                                    <span>{assignment.questions.length} câu hỏi</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </Col>
+                                                                            <Col md={4}>
+                                                                                <div className="text-end">
+                                                                                    <div className="mb-2">
+                                                                                        <div className="d-flex align-items-center justify-content-end gap-2 mb-1">
+                                                                                            <BarChart3 size={14} className="text-muted" />
+                                                                                            <span className="small text-muted">Tỷ lệ nộp bài</span>
+                                                                                        </div>
+                                                                                        <div className="d-flex align-items-center justify-content-end">
+                                                                                            <div className="progress me-2" style={{ width: "60px", height: "6px" }}>
+                                                                                                <div
+                                                                                                    className="progress-bar"
+                                                                                                    style={{
+                                                                                                        width: `${getSubmissionRate(assignment)}%`,
+                                                                                                        backgroundColor:
+                                                                                                            getSubmissionRate(assignment) >= 80
+                                                                                                                ? "#16a34a"
+                                                                                                                : getSubmissionRate(assignment) >= 50
+                                                                                                                    ? "#eab308"
+                                                                                                                    : "#dc2626",
+                                                                                                    }}
+                                                                                                />
+                                                                                            </div>
+                                                                                            <span className="small fw-medium">
+                                                                                                {assignment.submissions}/{assignment.totalStudents}(
+                                                                                                {getSubmissionRate(assignment)}%)
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="d-flex gap-1 justify-content-end">
+                                                                                        <Button variant="outline-primary" size="sm" title="Xem chi tiết">
+                                                                                            <Eye size={14} />
+                                                                                        </Button>
+                                                                                        <Button variant="outline-secondary" size="sm" title="Chỉnh sửa">
+                                                                                            <Edit size={14} />
+                                                                                        </Button>
+                                                                                        <Button variant="outline-danger" size="sm" title="Xóa">
+                                                                                            <Trash2 size={14} />
+                                                                                        </Button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Card.Body>
+                                                                </Card>
+                                                            </motion.div>
                                                         ))}
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                                                )}
+                                            </Tab.Pane>
+                                        </Tab.Content>
                                     </Card.Body>
                                 </Card>
                             </motion.div>
@@ -446,8 +724,62 @@ const CourseDetail = () => {
                                                 <span className="h4 fw-bold mb-0">{totalLessons}</span>
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center">
+                                                <span className="fw-medium">Số bài tập:</span>
+                                                <span className="h4 fw-bold mb-0">{totalAssignments}</span>
+                                            </div>
+                                            <div className="d-flex justify-content-between align-items-center">
                                                 <span className="fw-medium">Số tín chỉ:</span>
                                                 <span className="h4 fw-bold mb-0">{course.credits}</span>
+                                            </div>
+                                        </div>
+                                    </Card.Body>
+                                </Card>
+                            </motion.div>
+
+                            {/* Assignment Stats Card */}
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.5, delay: 0.4 }}
+                            >
+                                <Card style={cardStyle} className="mb-4">
+                                    <Card.Header className="border-0">
+                                        <Card.Title className="h5 mb-0 d-flex align-items-center">
+                                            <FileText size={18} className="me-2" />
+                                            Thống kê bài tập
+                                        </Card.Title>
+                                    </Card.Header>
+                                    <Card.Body>
+                                        <div className="d-grid gap-3">
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <span className="fw-medium">Đang mở:</span>
+                                                <Badge bg="success" className="fs-6">
+                                                    {activeAssignments}
+                                                </Badge>
+                                            </div>
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <span className="fw-medium">Quá hạn:</span>
+                                                <Badge bg="danger" className="fs-6">
+                                                    {assignments.filter((a) => isOverdue(a.dueDate)).length}
+                                                </Badge>
+                                            </div>
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <span className="fw-medium">Bản nháp:</span>
+                                                <Badge bg="secondary" className="fs-6">
+                                                    {assignments.filter((a) => !a.isVisible).length}
+                                                </Badge>
+                                            </div>
+                                            <hr className="my-2" />
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <span className="fw-medium">Tỷ lệ nộp bài trung bình:</span>
+                                                <span className="fw-bold text-primary">
+                                                    {assignments.length > 0
+                                                        ? Math.round(
+                                                            assignments.reduce((acc, a) => acc + getSubmissionRate(a), 0) / assignments.length,
+                                                        )
+                                                        : 0}
+                                                    %
+                                                </span>
                                             </div>
                                         </div>
                                     </Card.Body>
@@ -458,7 +790,7 @@ const CourseDetail = () => {
                             <motion.div
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.5, delay: 0.4 }}
+                                transition={{ duration: 0.5, delay: 0.5 }}
                             >
                                 <Card style={cardStyle}>
                                     <Card.Header className="border-0">

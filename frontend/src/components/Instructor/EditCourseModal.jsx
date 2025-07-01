@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Modal, Form, Button, Row, Col, Alert, Card, Accordion, Badge } from "react-bootstrap"
-import { Edit, Save, Plus, Trash2, BookOpen, Eye, EyeOff } from "lucide-react"
+import { Modal, Form, Button, Card, Row, Col, Badge, Accordion } from "react-bootstrap"
+import { Save, Plus, Trash2, Eye, EyeOff, BookOpen, Edit } from "lucide-react"
 
-const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false }) => {
+const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
     const [editForm, setEditForm] = useState({
         title: "",
         description: "",
@@ -15,24 +15,23 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
         modules: [],
     })
 
+    const [isLoading, setIsLoading] = useState(false)
     const [errors, setErrors] = useState({})
-    const [isSubmitting, setIsSubmitting] = useState(false)
 
-    // Initialize form when modal opens or courseData changes
     useEffect(() => {
-        if (show && courseData) {
+        if (courseData && show) {
             setEditForm({
                 title: courseData.title || "",
                 description: courseData.description || "",
                 startDate: courseData.startDate || "",
                 endDate: courseData.endDate || "",
                 credits: courseData.credits || 0,
-                term: Array.isArray(courseData.term) ? [...courseData.term] : [],
+                term: courseData.term || [],
                 modules: courseData.modules ? [...courseData.modules] : [],
             })
             setErrors({})
         }
-    }, [show, courseData])
+    }, [courseData, show])
 
     const formatDateForInput = (dateString) => {
         if (!dateString) return ""
@@ -71,58 +70,26 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
             newErrors.credits = "Số tín chỉ phải lớn hơn 0"
         }
 
-        // Validate modules
-        editForm.modules.forEach((module, moduleIndex) => {
-            if (!module.title.trim()) {
-                newErrors[`module_${moduleIndex}_title`] = "Tên chương là bắt buộc"
-            }
-
-            module.lessons.forEach((lesson, lessonIndex) => {
-                if (!lesson.title.trim()) {
-                    newErrors[`lesson_${moduleIndex}_${lessonIndex}_title`] = "Tên bài học là bắt buộc"
-                }
-            })
-        })
-
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
     }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-
+    const handleSave = async () => {
         if (!validateForm()) {
             return
         }
 
-        setIsSubmitting(true)
-
+        setIsLoading(true)
         try {
             await onSubmit(editForm)
-            handleClose()
+            onHide()
         } catch (error) {
-            console.error("Error updating course:", error)
-            setErrors({ general: error.message || "Có lỗi xảy ra khi cập nhật khóa học" })
+            console.error("Error saving course:", error)
         } finally {
-            setIsSubmitting(false)
+            setIsLoading(false)
         }
     }
 
-    const handleClose = () => {
-        setEditForm({
-            title: "",
-            description: "",
-            startDate: "",
-            endDate: "",
-            credits: 0,
-            term: [],
-            modules: [],
-        })
-        setErrors({})
-        onHide()
-    }
-
-    // Module management functions
     const addModule = () => {
         const newModule = {
             moduleId: Date.now().toString(),
@@ -194,27 +161,16 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
         })
     }
 
-    if (!courseData) {
-        return null
-    }
-
     return (
-        <Modal show={show} onHide={handleClose} size="xl" centered>
+        <Modal show={show} onHide={onHide} size="xl" centered>
             <Modal.Header closeButton>
                 <Modal.Title className="d-flex align-items-center">
                     <Edit size={20} className="me-2" />
-                    Chỉnh sửa khóa học - {courseData.title}
+                    Chỉnh sửa khóa học - {courseData?.title}
                 </Modal.Title>
             </Modal.Header>
-
-            <Form onSubmit={handleSubmit}>
-                <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
-                    {errors.general && (
-                        <Alert variant="danger" className="mb-3">
-                            {errors.general}
-                        </Alert>
-                    )}
-
+            <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
+                <Form>
                     {/* Basic Information */}
                     <Card className="mb-4">
                         <Card.Header>
@@ -224,9 +180,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
                             <Row>
                                 <Col md={12} className="mb-3">
                                     <Form.Group>
-                                        <Form.Label>
-                                            Tên khóa học <span className="text-danger">*</span>
-                                        </Form.Label>
+                                        <Form.Label>Tên khóa học *</Form.Label>
                                         <Form.Control
                                             type="text"
                                             value={editForm.title}
@@ -251,9 +205,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
                                 </Col>
                                 <Col md={4} className="mb-3">
                                     <Form.Group>
-                                        <Form.Label>
-                                            Số tín chỉ <span className="text-danger">*</span>
-                                        </Form.Label>
+                                        <Form.Label>Số tín chỉ *</Form.Label>
                                         <Form.Control
                                             type="number"
                                             min="1"
@@ -267,9 +219,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
                                 </Col>
                                 <Col md={4} className="mb-3">
                                     <Form.Group>
-                                        <Form.Label>
-                                            Ngày bắt đầu <span className="text-danger">*</span>
-                                        </Form.Label>
+                                        <Form.Label>Ngày bắt đầu *</Form.Label>
                                         <Form.Control
                                             type="date"
                                             value={formatDateForInput(editForm.startDate)}
@@ -281,9 +231,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
                                 </Col>
                                 <Col md={4} className="mb-3">
                                     <Form.Group>
-                                        <Form.Label>
-                                            Ngày kết thúc <span className="text-danger">*</span>
-                                        </Form.Label>
+                                        <Form.Label>Ngày kết thúc *</Form.Label>
                                         <Form.Control
                                             type="date"
                                             value={formatDateForInput(editForm.endDate)}
@@ -334,19 +282,13 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
                                                 <Row className="mb-3">
                                                     <Col md={8}>
                                                         <Form.Group>
-                                                            <Form.Label>
-                                                                Tên chương <span className="text-danger">*</span>
-                                                            </Form.Label>
+                                                            <Form.Label>Tên chương *</Form.Label>
                                                             <Form.Control
                                                                 type="text"
                                                                 value={module.title}
                                                                 onChange={(e) => updateModule(moduleIndex, "title", e.target.value)}
                                                                 placeholder="Nhập tên chương"
-                                                                isInvalid={!!errors[`module_${moduleIndex}_title`]}
                                                             />
-                                                            <Form.Control.Feedback type="invalid">
-                                                                {errors[`module_${moduleIndex}_title`]}
-                                                            </Form.Control.Feedback>
                                                         </Form.Group>
                                                     </Col>
                                                     <Col md={2}>
@@ -392,9 +334,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
                                                                 <Row>
                                                                     <Col md={6}>
                                                                         <Form.Group className="mb-2">
-                                                                            <Form.Label className="small">
-                                                                                Tên bài học <span className="text-danger">*</span>
-                                                                            </Form.Label>
+                                                                            <Form.Label className="small">Tên bài học *</Form.Label>
                                                                             <Form.Control
                                                                                 type="text"
                                                                                 size="sm"
@@ -403,11 +343,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
                                                                                     updateLesson(moduleIndex, lessonIndex, "title", e.target.value)
                                                                                 }
                                                                                 placeholder="Nhập tên bài học"
-                                                                                isInvalid={!!errors[`lesson_${moduleIndex}_${lessonIndex}_title`]}
                                                                             />
-                                                                            <Form.Control.Feedback type="invalid">
-                                                                                {errors[`lesson_${moduleIndex}_${lessonIndex}_title`]}
-                                                                            </Form.Control.Feedback>
                                                                         </Form.Group>
                                                                     </Col>
                                                                     <Col md={4}>
@@ -466,54 +402,29 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData, isLoading = false
                             )}
                         </Card.Body>
                     </Card>
-
-                    {Object.keys(errors).length > 0 && (
-                        <Alert variant="danger" className="mt-3">
-                            <strong>Vui lòng kiểm tra lại:</strong>
-                            <ul className="mb-0 mt-2">
-                                {Object.entries(errors)
-                                    .filter(([key]) => key !== "general")
-                                    .map(([key, error], index) => (
-                                        <li key={index}>{error}</li>
-                                    ))}
-                            </ul>
-                        </Alert>
-                    )}
-                </Modal.Body>
-
-                <Modal.Footer>
-                    <div className="d-flex justify-content-between w-100 align-items-center">
-                        <div className="text-muted small">
-                            {editForm.modules.length} chương •{" "}
-                            {editForm.modules.reduce((total, module) => total + module.lessons.length, 0)} bài học
-                        </div>
-                        <div className="d-flex gap-2">
-                            <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
-                                Hủy
-                            </Button>
-                            <Button
-                                type="submit"
-                                style={{ background: "#fbbf24", border: "none", color: "#000" }}
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <div className="spinner-border spinner-border-sm me-2" role="status">
-                                            <span className="visually-hidden">Loading...</span>
-                                        </div>
-                                        Đang lưu...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save size={16} className="me-2" />
-                                        Lưu thay đổi
-                                    </>
-                                )}
-                            </Button>
-                        </div>
+                </Form>
+            </Modal.Body>
+            <Modal.Footer>
+                <div className="d-flex justify-content-between w-100 align-items-center">
+                    <div className="text-muted small">
+                        {editForm.modules.length} chương •{" "}
+                        {editForm.modules.reduce((total, module) => total + module.lessons.length, 0)} bài học
                     </div>
-                </Modal.Footer>
-            </Form>
+                    <div className="d-flex gap-2">
+                        <Button variant="secondary" onClick={onHide} disabled={isLoading}>
+                            Hủy
+                        </Button>
+                        <Button
+                            style={{ background: "#fbbf24", border: "none", color: "#000" }}
+                            onClick={handleSave}
+                            disabled={isLoading}
+                        >
+                            <Save size={16} className="me-2" />
+                            {isLoading ? "Đang lưu..." : "Lưu thay đổi"}
+                        </Button>
+                    </div>
+                </div>
+            </Modal.Footer>
         </Modal>
     )
 }
