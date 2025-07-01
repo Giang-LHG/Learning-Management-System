@@ -117,18 +117,9 @@ function Header() {
                   Home
                 </Link>
               </li>
-
-              <li>
-                <Link
-                  to="/pricing"
-                  className={`nav-link ${location.pathname === '/pricing' ? 'active' : ''}`}
-                >
-                  Pricing
-                </Link>
-              </li>
             </>)}
 
-            {["admin", "student", "instructor"].includes(user?.role || '') && (<>
+            {["student"].includes(user?.role || '') && (<>
               <li>
                 <Link
                   to="/student/subjects"
@@ -143,7 +134,7 @@ function Header() {
               <li>
                 <Link
                   to="/instructor/course"
-                  className={`nav-link ${location.pathname === '/instructor/course' ? 'active' : ''}`}
+                  className={`nav-link ${location.pathname === '/courses' ? 'active' : ''}`}
                 >
                   Courses
                 </Link>
@@ -151,7 +142,7 @@ function Header() {
               <li>
                 <Link
                   to="/instructor"
-                  className={`nav-link ${location.pathname === '/instructor' ? 'active' : ''}`}
+                  className={`nav-link ${location.pathname === '/instructors' ? 'active' : ''}`}
                 >
                   Instructors
                 </Link>
