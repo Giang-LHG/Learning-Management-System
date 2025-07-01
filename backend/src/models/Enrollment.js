@@ -33,8 +33,12 @@ const EnrollmentSchema = new Schema(
       type:String,
       required:true,
       trim:true
-    }
-  },
+    },
+      studiedLessons: {
+    type: [Schema.Types.ObjectId],
+    default: []
+  }
+  }, 
   { timestamps: false }
 );
 

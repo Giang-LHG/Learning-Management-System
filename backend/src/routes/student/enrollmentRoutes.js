@@ -6,6 +6,9 @@ const enrollmentController = require('../../controllers/student/enrollmentContro
 // POST /api/student/enroll
 // Body: { studentId, courseId }
 router.post('/enroll', enrollmentController.enrollCourse);
+router.get('/study', enrollmentController.getStudiedLessons);
 router.get('/enrollments/search', enrollmentController.searchEnrollments);
 router.get('/', enrollmentController.getEnrollments);
+
+router.post('/study', enrollmentController.addStudiedLesson);
 module.exports = router;

@@ -11,7 +11,9 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiList,
-  FiEye
+  FiEye,
+  FiCheckCircle,
+  FiCircle
 } from 'react-icons/fi';
 import axios from 'axios';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -27,9 +29,12 @@ import {
   Badge,
   Dropdown,
   Collapse,
-  Alert
+  Alert,
+  Nav,
+  Tab
 } from 'react-bootstrap';
 import {useMemo} from 'react';
+
 const sortOptions = [
   { label: 'Title A→Z',       value: 'title:asc' },
   { label: 'Title Z→A',       value: 'title:desc' },
@@ -49,13 +54,17 @@ export default function CourseDetail() {
   const [course, setCourse] = useState(null);
   const [modules, setModules] = useState([]);
   const [filteredModules, setFilteredModules] = useState([]);
+  const [studiedModules, setStudiedModules] = useState([]);
+  const [notStudiedModules, setNotStudiedModules] = useState([]);
+  const [studiedLessons, setStudiedLessons] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('order');
   const [order, setOrder] = useState('asc');
   const [isLoading, setIsLoading] = useState(true);
   const [showAssignments, setShowAssignments] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
 
-const [expandedModuleId, setExpandedModuleId] = useState(null);
+  const [expandedModuleId, setExpandedModuleId] = useState(null);
   const [moduleLessons, setModuleLessons] = useState({});
   const [loadingLessons, setLoadingLessons] = useState({});
   const [currentListKey, setCurrentListKey] = useState('sameTerm');
@@ -84,20 +93,73 @@ const [expandedModuleId, setExpandedModuleId] = useState(null);
         setCoursesList(data);
         
         const keys = ['sameTerm', 'otherTerms', 'noneEnrolled'];
-      for (const key of keys) {
-        const idx = data[key].findIndex(c => c._id === courseId);
-        if (idx >= 0) {
-          setCurrentListKey(key);
-          setCurrentCourseIndex(idx);
-          break;
+        for (const key of keys) {
+          const idx = data[key].findIndex(c => c._id === courseId);
+          if (idx >= 0) {
+            setCurrentListKey(key);
+            setCurrentCourseIndex(idx);
+            break;
+          }
         }
-      }
       }
     } catch (err) {
       console.error('Error fetching courses list:', err);
     }
   }, [subjectId, courseId]);
+
   const currentList = useMemo(() => coursesList[currentListKey] || [], [coursesList, currentListKey]);
+
+  const fetchStudyProgress = useCallback(async () => {
+    try {
+      const studentId = getStudentId();
+      if (!studentId || !course) return;
+
+      const courseTerms = Array.isArray(course.term) ? course.term : [];
+      const latestTerm = courseTerms.length ? courseTerms[courseTerms.length - 1] : null;
+
+      if (!latestTerm) return;
+console.log(latestTerm);
+      const resp = await axios.get(`/api/student/enrollments/study`, {
+        params: {
+          courseId: courseId,
+          studentId: studentId,
+          term: latestTerm
+        }
+      });
+
+      if (resp.data.success) {
+        const studiedLessonIds = resp.data.data || [];
+        setStudiedLessons(studiedLessonIds);
+        
+        const studied = [];
+        const notStudied = [];
+
+        modules.forEach(module => {
+          const lessons = module.lessons || [];
+          
+          if (lessons.length === 0) {
+            notStudied.push(module);
+            return;
+          }
+
+          const allLessonsStudied = lessons.every(lesson => 
+            studiedLessonIds.includes(lesson.lessonId)
+          );
+
+          if (allLessonsStudied) {
+            studied.push(module);
+          } else {
+            notStudied.push(module);
+          }
+        });
+
+        setStudiedModules(studied);
+        setNotStudiedModules(notStudied);
+      }
+    } catch (err) {
+      console.error('Error fetching study progress:', err);
+    }
+  }, [courseId, course, modules]);
 
   const fetchCourseDetail = useCallback(async () => {
     try {
@@ -108,7 +170,6 @@ const [expandedModuleId, setExpandedModuleId] = useState(null);
         setCourse(data);
         setModules(data.modules || []);
         setFilteredModules(data.modules || []);
-        
       }
     } catch (err) {
       console.error('Error fetching course detail:', err);
@@ -116,16 +177,12 @@ const [expandedModuleId, setExpandedModuleId] = useState(null);
       setIsLoading(false);
     }
   }, [courseId]);
-console.log(modules)
-  
 
-const toggleModuleExpansion = (moduleId) => {
-  setExpandedModuleId(prev =>
-    prev === moduleId  
-      ? null
-      : moduleId     
-  );
-};
+  const toggleModuleExpansion = (moduleId) => {
+    setExpandedModuleId(prev =>
+      prev === moduleId ? null : moduleId
+    );
+  };
 
   const goToPreviousCourse = () => {
     if (currentCourseIndex > 0) {
@@ -171,15 +228,32 @@ const toggleModuleExpansion = (moduleId) => {
   }, [course, courseId]);
 
   useEffect(() => {
+    if (course && modules.length > 0) {
+      fetchStudyProgress();
+    }
+  }, [course, modules, fetchStudyProgress]);
+
+  useEffect(() => {
     let temp = [...modules];
+    
+    if (activeTab === 'studied') {
+      temp = studiedModules;
+    } else if (activeTab === 'not-studied') {
+      temp = notStudiedModules;
+    }
+    
+    // Áp dụng search
     if (searchQuery.trim()) {
       const r = new RegExp(searchQuery, 'i');
       temp = temp.filter(m => r.test(m.title));
     }
+    
+    // Áp dụng sort
     temp.sort((a, b) => {
       let A, B;
       if (sortBy === 'order') {
-        A = a.order || 0;  B = b.order || 0;
+        A = a.order || 0;  
+        B = b.order || 0;
       } else {
         A = String(a[sortBy]||'').toLowerCase();
         B = String(b[sortBy]||'').toLowerCase();
@@ -188,16 +262,32 @@ const toggleModuleExpansion = (moduleId) => {
       if (A > B) return order==='asc'? 1:-1;
       return 0;
     });
+    
     setFilteredModules(temp);
-  }, [modules, searchQuery, sortBy, order]);
+  }, [modules, studiedModules, notStudiedModules, searchQuery, sortBy, order, activeTab]);
 
   const handleSortChange = v => {
     const [f, o] = v.split(':');
-    setSortBy(f); setOrder(o);
+    setSortBy(f); 
+    setOrder(o);
   };
 
   const handleModuleClick = mid =>
     navigate(`/student/course/${courseId}/module/${mid}`);
+
+  const isModuleStudied = (moduleId) => {
+    return studiedModules.some(module => module.moduleId === moduleId);
+  };
+
+  const getLessonProgress = (lessons) => {
+    if (!lessons || lessons.length === 0) return { studied: 0, total: 0 };
+    
+    const studiedCount = lessons.filter(lesson => 
+      studiedLessons.includes(lesson.lessonId)
+    ).length;
+    
+    return { studied: studiedCount, total: lessons.length };
+  };
 
   if (isLoading) {
     return (
@@ -226,13 +316,15 @@ const toggleModuleExpansion = (moduleId) => {
   }
 
   const ModuleCard = ({ mod, idx }) => {
-    const moduleId = mod.moduleId ;
-const isExpanded = expandedModuleId === moduleId;
-  const lessons = mod.lessons || [];
-
+    const moduleId = mod.moduleId;
+    const isExpanded = expandedModuleId === moduleId;
+    const lessons = mod.lessons || [];
     const isLoadingLessons = loadingLessons[moduleId];
- const displayedLessons = lessons.slice(0, 5);
-  const hasMore = lessons.length > 5;
+    const displayedLessons = lessons.slice(0, 5);
+    const hasMore = lessons.length > 5;
+    const moduleStudied = isModuleStudied(moduleId);
+    const { studied, total } = getLessonProgress(lessons);
+
     return (
       <motion.div
         initial={{opacity:0,y:20}}
@@ -240,15 +332,31 @@ const isExpanded = expandedModuleId === moduleId;
         transition={{delay: idx*0.1}}
         whileHover={{scale:1.02}}
       >
-        <Card className="shadow-sm">
+        <Card className={`shadow-sm ${moduleStudied ? 'border-success' : 'border-warning'}`}>
           <Card.Body>
             <Row>
               <Col xs="auto" className="text-primary me-3">
-                <FiBookOpen size={24} />
+                {moduleStudied ? (
+                  <FiCheckCircle size={24} className="text-success" />
+                ) : (
+                  <FiCircle size={24} className="text-warning" />
+                )}
               </Col>
               <Col>
                 <div className="d-flex justify-content-between align-items-start mb-2">
-                  <h5 className="fw-bold mb-0">{mod.title}</h5>
+                  <div>
+                    <h5 className="fw-bold mb-0">{mod.title}</h5>
+                    <div className="d-flex align-items-center gap-2 mt-1">
+                      <Badge bg={moduleStudied ? 'success' : 'warning'} text="white">
+                        {moduleStudied ? 'Completed' : 'In Progress'}
+                      </Badge>
+                      {total > 0 && (
+                        <small className="text-muted">
+                          {studied}/{total} lessons completed
+                        </small>
+                      )}
+                    </div>
+                  </div>
                   <div className="d-flex gap-2">
                     <Button
                       variant="outline-info"
@@ -268,10 +376,8 @@ const isExpanded = expandedModuleId === moduleId;
                   </div>
                 </div>
                 
-                
                 <div className="d-flex gap-3 mb-2">
-                 
-                  {lessons.length > 0&& (
+                  {lessons.length > 0 && (
                     <small className="text-muted">
                       <FiBookOpen className="me-1" />
                       {lessons.length} lessons
@@ -279,61 +385,80 @@ const isExpanded = expandedModuleId === moduleId;
                   )}
                 </div>
 
-                {/* Lessons list */}
-              
-          <Collapse in={isExpanded}>
-            <div className="mt-3">
-              {isLoadingLessons ? (
-                <div className="text-center py-2">
-                  <Spinner size="sm" animation="border" />
-                  <small className="text-muted ms-2">Loading lessons...</small>
-                </div>
-              ) : lessons.length > 0 ? (
-                <div className="border rounded p-2 bg-light">
-                  <small className="text-muted fw-bold mb-2 d-block">
-                    Lessons:
-                  </small>
+                {/* Progress bar */}
+                {total > 0 && (
+                  <div className="mb-3">
+                    <div className="progress" style={{ height: '6px' }}>
+                      <div 
+                        className={`progress-bar ${moduleStudied ? 'bg-success' : 'bg-warning'}`}
+                        style={{ width: `${(studied / total) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
 
-                  {displayedLessons.map((lesson) => (
-                    <div
-                      key={lesson._id}
-                      className="d-flex align-items-center justify-content-between py-1 px-2 rounded hover-bg-white"
-                      onClick={() =>
-                        navigate(
-                          `/student/course/${courseId}/module/${moduleId}/lesson/${lesson.lessonId}`
-                        )
-                      }
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="d-flex align-items-center">
-                        <FiPlay size={12} className="text-primary me-2" />
-                        <small className="text-dark">{lesson.title}</small>
+                <Collapse in={isExpanded}>
+                  <div className="mt-3">
+                    {isLoadingLessons ? (
+                      <div className="text-center py-2">
+                        <Spinner size="sm" animation="border" />
+                        <small className="text-muted ms-2">Loading lessons...</small>
                       </div>
-                      <FiEye size={12} className="text-muted" />
-                    </div>
-                  ))}
+                    ) : lessons.length > 0 ? (
+                      <div className="border rounded p-2 bg-light">
+                        <small className="text-muted fw-bold mb-2 d-block">
+                          Lessons:
+                        </small>
 
-                  {hasMore && (
-                    <div className="text-center mt-2">
-                      <Button
-                        variant="link"
-                        size="sm"
-                        onClick={() =>
-                          navigate(`/student/course/${courseId}/module/${moduleId}`)
-                        }
-                      >
-                        View all {lessons.length} lessons →
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Alert variant="info" className="py-2 mb-0">
-                  <small>No lessons available for this module.</small>
-                </Alert>
-              )}
-            </div>
-          </Collapse>
+                        {displayedLessons.map((lesson) => {
+                          const isLessonStudied = studiedLessons.includes(lesson.lessonId);
+                          return (
+                            <div
+                              key={lesson.lessonId}
+                              className="d-flex align-items-center justify-content-between py-1 px-2 rounded hover-bg-white"
+                              onClick={() =>
+                                navigate(
+                                  `/student/course/${courseId}/module/${moduleId}/lesson/${lesson.lessonId}`
+                                )
+                              }
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <div className="d-flex align-items-center">
+                                {isLessonStudied ? (
+                                  <FiCheckCircle size={12} className="text-success me-2" />
+                                ) : (
+                                  <FiPlay size={12} className="text-primary me-2" />
+                                )}
+                                <small className={`${isLessonStudied ? 'text-success' : 'text-dark'}`}>
+                                  {lesson.title}
+                                </small>
+                              </div>
+                              <FiEye size={12} className="text-muted" />
+                            </div>
+                          );
+                        })}
+
+                        {hasMore && (
+                          <div className="text-center mt-2">
+                            <Button
+                              variant="link"
+                              size="sm"
+                              onClick={() =>
+                                navigate(`/student/course/${courseId}/module/${moduleId}`)
+                              }
+                            >
+                              View all {lessons.length} lessons →
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Alert variant="info" className="py-2 mb-0">
+                        <small>No lessons available for this module.</small>
+                      </Alert>
+                    )}
+                  </div>
+                </Collapse>
               </Col>
               <Col xs="auto" className="text-primary">
                 <Button
@@ -372,7 +497,7 @@ const isExpanded = expandedModuleId === moduleId;
             </Button>
             <Button
               variant="outline-secondary"
-              disabled={currentCourseIndex >= coursesList.sameTerm.length - 1}
+              disabled={currentCourseIndex >= currentList.length - 1}
               onClick={goToNextCourse}
             >
               Next Course <FiChevronRight className="ms-1" />
@@ -381,21 +506,20 @@ const isExpanded = expandedModuleId === moduleId;
         </div>
       </motion.div>
 
-      {coursesList.sameTerm.length > 1 && (
+      {currentList.length > 1 && (
         <motion.div initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}}>
           <Alert variant="info" className="mb-4">
             <div className="d-flex justify-content-between align-items-center">
               <small>
                 Course {currentCourseIndex + 1} of {currentList.length}
                 {currentListKey==='noneEnrolled' && ' (not enrolled)'}
-                {currentListKey==='otherTerms' && ' (enrolled  in other terms)'}
-              {currentListKey==='sameTerm' && ' (enroll in same term)'}
-                
+                {currentListKey==='otherTerms' && ' (enrolled in other terms)'}
+                {currentListKey==='sameTerm' && ' (enrolled in same term)'}
               </small>
               <div className="progress" style={{ width: '200px', height: '4px' }}>
                 <div 
                   className="progress-bar" 
-                  style={{ width: `${((currentCourseIndex + 1) / coursesList.sameTerm.length) * 100}%` }}
+                  style={{ width: `${((currentCourseIndex + 1) / currentList.length) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -419,7 +543,15 @@ const isExpanded = expandedModuleId === moduleId;
             <div className="d-flex flex-wrap gap-2">
               <Badge bg="light" text="dark">
                 <FiBookOpen className="me-1" />
-                {filteredModules.length} Modules
+                {modules.length} Modules
+              </Badge>
+              <Badge bg="light" text="dark">
+                <FiCheckCircle className="me-1" />
+                {studiedModules.length} Completed
+              </Badge>
+              <Badge bg="light" text="dark">
+                <FiCircle className="me-1" />
+                {notStudiedModules.length} In Progress
               </Badge>
               {course.duration && (
                 <Badge bg="light" text="dark">
@@ -456,7 +588,6 @@ const isExpanded = expandedModuleId === moduleId;
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </Form.Select>
-                
                 </InputGroup>
               </Col>
             </Row>
@@ -464,12 +595,42 @@ const isExpanded = expandedModuleId === moduleId;
         </Card>
       </motion.div>
 
+      <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.2}}>
+        <Nav variant="tabs" className="mb-4">
+          <Nav.Item>
+            <Nav.Link 
+              active={activeTab === 'all'} 
+              onClick={() => setActiveTab('all')}
+              className="d-flex align-items-center"
+            >
+              <FiBookOpen className="me-2" />
+              All Modules ({modules.length})
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeTab === 'studied'} 
+              onClick={() => setActiveTab('studied')}
+              className="d-flex align-items-center"
+            >
+              <FiCheckCircle className="me-2" />
+              Completed ({studiedModules.length})
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeTab === 'not-studied'} 
+              onClick={() => setActiveTab('not-studied')}
+              className="d-flex align-items-center"
+            >
+              <FiCircle className="me-2" />
+              In Progress ({notStudiedModules.length})
+            </Nav.Link>
+          </Nav.Item>
+        </Nav>
+      </motion.div>
+
       <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.3}}>
-        <h4 className="mb-3">
-          <FiBookOpen className="me-2" />
-          All Modules ({filteredModules.length})
-        </h4>
-        
         {filteredModules.length === 0 ? (
           <Card className="text-center py-5">
             <FiBookOpen size={48} className="text-muted mb-3" />

@@ -86,14 +86,14 @@ const hasEnrolledSibling = await Enrollment.exists({
   courseId: { $in: siblingIds }
 });
 if (hasEnrolledSibling) {
-  const newEnrollment = await Enrollment.create({ studentId, courseId, enrolledAt: new Date(), term: courseTerm,subjectId:subject._id });
+  const newEnrollment = await Enrollment.create({ studentId, courseId, enrolledAt: new Date(), term: courseTerm,subjectId:subject._id ,studiedLessons:[] });
   return res.status(201).json({ success: true, data: newEnrollment });
 }
     const prereqSubjectIds = subject.prerequisites || [];
 
     // 5. Nếu không có prerequisites, cho enroll luôn
     if (!prereqSubjectIds.length) {
-      const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(), term: courseTerm ,subjectId:subject._id});
+      const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(), term: courseTerm ,subjectId:subject._id,studiedLessons:[] });
       await newEnrollment.save();
       return res.status(201).json({ success: true, data: newEnrollment });
     }
@@ -224,7 +224,7 @@ if (subjectAvg <= 4) {
 }
 
     // 7. Nếu đã vượt qua tất cả điều kiện prerequisite, tạo enrollment
-    const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(),term:courseTerm,subjectId:subject._id });
+    const newEnrollment = new Enrollment({ studentId, courseId, enrolledAt: new Date(),term:courseTerm,subjectId:subject._id,studiedLessons:[] });
     await newEnrollment.save();
     return res.status(201).json({ success: true, data: newEnrollment });
   } catch (err) {
@@ -314,5 +314,82 @@ exports.getEnrollments = async (req, res) => {
       success: false,
       message: 'Server error while fetching enrollments.'
     });
+  }
+};
+exports.addStudiedLesson = async (req, res) => {
+  try {
+    let { studentId, courseId, term, lessonId } = req.body;
+
+    if (![studentId, courseId, term, lessonId].every(Boolean)) {
+      return res.status(400).json({ success: false, message: 'Missing parameters' });
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(studentId) ||
+      !mongoose.Types.ObjectId.isValid(courseId) ||
+      !mongoose.Types.ObjectId.isValid(lessonId)
+    ) {
+      return res.status(400).json({ success: false, message: 'Invalid ObjectId format' });
+    }
+
+    studentId = new mongoose.Types.ObjectId(studentId);
+    courseId = new mongoose.Types.ObjectId(courseId);
+    lessonId = new mongoose.Types.ObjectId(lessonId);
+    term = term.trim(); 
+    const filter = { studentId, courseId, term };
+
+    const update = {
+      $addToSet: { studiedLessons: lessonId }
+    };
+console.log('📌 Filter about to query:', {
+  studentId: studentId.toString(),
+  courseId: courseId.toString(),
+  term
+});
+
+const exists = await Enrollment.findOne({ studentId, courseId, term }).lean();
+console.log('📋 Enrollment found manually:', exists);
+    const enrollment = await Enrollment.findOneAndUpdate(
+      filter,
+      update,
+      { new: true } 
+    ).lean();
+
+    if (!enrollment) {
+      return res.status(404).json({ success: false, message: 'Enrollment not found with given studentId, courseId, term' });
+    }
+
+    return res.json({ success: true, data: enrollment });
+  } catch (err) {
+    console.error('Error in addStudiedLesson:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+exports.getStudiedLessons = async (req, res) => {
+  try {
+    const { studentId, courseId, term } = req.query;
+    if (![studentId, courseId, term].every(Boolean) ||
+        !mongoose.Types.ObjectId.isValid(studentId) ||
+        !mongoose.Types.ObjectId.isValid(courseId)
+    ) {
+      return res.status(400).json({ success: false, message: 'Invalid query parameters' });
+    }
+
+    const enrollment = await Enrollment.findOne({
+      studentId,
+      courseId,
+      term
+    })
+    .select('studiedLessons -_id')
+    .lean();
+
+    if (!enrollment) {
+      return res.status(404).json({ success: false, message: 'Enrollment not found' });
+    }
+
+    return res.json({ success: true, data: enrollment.studiedLessons });
+  } catch (err) {
+    console.error('Error in getStudiedLessons:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
