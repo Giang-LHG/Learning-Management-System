@@ -6,7 +6,8 @@ import {
   FiBookOpen, 
   FiFileText,
   FiSkipBack,
-  FiSkipForward
+  FiSkipForward,
+  FiCheck
 } from "react-icons/fi";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +18,7 @@ import {
   Row,
   Col,
   Form,
+  Alert
 } from 'react-bootstrap';
 
 export default function LessonDetail() {
@@ -30,6 +32,12 @@ export default function LessonDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
+  
+  const [studiedLessons, setStudiedLessons] = useState([]);
+  const [currentTerm, setCurrentTerm] = useState("");
+  const [studentId, setStudentId] = useState(""); 
+  const [isMarkingComplete, setIsMarkingComplete] = useState(false);
+  const [studyError, setStudyError] = useState("");
 
   const [navigationInfo, setNavigationInfo] = useState({
     previousLesson: null,
@@ -37,7 +45,43 @@ export default function LessonDetail() {
     currentIndex: 0,
     totalLessons: 0
   });
+const getStudentId = () => {
+   
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return  user._id ;
+  };
 
+
+useEffect(() => {
+  const id = getStudentId();
+  setStudentId(id);
+}, []);
+console.log(studentId);
+  const isLessonCompleted = studiedLessons.includes(lesson?.lessonId );
+
+
+  const fetchStudiedLessons = useCallback(async () => {
+    try {
+     
+      if (!studentId || !courseId || !currentTerm){
+        console.warn("Missing studentId, courseId, or currentTerm in fetchStudiedLessons.");
+      return;}
+console.log(studentId, courseId, currentTerm);
+      const response = await axios.get('/api/student/enrollments/study', {
+        params: {
+          studentId,
+          courseId   ,
+          term: currentTerm
+        }
+      });
+      
+      if (response.data.success) {
+        setStudiedLessons(response.data.data|| []);
+      }
+    } catch (err) {
+      console.error("Error fetching studied lessons:", err);
+    }
+  }, [courseId, studentId, currentTerm]);
   const fetchLesson = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -46,14 +90,19 @@ export default function LessonDetail() {
         const courseData = courseResp.data.data;
         setCourseTitle(courseData.title);
         
+        if (courseData.term && courseData.term.length > 0) {
+          const lastTerm = courseData.term[courseData.term.length - 1];
+          setCurrentTerm(lastTerm);
+        }
+        
         const module = courseData.modules.find(
-          (m) => m.moduleId === moduleId || m._id === moduleId
+          (m) => m.moduleId === moduleId 
         );
         
         if (module) {
           setModuleTitle(module.title);
           const lessonData = module.lessons.find(
-            (l) => l.lessonId === lessonId || l._id === lessonId
+            (l) => l.lessonId === lessonId 
           );
           
           if (lessonData) {
@@ -61,7 +110,7 @@ export default function LessonDetail() {
             setNotes(""); 
             
             const currentIndex = module.lessons.findIndex(
-              (l) => l.lessonId === lessonId || l._id === lessonId
+              (l) => l.lessonId === lessonId 
             );
             setNavigationInfo({
               previousLesson: currentIndex > 0 ? module.lessons[currentIndex - 1] : null,
@@ -80,20 +129,52 @@ export default function LessonDetail() {
   }, [courseId, moduleId, lessonId]);
 
   useEffect(() => {
+    
+    
     fetchLesson();
   }, [fetchLesson]);
 
+  useEffect(() => {
+    if (currentTerm && studentId) {
+      fetchStudiedLessons();
+    }
+  }, [fetchStudiedLessons, currentTerm, studentId]);
+
+  const markLessonComplete = async () => {
+    try {
+      setIsMarkingComplete(true);
+      setStudyError("");
+      
+      const response = await axios.post('/api/student/enrollments/study', {
+        studentId,
+        courseId,
+        lessonId: lesson.lessonId ,
+        term: currentTerm
+      });
+      
+      if (response.data.success) {
+        setStudiedLessons(prev => [...prev, lesson.lessonId ]);
+      }
+    } catch (err) {
+      console.error("Error marking lesson complete:", err);
+      setStudyError("Failed to mark lesson as complete. Please try again.");
+    } finally {
+      setIsMarkingComplete(false);
+    }
+  };
+
   const goToPreviousLesson = () => {
     if (navigationInfo.previousLesson) {
-      navigate(`/student/course/${courseId}/module/${moduleId}/lesson/${navigationInfo.previousLesson.lessonId || navigationInfo.previousLesson._id}`);
+      navigate(`/student/course/${courseId}/module/${moduleId}/lesson/${navigationInfo.previousLesson.lessonId }`);
     }
   };
 
   const goToNextLesson = () => {
     if (navigationInfo.nextLesson) {
-      navigate(`/student/course/${courseId}/module/${moduleId}/lesson/${navigationInfo.nextLesson.lessonId || navigationInfo.nextLesson._id}`);
+      navigate(`/student/course/${courseId}/module/${moduleId}/lesson/${navigationInfo.nextLesson.lessonId }`);
     }
   };
+console.log(studiedLessons);
 
   if (isLoading) {
     return (
@@ -169,6 +250,12 @@ export default function LessonDetail() {
                       <span className="opacity-90">
                         Lesson {navigationInfo.currentIndex} of {navigationInfo.totalLessons}
                       </span>
+                      {isLessonCompleted && (
+                        <div className="d-flex align-items-center bg-success bg-opacity-20 px-2 py-1 rounded">
+                          <FiCheck size={16} className="me-1" />
+                          <small>Completed</small>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -232,6 +319,51 @@ export default function LessonDetail() {
                       Notes are stored locally in your browser session.
                     </Form.Text>
                   </Form.Group>
+                )}
+              </Card.Body>
+            </Card>
+          </motion.div>
+
+          {/* Lesson Completion Card */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+          >
+            <Card className="mb-4 shadow-sm border-0">
+              <Card.Body>
+                <h5 className="mb-3">Lesson Progress</h5>
+                {studyError && (
+                  <Alert variant="danger" className="mb-3">
+                    {studyError}
+                  </Alert>
+                )}
+                <div className="d-grid">
+                  <Button
+                    variant={isLessonCompleted ? "success" : "primary"}
+                    onClick={markLessonComplete}
+                    disabled={isLessonCompleted || isMarkingComplete}
+                    className="d-flex align-items-center justify-content-center"
+                  >
+                    {isMarkingComplete && (
+                      <Spinner size="sm" className="me-2" />
+                    )}
+                    {isLessonCompleted ? (
+                      <>
+                        <FiCheck className="me-2" />
+                        Completed
+                      </>
+                    ) : (
+                      "Mark as Complete"
+                    )}
+                  </Button>
+                </div>
+                {isLessonCompleted && (
+                  <div className="mt-2 text-center">
+                    <small className="text-success">
+                      Great job! You've completed this lesson.
+                    </small>
+                  </div>
                 )}
               </Card.Body>
             </Card>
