@@ -24,8 +24,9 @@ import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import Header from "../header/Header"
 import EditCourseModal from "./EditCourseModal"
+import AssignmentDetailModal from "./assignment-detail-modal"
 
-// Dữ liệu mẫu khóa học
+// Dữ liệu mẫu khóa học (giữ nguyên như cũ)
 const courseData = {
     _id: "64f8a1b2c3d4e5f6a7b8c9d0",
     title: "Lập Trình Web Nâng Cao",
@@ -83,7 +84,7 @@ const courseData = {
     updatedAt: "2024-01-20T10:30:00.000Z",
 }
 
-// Dữ liệu mẫu assignments
+// Dữ liệu mẫu assignments (giữ nguyên như cũ)
 const assignmentsData = [
     {
         _id: "64f8a1b2c3d4e5f6a7b8c9a1",
@@ -152,7 +153,7 @@ const assignmentsData = [
     },
 ]
 
-// Thêm dữ liệu mẫu học sinh tham gia khóa học
+// Thêm dữ liệu mẫu học sinh tham gia khóa học (giữ nguyên như cũ)
 const enrolledStudents = [
     {
         _id: "64f8a1b2c3d4e5f6a7b8c9e1",
@@ -232,6 +233,11 @@ const CourseDetail = () => {
     const [studentToRemove, setStudentToRemove] = useState(null)
     const [showRemoveStudentModal, setShowRemoveStudentModal] = useState(false)
     const [activeTab, setActiveTab] = useState("overview")
+
+    // Thêm state cho Assignment Detail Modal
+    const [showAssignmentDetail, setShowAssignmentDetail] = useState(false)
+    const [selectedAssignment, setSelectedAssignment] = useState(null)
+
     const navigate = useNavigate()
 
     const handleEdit = () => {
@@ -256,6 +262,12 @@ const CourseDetail = () => {
     const handleBack = () => {
         navigate(`/instructor/course`)
         console.log("Quay lại danh sách")
+    }
+
+    // Thêm handler cho xem chi tiết assignment
+    const handleViewAssignmentDetail = (assignment) => {
+        setSelectedAssignment(assignment)
+        setShowAssignmentDetail(true)
     }
 
     const formatDate = (dateString) => {
@@ -675,7 +687,12 @@ const CourseDetail = () => {
                                                                                         </div>
                                                                                     </div>
                                                                                     <div className="d-flex gap-1 justify-content-end">
-                                                                                        <Button variant="outline-primary" size="sm" title="Xem chi tiết">
+                                                                                        <Button
+                                                                                            variant="outline-primary"
+                                                                                            size="sm"
+                                                                                            title="Xem chi tiết"
+                                                                                            onClick={() => handleViewAssignmentDetail(assignment)}
+                                                                                        >
                                                                                             <Eye size={14} />
                                                                                         </Button>
                                                                                         <Button variant="outline-secondary" size="sm" title="Chỉnh sửa">
@@ -828,6 +845,14 @@ const CourseDetail = () => {
                     onHide={() => setShowEditModal(false)}
                     onSubmit={handleSaveEdit}
                     courseData={course}
+                />
+
+                {/* Assignment Detail Modal */}
+                <AssignmentDetailModal
+                    show={showAssignmentDetail}
+                    onHide={() => setShowAssignmentDetail(false)}
+                    assignment={selectedAssignment}
+                    students={students}
                 />
 
                 {/* Students List Modal */}
