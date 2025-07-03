@@ -47,4 +47,7 @@ dump/
 *.pm2.log
 
 # Optional: ignore uploads (nếu có)
+
 uploads/
+
+

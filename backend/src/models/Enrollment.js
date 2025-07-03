@@ -1,3 +1,4 @@
+
 // models/Enrollment.js
 const mongoose = require('mongoose');
 const { Schema, Types } = mongoose;
@@ -7,6 +8,11 @@ const EnrollmentSchema = new Schema(
     courseId: {
       type: Types.ObjectId,
       ref: 'Course',
+      required: true
+    },
+    subjectId: {
+      type: Types.ObjectId,
+      ref: 'Subject',
       required: true
     },
     studentId: {
@@ -22,10 +28,18 @@ const EnrollmentSchema = new Schema(
       type: String,
       enum: ['active', 'completed', 'dropped'],
       default: 'active'
-    }
-  },
+    },
+   term:{
+      type:String,
+      required:true,
+      trim:true
+    },
+      studiedLessons: {
+    type: [Schema.Types.ObjectId],
+    default: []
+  }
+  }, 
   { timestamps: false }
-  // Không cần timestamps vì chỉ lưu enrolledAt, status; nếu muốn thêm createdAt/updatedAt thì set { timestamps: true }.
 );
 
 module.exports = mongoose.model('Enrollment', EnrollmentSchema);

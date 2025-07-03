@@ -1,3 +1,4 @@
+
 // models/Submission.js
 const mongoose = require('mongoose');
 const { Schema, Types } = mongoose;
@@ -66,7 +67,7 @@ const AppealSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ['open', 'resolved'],
+      enum: ['open', 'resolved','rejected'],
       default: 'open'
     },
     comments: [CommentSchema]
@@ -86,6 +87,10 @@ const SubmissionSchema = new Schema(
       ref: 'User',
       required: true
     },
+    term: {
+        type: String,
+        required: true
+    },
     submittedAt: {
       type: Date,
       default: () => new Date()
@@ -96,7 +101,7 @@ const SubmissionSchema = new Schema(
     },
     answers: {
       type: [AnswerSchema],
-      default: undefined // Chỉ dùng khi assignment.type === 'quiz'
+      default: undefined
     },
     grade: {
       type: GradeSchema,
@@ -105,6 +110,11 @@ const SubmissionSchema = new Schema(
     appeals: {
       type: [AppealSchema],
       default: []
+    }
+     ,term:{
+      type:String,
+      required:true,
+      trim:true
     }
     // Không bật timestamps vì đã có submittedAt / grade.gradedAt / appeal.createdAt
   },

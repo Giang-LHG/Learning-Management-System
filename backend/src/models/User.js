@@ -26,10 +26,27 @@ const UserSchema = new Schema(
       enum: ['student', 'instructor', 'admin', 'parent'],
       required: true
     },
+    isActive: {
+      type: Boolean,
+      default: true
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false
+    },
+    lastLoginAt: {
+      type: Date,
+      default: null
+    },
     profile: {
       fullName: { type: String, required: true },
+      phone: { type: String, default: '' },
+      address: { type: String, default: '' },
+      bio: { type: String, default: '' },
       avatarUrl: { type: String, default: '' },
       // Chỉ có khi role === 'student'
+      studentId: { type: String, default: '' },
+      className: { type: String, default: '' },
       parentIds: [
         {
           type: Types.ObjectId,
@@ -37,12 +54,15 @@ const UserSchema = new Schema(
         }
       ],
       // Chỉ có khi role === 'instructor'
-      bio: { type: String, default: '' },
-      expertise: { type: String, default: '' }
+      department: { type: String, default: '' },
+      expertise: { type: [String], default: [] }
     }
     // timestamps sẽ tự động tạo ra createdAt / updatedAt
   },
-  { timestamps: true }
+   {
+  timestamps: true,
+  // collection: 'Users'
+}
 );
 
 module.exports = mongoose.model('User', UserSchema);

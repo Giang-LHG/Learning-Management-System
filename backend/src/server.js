@@ -1,12 +1,31 @@
+
+
 // server.js
 const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const studentRoute = require('./routes/student/index.js');
+const parentRoute = require('./routes/parent/index.js');
+const userRoutes = require('./routes/admin/userRoutes.js');
+const subjectRoutes = require('./routes/admin/subjectRoutes.js');
+const dashboardRoutes = require('./routes/admin/dashboardRoutes.js');
+const authRoutes = require('./routes/auth/authRoutes.js');
+const instructorRoute = require('./routes/instructor/index.js'); // NEW
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+// Cấu hình CORS
+app.use(cors({
+  origin: 'http://localhost:8081',
+  credentials: true, // nếu có dùng cookie, token
+}));
+
+app.use(cors());
+
+// Middleware
+app.use(express.json());
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -20,7 +39,21 @@ mongoose.connect(process.env.MONGODB_URI, {
         console.error('Error connecting to MongoDB:', error);
     });
 
-// Middleware
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/subjects', subjectRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use("/api/student/", studentRoute);
+app.use("/api/parent/", parentRoute);
+app.use("/api/student/", studentRoute);
+app.use("/api/instructor/", instructorRoute);
+// Xử lý lỗi
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Internal Server Error' });
+});
 
 
 const PORT = process.env.PORT || 8021;
