@@ -7,8 +7,8 @@ import store from './store/store';
 // --- Header----
 import Header from './components/header/Header.js';
 // --- layouts ---
-import MainLayout from './Layouts/MainLayout.jsx';
-import AuthLayout from './Layouts/AuthLayout.jsx';
+import MainLayout from './layouts/MainLayout.jsx';
+import AuthLayout from './layouts/AuthLayout.jsx';
 
 // --- Components ---
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
@@ -55,14 +55,14 @@ import QuizList from './components/Student/QuizList';
 import GradeOverview from './components/Student/GradeOverview';
 import AppealListStudent from './components/Student/AppealListStudent';
 import AppealFormStudent from './components/Student/AppealFormStudent';
-import SidebarStudent from './Layouts/Student/SideBarStudent.js';
+import SidebarStudent from './layouts/Student/SideBarStudent.js';
 import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 
 const queryClient = new QueryClient();
 
 import SubjectOverView from './components/parent/SubjectOverView';
-import SideBarParent from './Layouts/parent/SideBarParent';
-import SidebarParent from './Layouts/parent/SideBarParent';
+import SideBarParent from './layouts/parent/SideBarParent';
+import SidebarParent from './layouts/parent/SideBarParent';
 function App() {
   return (
     <Provider store={store}>
@@ -175,7 +175,7 @@ function App() {
           </Route>
 
           {/* --- INSTRUCTOR ROUTES --- */}
-          <Route path="/instructor" element={< InstructorDashboard />} />
+          <Route path="/Learning Analytics" element={< InstructorDashboard />} />
           <Route path="/instructor/course" element={< CourseList />} />
           <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
           <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />

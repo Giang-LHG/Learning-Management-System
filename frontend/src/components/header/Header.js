@@ -141,23 +141,16 @@ function Header() {
               </li>
               <li>
                 <Link
-                  to="/instructor"
-                  className={`nav-link ${location.pathname === '/instructors' ? 'active' : ''}`}
+                  to="/Learning Analytics"
+                  className={`nav-link ${location.pathname === '/Learning Analytics' ? 'active' : ''}`}
                 >
-                  Instructors
+                  Learning Analytics
                 </Link>
               </li>
             </>)}
 
             {["instructor"].includes(user?.role || '') && (<>
-              <li>
-                <Link
-                  to="/instructor/course/:courseId/assignments/new"
-                  className={`nav-link ${location.pathname === '/instructors' ? 'active' : ''}`}
-                >
-                  assignments
-                </Link>
-              </li>
+
               <li>
                 <Link
                   to="/instructor/appeals"
