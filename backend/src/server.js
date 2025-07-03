@@ -12,7 +12,7 @@ const subjectRoutes = require('./routes/admin/subjectRoutes.js');
 const dashboardRoutes = require('./routes/admin/dashboardRoutes.js');
 const authRoutes = require('./routes/auth/authRoutes.js');
 const instructorRoute = require('./routes/instructor/index.js'); // NEW
-
+const notificationRoute = require('./routes/notification/index.js');
 dotenv.config();
 
 const app = express();
@@ -49,6 +49,7 @@ app.use("/api/student/", studentRoute);
 app.use("/api/parent/", parentRoute);
 app.use("/api/student/", studentRoute);
 app.use("/api/instructor/", instructorRoute);
+app.use("/api/notifications", notificationRoute);
 // Xử lý lỗi
 app.use((err, req, res, next) => {
   console.error(err.stack);
