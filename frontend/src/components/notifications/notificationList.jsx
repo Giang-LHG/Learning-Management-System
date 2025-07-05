@@ -207,7 +207,7 @@ const NotificationList = () => {
         return 'Grade posted';
    
       case 'reportReady':
-        return 'Report ready';
+        return 'Appeal';
       default:
         return 'Other';
     }
@@ -333,6 +333,9 @@ const NotificationList = () => {
                   <option value="all">Total</option>
                   <option value="unread">Unread</option>
                   <option value="read">Read</option>
+                     <option value="newSubmission">New submissions</option>
+                  <option value="gradePosted ">Grade</option>
+                  <option value="reportReady">Appeal</option>
 
                 </Form.Select>
               </InputGroup>
@@ -377,7 +380,6 @@ const NotificationList = () => {
                       <small className="text-muted">{formatDate(notification.createdAt)}</small>
                     </div>
                     
-                    <p className="text-muted mb-3">{notification.message}</p>
 
                     <div className="d-flex gap-2 mb-3">
                       <Badge bg={getNotificationVariant(notification.type)}>

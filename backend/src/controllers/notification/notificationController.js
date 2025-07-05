@@ -16,7 +16,24 @@ exports.getNotifications = async (req, res) => {
     const notes = await Notification.find({ toUserId: userId })
       .sort({ createdAt: -1 })
       .lean();
-    return res.json({ success: true, data: notes });
+
+    const titleMap = {
+      newSubmission: 'New submission',
+      gradePosted:   'New grade',
+      reportReady:   'New appeal'
+    };
+
+    const enriched = notes.map(n => {
+      const title = titleMap[n.type] || 'Notifications';
+        const raw = JSON.stringify(n.payload.text||n.payload || {});
+  const message =
+    raw.startsWith('{') && raw.endsWith('}')
+      ? raw.slice(1, -1)
+      : raw;
+      return { ...n, title, message };
+    });
+
+    return res.json({ success: true, data: enriched });
   } catch (err) {
     console.error('Error in getNotifications:', err);
     return res.status(500).json({ success: false, message: 'Server error' });
