@@ -26,10 +26,9 @@ exports.getNotifications = async (req, res) => {
     const enriched = notes.map(n => {
       const title = titleMap[n.type] || 'Notifications';
         const raw = JSON.stringify(n.payload.text||n.payload || {});
-  const message =
-    raw.startsWith('{') && raw.endsWith('}')
-      ? raw.slice(1, -1)
-      : raw;
+    const message = Object.entries(n.payload)
+    .map(([key, val]) => `${key}: ${val}`)
+    .join('; ');
       return { ...n, title, message };
     });
 

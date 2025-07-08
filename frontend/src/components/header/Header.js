@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiMenu, FiX, FiSearch, FiUser, FiLogOut, FiLogIn } from 'react-icons/fi';
+import { FiMenu, FiX, FiSearch, FiUser, FiLogOut, FiLogIn,FiBell } from 'react-icons/fi';
 import { FaChalkboardTeacher } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
@@ -17,11 +17,37 @@ function Header() {
   const userDropdownRef = useRef(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Lấy thông tin người dùng từ Redux store
   const { user, token } = useSelector((state) => state.auth);
   const isAuthenticated = !!token;
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (isAuthenticated && user?._id) {
+        try {
+          const response = await fetch(`/api/notifications/unread-count?userId=${user._id}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          const data = await response.json();
+          if (data.success) {
+            setUnreadCount(data.data.unreadCount);
+          }
+        } catch (error) {
+          console.error('Error fetching unread count:', error);
+        }
+      }
+    };
 
+    fetchUnreadCount();
+    
+    // Fetch unread count every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user?._id, token]);
   // Đóng menu khi chuyển trang
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -83,7 +109,10 @@ function Header() {
     setMobileMenuOpen(false);
     navigate('/');
   };
-
+  const handleNotificationClick = () => {
+    setUserDropdownOpen(false);
+    navigate('/notifications');
+  };
   // Tạo avatar từ tên người dùng
   const getUserInitials = () => {
     if (!user) return '';
@@ -248,6 +277,34 @@ function Header() {
                           <FaChalkboardTeacher className="dropdown-icon" />
                           Dashboard
                         </Link>
+                      </li>
+                      <li
+                      className="dropdown-link"
+                          onClick={handleNotificationClick}>
+                       
+                          <FiBell className="dropdown-icon" />
+                          Notifications
+                          {unreadCount > 0 && (
+                            <span style={{
+                              position: 'absolute',
+                              right: '1rem',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              background: '#ef4444',
+                              color: 'white',
+                              borderRadius: '50%',
+                              width: '20px',
+                              height: '20px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              fontWeight: 600
+                            }}>
+                              {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                          )}
+                        
                       </li>
                       <li>
                         <Link to="/profile" className="dropdown-link" onClick={() => setUserDropdownOpen(false)}>

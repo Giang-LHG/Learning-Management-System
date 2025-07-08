@@ -54,9 +54,9 @@ export default function SidebarParent() {
             <Nav.Link as={Link} to="/parent/dashboard" onClick={handleClose}>
               <FiBarChart className="me-2" /> Dashboard
             </Nav.Link>
-            <Nav.Link as={Link} to="/parent/subjects" onClick={handleClose}>
-              <FiBook className="me-2" /> Subjects
-            </Nav.Link>
+     {/* <Nav.Link as={Link} to="/parent/subjects" onClick={handleClose}>
+ <FiBook className="me-2" /> Subjects
+</Nav.Link> */}
           </Nav>
         </Offcanvas.Body>
       </Offcanvas>
