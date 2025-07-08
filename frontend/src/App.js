@@ -31,6 +31,7 @@ import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
 import Profile from './pages/Profile.jsx';
 
 // --- Pages/Components for Instructor ---
+import InstructorCommunication from './components/Instructor/instructor-communication.jsx'
 import InstructorSubmissionList from './components/Instructor/InstructorSubmissionList';
 import GradeSubmission from './components/Instructor/GradeSubmission';
 import InstructorAppealList from './components/Instructor/InstructorAppealList';
@@ -61,8 +62,8 @@ import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 const queryClient = new QueryClient();
 
 import SubjectOverView from './components/parent/SubjectOverView';
-import SideBarParent from './layouts/parent/SideBarParent';
-import SidebarParent from './layouts/parent/SideBarParent';
+import SideBarParent from './layouts/parent/SideBarParent.js';
+import SidebarParent from './layouts/parent/SideBarParent.js';
 function App() {
   return (
     <Provider store={store}>
@@ -176,6 +177,7 @@ function App() {
 
           {/* --- INSTRUCTOR ROUTES --- */}
           <Route path="/Learning Analytics" element={< InstructorDashboard />} />
+          <Route path="/instructor/chat" element={< InstructorCommunication />} />
           <Route path="/instructor/course" element={< CourseList />} />
           <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
           <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />

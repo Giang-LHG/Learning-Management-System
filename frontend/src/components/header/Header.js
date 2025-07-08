@@ -159,6 +159,14 @@ function Header() {
                   Appeals
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/instructor/chat"
+                  className={`nav-link ${location.pathname === '/instructor/chat' ? 'active' : ''}`}
+                >
+                  Chat
+                </Link>
+              </li>
             </>)}
           </ul>
         </nav>
