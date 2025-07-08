@@ -39,9 +39,9 @@ export default function SidebarParent() {
           <Nav.Link as={Link} to="/parent/dashboard" className="py-2">
             <FiBarChart size={20} />
           </Nav.Link>
-          <Nav.Link as={Link} to="/parent/subjects" className="py-2">
+        {/*    <Nav.Link as={Link} to="/parent/subjects" className="py-2">
             <FiBook size={20} />
-          </Nav.Link>
+          </Nav.Link>*/}
         </Nav>
       </div>
 
