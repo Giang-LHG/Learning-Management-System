@@ -313,7 +313,7 @@ useEffect(() => {
                         color: '#1976d2'
                       }}
                     >
-                      <FiChevronDown />
+                   
                     </InputGroup.Text>
                   </InputGroup>
                 </Col>

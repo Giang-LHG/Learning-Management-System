@@ -61,8 +61,9 @@ import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 const queryClient = new QueryClient();
 
 import SubjectOverView from './components/parent/SubjectOverView';
-import SideBarParent from './layouts/parent/SideBarParent';
-import SidebarParent from './layouts/parent/SideBarParent';
+import SideBarParent from './Layouts/parent/SideBarParent';
+import SidebarParent from './Layouts/parent/SideBarParent';
+import NotificationList from './components/notifications/notificationList';
 function App() {
   return (
     <Provider store={store}>
@@ -133,7 +134,11 @@ function App() {
               <Profile />
             </ProtectedRoute>
           } />
-
+<Route path ="/notifications" element ={
+  <ProtectedRoute>
+    <NotificationList/>
+  </ProtectedRoute>
+}/>
           {/* Student Routes - Chỉ cho phép student */}
           <Route path="/student" element={
             <ProtectedRoute allowedRoles={['student']}>
