@@ -38,4 +38,11 @@ router.get('/recent-activities', [requireAuth, requireAdmin], dashboardControlle
  */
 router.get('/user-status', [requireAuth, requireAdmin], dashboardController.getUserStatusStats);
 
+/**
+ * @route POST /dashboard/generate-report
+ * @description Sinh report theo ngày và loại
+ * @access Private (Admin)
+ */
+router.post('/generate-report', [requireAuth, requireAdmin], dashboardController.generateReport);
+
 module.exports = router; 

@@ -46,7 +46,6 @@ const MainLayout = () => {
     { key: '/subjects', icon: <BookOutlined />, label: 'Subject Management' },
     { key: '/analytics', icon: <PieChartOutlined />, label: 'Analytics' },
     { key: '/reports', icon: <FileTextOutlined />, label: 'Reports' },
-    { key: '/profile', icon: <SettingOutlined />, label: 'Profile' },
   ];
 
   const userMenuItems = [

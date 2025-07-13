@@ -32,9 +32,18 @@ export async function fetchUserStatusStats() {
   return response.data;
 }
 
+/**
+ * Gửi yêu cầu sinh report
+ */
+export async function generateReport({ date, reportType }) {
+  const response = await api.post('/dashboard/generate-report', { date, reportType });
+  return response.data;
+}
+
 export default {
   fetchDashboardStats,
   fetchActivityChart,
   fetchRecentActivities,
   fetchUserStatusStats,
+  generateReport,
 }; 

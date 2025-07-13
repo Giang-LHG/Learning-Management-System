@@ -191,9 +191,58 @@ const getUserStatusStats = async (req, res) => {
   }
 };
 
+
+// Tạo report theo ngày và loại
+const generateReport = async (req, res) => {
+  try {
+    const { date, reportType } = req.body;
+    if (!date || !reportType) {
+      return res.status(400).json({ success: false, message: 'Missing date or reportType' });
+    }
+    // Tùy loại report trả về dữ liệu mẫu
+    let report = {};
+    if (reportType === 'summary') {
+      report = {
+        date,
+        totalUsers: await User.countDocuments(),
+        totalSubjects: await Subject.countDocuments(),
+        totalCourses: await Course.countDocuments(),
+        totalEnrollments: await Enrollment.countDocuments(),
+      };
+    } else if (reportType === 'activity') {
+      // Lấy số user hoạt động trong ngày
+      const start = new Date(date);
+      start.setHours(0,0,0,0);
+      const end = new Date(start);
+      end.setHours(23,59,59,999);
+      const activeUsers = await User.countDocuments({ lastLoginAt: { $gte: start, $lte: end } });
+      report = {
+        date,
+        activeUsers,
+        logins: activeUsers, // demo
+        actions: Math.floor(Math.random() * 100), // demo
+      };
+    } else if (reportType === 'revenue') {
+      // Demo: random số liệu
+      report = {
+        date,
+        totalRevenue: Math.floor(Math.random() * 10000) + 1000,
+        paidUsers: Math.floor(Math.random() * 100) + 10,
+      };
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid reportType' });
+    }
+    return res.json({ success: true, data: report });
+  } catch (err) {
+    console.error('Error generating report:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getActivityChart,
   getRecentActivities,
-  getUserStatusStats
+  getUserStatusStats,
+  generateReport,
 }; 
