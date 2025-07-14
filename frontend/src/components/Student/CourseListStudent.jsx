@@ -471,7 +471,7 @@ export default function CourseList() {
       <div className="mb-5">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="mb-0">{title}</h5>
-          <Badge bg="secondary">{courses.length} courses</Badge>
+          <Badge bg="secondary">{courses.length} khóa học</Badge>
         </div>
         
         {courses.length === 0 ? (
@@ -694,7 +694,7 @@ Quay lại danh sách môn học
           <InputGroup>
             <InputGroup.Text><FiSearch /></InputGroup.Text>
             <Form.Control
-              placeholder="Search courses..."
+              placeholder="Tìm kiếm khóa học..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />

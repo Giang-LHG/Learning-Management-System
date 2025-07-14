@@ -238,7 +238,7 @@ const getCodeBoxColor = (code,name) => {
                 className="mt-auto text-white"
                 onClick={() => goCourses(sub._id, flag)}
               >
-                {showCompletionDate ? 'Review Courses' : 'View Courses'}
+                {showCompletionDate ? 'Xem lại các khóa học ' : 'Xem các khóa học'}
               </Button>
             </Card.Body>
           </Card>
@@ -293,7 +293,7 @@ const getCodeBoxColor = (code,name) => {
       ) : (
         <div className="my-5">
           {renderRecommendationSection(
-            'Most Popular Subjects',
+            'Các môn học phổ biến nhất',
             <FiTrendingUp className="me-2" />,
             mostEnrolledSubjects,
             showMoreMostEnrolled,
@@ -303,7 +303,7 @@ const getCodeBoxColor = (code,name) => {
           )}
 
           {renderRecommendationSection(
-            'Recommended Subjects For You',
+            'Môn học khuyến nghị cho bạn',
             <FiUsers className="me-2" />,
             peerInstructorSubjects,
             showMorePeerInstructor,

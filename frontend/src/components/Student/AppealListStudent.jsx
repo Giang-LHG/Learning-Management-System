@@ -209,7 +209,7 @@ export default function AppealList() {
       if (response.data.success) {
         setCommentTexts(prev => ({ ...prev, [appealId]: "" }));
         
-        setCommentSuccess(prev => ({ ...prev, [appealId]: "Comment added successfully!" }));
+        setCommentSuccess(prev => ({ ...prev, [appealId]: "Thêm bình luận thành công!" }));
         
         await fetchAppeals();
         
@@ -500,7 +500,7 @@ Theo dõi và quản lý đơn kháng cáo điểm của bạn                  
                     <FiCheckCircle size={18} />
                   </div>
                   <div>
-                    <p className="mb-1 text-muted small">Loại bỏ</p>
+                    <p className="mb-1 text-muted small">Đã bị hủy</p>
                     <h4 className="mb-0 fw-bold">
                       {appeals.filter(a => a.appealStatus === "rejected").length}
                     </h4>
@@ -548,7 +548,12 @@ Theo dõi và quản lý đơn kháng cáo điểm của bạn                  
                                   className="d-flex align-items-center"
                                 >
                                   {getStatusIcon(appeal.appealStatus)}
-                                  <span className="text-capitalize">{appeal.appealStatus}</span>
+                              <span className="text-capitalize">
+
+  {appeal.appealStatus === 'open' && <small className="text-warning">(đang xử lý)</small>}
+  {appeal.appealStatus === 'resolved' && <small className="text-success">(đã xử lý)</small>}
+  {appeal.appealStatus === 'rejected' && <small className="text-danger">(đã hủy)</small>}
+</span>
                                 </Badge>
                               </div>
                               <p className="mb-0 text-muted">

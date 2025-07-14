@@ -363,8 +363,8 @@ const [user, setUser] = useState(null);
             <h4>No Notifications</h4>
             <p className="text-muted">
               {searchQuery || filterType !== 'all' 
-                ? 'Not found'
-                : 'When there is a new notification, you will see it here.'
+                ? 'Không tìm thấy'
+                : 'Khi có thông báo mới, bạn sẽ thấy thông báo đó ở đây.'
               }
             </p>
           </Card.Body>
@@ -513,7 +513,7 @@ Chưa đọc
         <div className="text-center mt-4">
           <Button variant="primary" onClick={loadMore}>
             <FiChevronDown className="me-2" />
-           Show more 10 notifications
+       Hiển thị thêm 10 thông báo
           </Button>
         </div>
       )}
@@ -522,7 +522,7 @@ Chưa đọc
       <div className="text-center mt-3">
         <Button variant="link" onClick={fetchNotifications}>
           <FiRefreshCw className="me-2" />
-         Reload
+        Tải lại
         </Button>
       </div>
     </Container>
