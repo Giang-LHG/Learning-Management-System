@@ -389,7 +389,7 @@ export default function AppealList() {
                 onClick={() => navigate("/student/subjects")}
               >
                 <FiArrowLeft className="me-2" size={18} />
-                Back to Courses
+                Back to Subjects
               </Button>
             </Col>
           </Row>
