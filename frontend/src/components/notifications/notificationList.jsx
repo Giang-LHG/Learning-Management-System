@@ -40,14 +40,18 @@ const NotificationList = () => {
   const [markingAsRead, setMarkingAsRead] = useState(new Set());
   const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-
+const [user, setUser] = useState(null);
   const getUserId = () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      return user._id || null;
-    } catch {
-      return null;
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUser(storedUser); 
+      return storedUser._id || null; 
     }
+    return null;
+  } catch {
+    return null;
+  }
   };
 
   const fetchNotifications = async () => {
@@ -112,11 +116,11 @@ const NotificationList = () => {
           )
         );
       } else {
-        throw new Error(data.message || 'Failed to mark notification as read');
+        throw new Error(data.message || 'Không thể đánh dấu thông báo là đã đọc');
       }
     } catch (error) {
-      console.error('Error marking notification as read:', error);
-      setError('Failed to mark notification as read');
+      console.error('Lỗi khi đánh dấu thông báo là đã đọc:', error);
+      setError('Không thể đánh dấu thông báo là đã đọc');
       
       setTimeout(() => {
         setError(null);
@@ -160,13 +164,13 @@ const NotificationList = () => {
       const hours = Math.floor(diff / (1000 * 60 * 60));
       if (hours === 0) {
         const minutes = Math.floor(diff / (1000 * 60));
-        return `${minutes} minutes ago`;
+        return `${minutes} phút trước`;
       }
-      return `${hours} hours ago`;
+      return `${hours} giờ trước`;
     } else if (days === 1) {
-      return 'Yesterday';
+      return 'Hôm qua';
     } else if (days < 7) {
-      return `${days} days ago`;
+      return `${days} ngày trước`;
     } else {
       return date.toLocaleDateString('vi-VN');
     }
@@ -202,14 +206,14 @@ const NotificationList = () => {
   const getTypeLabel = (type) => {
     switch (type) {
       case 'newSubmission':
-        return 'New submission';
+        return 'Bài nộp mới';
       case 'gradePosted':
-        return 'Grade posted';
+        return 'Điểm bài tập';
    
       case 'reportReady':
-        return 'Appeal';
+        return 'Phúc khảo';
       default:
-        return 'Other';
+        return 'Khác';
     }
   };
 
@@ -241,7 +245,7 @@ const NotificationList = () => {
         <Row className="justify-content-center">
           <Col md={8} className="text-center">
             <Spinner animation="border" variant="primary" className="mb-3" />
-            <h5>Loading notifications...</h5>
+            <h5>Tải thông báo...</h5>
           </Col>
         </Row>
       </Container>
@@ -255,11 +259,11 @@ const NotificationList = () => {
           <Col md={8}>
             <Alert variant="danger" className="text-center">
               <FiX size={24} className="mb-2" />
-              <h5>Something went wrong</h5>
+              <h5>Có điều gì đó xảy ra</h5>
               <p>{error}</p>
               <Button variant="outline-danger" onClick={fetchNotifications}>
                 <FiRefreshCw className="me-2" />
-                Re load
+                Tải lại
               </Button>
             </Alert>
           </Col>
@@ -290,18 +294,18 @@ const NotificationList = () => {
                   )}
                 </div>
                 <div>
-                  <h2 className="mb-1">Notification</h2>
-                  <p className="text-muted mb-0">Your notifications</p>
+                  <h2 className="mb-1">Thông báo</h2>
+                  <p className="text-muted mb-0">Thông báo của bạn</p>
                 </div>
               </div>
             </Col>
             <Col xs="auto">
               <div className="text-end">
                 <div className="mb-2">
-                  <strong>Total: </strong>
+                  <strong>Tổng: </strong>
                   <Badge bg="primary">{notifications.length}</Badge>
                 </div>
-                <Badge bg="danger">{unreadCount} Unread</Badge>
+                <Badge bg="danger">{unreadCount} Chưa đọc</Badge>
               </div>
             </Col>
           </Row>
@@ -315,7 +319,7 @@ const NotificationList = () => {
                 </InputGroup.Text>
                 <Form.Control
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Tìm kiếm..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -330,12 +334,19 @@ const NotificationList = () => {
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                 >
-                  <option value="all">Total</option>
-                  <option value="unread">Unread</option>
-                  <option value="read">Read</option>
-                     <option value="newSubmission">New submissions</option>
-                  <option value="gradePosted ">Grade</option>
-                  <option value="reportReady">Appeal</option>
+                  <option value="all">Tổng</option>
+                  <option value="unread">Chưa đọc</option>
+                  <option value="read">Đã đọc</option>
+                   {user?.role === 'student' && (
+    <option value="gradePosted">Điểm</option>
+  )}
+
+  {user?.role === 'instructor' && (
+    <>
+      <option value="newSubmission">Bài nộp mới</option>
+      <option value="reportReady">Phúc khảo</option>
+    </>
+  )}
 
                 </Form.Select>
               </InputGroup>
@@ -386,7 +397,7 @@ const NotificationList = () => {
                         {getTypeLabel(notification.type)}
                       </Badge>
                       <Badge bg={notification.read ? 'secondary' : 'primary'}>
-                        {notification.read ? 'Read' : 'Unread'}
+                        {notification.read ? 'Đã đọc' : 'Chưa đọc'}
                       </Badge>
                     </div>
                   </Col>
@@ -415,12 +426,12 @@ const NotificationList = () => {
                         {expandedNotifications.has(notification._id) ? (
                           <>
                             <FiEyeOff className="me-1" />
-                           Hidden
+                        Ẩn
                           </>
                         ) : (
                           <>
                             <FiEye className="me-1" />
-                            View
+                            Xem
                           </>
                         )}
                       </Button>
@@ -435,18 +446,18 @@ const NotificationList = () => {
                       <Card.Body>
                         <div className="d-flex align-items-center mb-3">
                           <FiCheckCircle className="text-primary me-2" />
-                          <h6 className="mb-0">Notification detail</h6>
+                          <h6 className="mb-0">Nội dung thông báo</h6>
                         </div>
                         
                         <Row>
                           <Col md={6}>
                             <ListGroup variant="flush">
                               <ListGroup.Item className="bg-transparent px-0">
-                                <strong>Title:</strong>
+                                <strong>Tiêu đề:</strong>
                                 <div>{notification.title}</div>
                               </ListGroup.Item>
                               <ListGroup.Item className="bg-transparent px-0">
-                                <strong>Type:</strong>
+                                <strong>Loại:</strong>
                                 <div>{getTypeLabel(notification.type)}</div>
                               </ListGroup.Item>
                             </ListGroup>
@@ -454,22 +465,22 @@ const NotificationList = () => {
                           <Col md={6}>
                             <ListGroup variant="flush">
                               <ListGroup.Item className="bg-transparent px-0">
-                                <strong>Date:</strong>
+                                <strong>Thời gian:</strong>
                                 <div>{new Date(notification.createdAt).toLocaleString('vi-VN')}</div>
                               </ListGroup.Item>
                               <ListGroup.Item className="bg-transparent px-0">
-                                <strong>Status:</strong>
+                                <strong>Trạng thái:</strong>
                                 <div>
                                   <Badge bg={notification.read ? 'success' : 'warning'}>
                                     {notification.read ? (
                                       <>
                                         <FiCheckCircle className="me-1" />
-                                        Read
+                                        Đã đọc
                                       </>
                                     ) : (
                                       <>
                                         <FiMail className="me-1" />
-                                        Unread
+Chưa đọc
                                       </>
                                     )}
                                   </Badge>
@@ -480,7 +491,7 @@ const NotificationList = () => {
                         </Row>
                         
                         <div className="mt-3">
-                          <strong>Message:</strong>
+                          <strong>Tin nhắn:</strong>
                           <Card className="mt-2">
                             <Card.Body>
                               {notification.message}

@@ -34,25 +34,25 @@ const endMs   = course.endDate   ? new Date(course.endDate).getTime()   : null;
 if (course.startDate && isNaN(startMs)) {
   return res
     .status(500)
-    .json({ success: false, message: 'Invalid startDate format' });
+    .json({ success: false, message: 'Lỗi trong ngày bắt đầu' });
 }
 
 if (course.endDate && isNaN(endMs)) {
   return res
     .status(500)
-    .json({ success: false, message: 'Invalid endDate format' });
+    .json({ success: false, message: 'Lỗi trong ngày kết thúc' });
 }
 
 if (startMs !== null && now < startMs) {
   return res
     .status(400)
-    .json({ success: false, message: `This course will open on ${new Date(startMs).toLocaleString()}.` });
+    .json({ success: false, message: `Môn học mở vào ${new Date(startMs).toLocaleString()}.` });
 }
 
 if (endMs !== null && now > endMs) {
   return res
     .status(400)
-    .json({ success: false, message: `This course closed on ${new Date(endMs).toLocaleString()}.` });
+    .json({ success: false, message: `Môn học hết hạn vào ${new Date(endMs).toLocaleString()}.` });
 }
 // Chỉ đánh giá là “already” khi có cùng courseId và cùng term
 const already = await Enrollment.findOne({
@@ -66,7 +66,7 @@ const already = await Enrollment.findOne({
     // 3. Kiểm tra xem học sinh đã enroll chưa
   
     if (already) {
-      return res.status(400).json({ success: false, message: 'Already enrolled in this course' });
+      return res.status(400).json({ success: false, message: 'Đã đăng kí môn học' });
     }
 
     // 4. Lấy subject của khóa học để kiểm tra prerequisites
@@ -74,7 +74,7 @@ const already = await Enrollment.findOne({
     if (!subject || subject.status !== 'approved') {
       return res
         .status(400)
-        .json({ success: false, message: 'Subject not found or not approved' });
+        .json({ success: false, message: 'Môn học không tìm thấy hoặc chưa được chấp thuận' });
     }
     
 const siblingCourses = await Course.find({ subjectId: subject._id })
@@ -120,7 +120,7 @@ if (hasEnrolledSibling) {
         const ms = await Subject.findById(prereqSubjId).select('name').lean();
         return res.status(400).json({
           success: false,
-          message: `You must register for the subject courses "${ms.name}" before registering new key`
+          message: `Bạn phải đăng ký các khóa học môn học "${ms.name}" trước khi đăng kí`
         });
       }
       const courseDoc = await Course.findById(latestEnroll.courseId).select('term endDate').lean();
@@ -132,7 +132,7 @@ if (latestEnroll.term === lastCourseTerm) {
     const ms = await Subject.findById(prereqSubjId).select('name').lean();
     return res.status(400).json({
       success: false,
-      message: `You are still enrolled in semester ${lastCourseTerm} of course "${ms.name}" (until ${new Date(courseDoc.endDate).toLocaleDateString()}) so you cannot continue registering.`
+      message: `Bạn vẫn đang theo học học kỳ ${lastCourseTerm} ở khóa học  "${ms.name}" (đến ngày ${new Date(courseDoc.endDate).toLocaleDateString()}) vì vậy bạn không thể tiếp tục đăng ký.`
     });
   }
 }
@@ -163,7 +163,7 @@ if(!filteredAids.length){
   const ms = await Subject.findById(prereqSubjId).select('name').lean();
   return res.status(400).json({
     success: false,
-    message: `You must register for the subject courses "${ms.name}" before registering new key`
+    message: `Bạn phải đăng ký các khóa học môn học "${ms.name}" trước khi đăng kí`
   });
 }
 
@@ -217,7 +217,7 @@ if (subjectAvg <= 4) {
   const ms = await Subject.findById(prereqSubjId).select('name').lean();
   return res.status(400).json({
     success: false,
-    message: `Average subject "${ms.name}" (term ${prereqTerm}) need > 4 newly registered.`
+    message: `Điểm trung bình môn học "${ms.name}" (kì ${prereqTerm}) cần > 4 để đăng kí.`
   });
 }
 

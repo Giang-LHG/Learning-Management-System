@@ -19,20 +19,20 @@ exports.submitAssignment = async (req, res) => {
       !mongoose.Types.ObjectId.isValid(studentId) ||
       !mongoose.Types.ObjectId.isValid(assignmentId)
     ) {
-      return res.status(400).json({ success: false, message: 'Invalid IDs' });
+      return res.status(400).json({ success: false, message: 'Mã không đúng' });
     }
 
     // Lấy assignment để kiểm tra tồn tại và deadline
     const assignment = await Assignment.findById(assignmentId).lean();
     if (!assignment) {
-      return res.status(404).json({ success: false, message: 'Assignment not found' });
+      return res.status(404).json({ success: false, message: 'Không tìm thấy bài tập' });
     }
 
     // Kiểm tra deadline
     if (new Date() > assignment.dueDate) {
       return res
         .status(400)
-        .json({ success: false, message: 'Deadline has passed. Cannot submit.' });
+        .json({ success: false, message: 'Quá hạn. Không thể nộp.' });
     }
 
     // Tạo mới Submission
@@ -52,7 +52,7 @@ const user = await User.findById(studentId);
         toUserId: course.instructorId,
         type: 'newSubmission',
         payload: {
-          text: `New submission in assigment ${assignment.title} in course ${course.title} from student ${user.profile.fullName}`,  
+          text: `Bài nộp mới ở bài tập ${assignment.title} ở khóa học ${course.title} từ học sinh ${user.profile.fullName}`,  
          
         }
       });
@@ -129,25 +129,25 @@ exports.resubmitSubmission = async (req, res) => {
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(submissionId)) {
-      return res.status(400).json({ success: false, message: 'Invalid submissionId' });
+      return res.status(400).json({ success: false, message: 'Mã bài nộp không đúng' });
     }
 
     // Tìm submission hiện tại
     const submission = await Submission.findById(submissionId);
     if (!submission) {
-      return res.status(404).json({ success: false, message: 'Submission not found' });
+      return res.status(404).json({ success: false, message: 'Không thấy bài nộp' });
     }
 
     //  Lấy assignment để kiểm tra deadline
     const assignment = await Assignment.findById(submission.assignmentId).select('dueDate type');
     if (!assignment) {
-      return res.status(404).json({ success: false, message: 'Assignment not found' });
+      return res.status(404).json({ success: false, message: 'Không tìm thấy bài tập' });
     }
     const now = new Date();
     if (now > assignment.dueDate) {
       return res.status(400).json({
         success: false,
-        message: 'Cannot resubmit: due date has passed'
+        message: 'Không thể nộp lại: đã quá hạn'
       });
     }
 
@@ -156,7 +156,7 @@ exports.resubmitSubmission = async (req, res) => {
       if (typeof content !== 'string' || !content.trim()) {
         return res.status(400).json({
           success: false,
-          message: 'Please provide non-empty content for essay resubmission'
+          message: 'Vui lòng không nộp bài tập trống'
         });
       }
       submission.content = content.trim();
@@ -164,7 +164,7 @@ exports.resubmitSubmission = async (req, res) => {
       if (!Array.isArray(answers) || answers.length === 0) {
         return res.status(400).json({
           success: false,
-          message: 'Please provide answers array for quiz resubmission'
+          message: 'Vui lòng cung cấp câu trả lời'
         });
       }
       submission.answers = answers.map(ans => ({
@@ -182,13 +182,13 @@ exports.resubmitSubmission = async (req, res) => {
     return res.json({
       success: true,
       data: submission,
-      message: 'Resubmission successful'
+      message: 'Nộp lại thành thông'
     });
   } catch (err) {
-    console.error('Error in resubmitSubmission:', err);
+    console.error('Lỗi khi nộp bài:', err);
     return res.status(500).json({
       success: false,
-      message: 'Server error during resubmission'
+      message: 'Hệ thống lỗi khi nộp lại'
     });
   }
 };
@@ -320,7 +320,7 @@ exports.getSubmissionById = async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching submission by ID:', err);
-    res.status(500).json({ success: false, message: 'Error fetching submission' });
+    res.status(500).json({ success: false, message: 'Lỗi lấy bài nộp' });
   }
 };
 exports.addAppeal = async (req, res) => {
@@ -329,18 +329,18 @@ exports.addAppeal = async (req, res) => {
     const { studentId, text } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(submissionId)) {
-      return res.status(400).json({ success: false, message: 'Invalid submissionId' });
+      return res.status(400).json({ success: false, message: 'Mã bài nộp không đúng' });
     }
     if (!mongoose.Types.ObjectId.isValid(studentId)) {
-      return res.status(400).json({ success: false, message: 'Invalid userId' });
+      return res.status(400).json({ success: false, message: 'Mã người dùng không đúng' });
     }
     if (!text || typeof text !== 'string') {
-      return res.status(400).json({ success: false, message: 'Comment text is required' });
+      return res.status(400).json({ success: false, message: 'BÌnh luận không trống' });
     }
 
     const submission = await Submission.findById(submissionId);
     if (!submission) {
-      return res.status(404).json({ success: false, message: 'Submission not found' });
+      return res.status(404).json({ success: false, message: 'Bài nộp không thấy' });
     }
 
     const newAppeal = {
@@ -362,7 +362,7 @@ const assignment = await Assignment.findById(submission.assignmentId).lean();
         toUserId: course.instructorId,
         type: 'reportReady',       // hoặc type khác nếu phù hợp
         payload: {
-          text:`new appeal about submission have id : ${submission._id} assigment ${assignment.title} in course ${course.title} from student ${user.profile.fullName}`,
+          text:`Có đơn phúc khảo mới cho bài nộp mã : ${submission._id} bài tập ${assignment.title} ở khóa học ${course.title} từ học sinh  ${user.profile.fullName}`
  
          
         }
@@ -375,6 +375,6 @@ const assignment = await Assignment.findById(submission.assignmentId).lean();
     res.status(201).json({ success: true, data: created });
   } catch (err) {
     console.error('Error adding appeal:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ' });
   }
 };

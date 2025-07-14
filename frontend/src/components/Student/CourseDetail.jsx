@@ -293,7 +293,7 @@ console.log(latestTerm);
     return (
       <Container className="py-5 text-center">
         <Spinner animation="border" variant="primary" size="lg" />
-        <p className="mt-3 text-muted">Loading course details...</p>
+        <p className="mt-3 text-muted">Đang tải...</p>
       </Container>
     );
   }
@@ -304,10 +304,10 @@ console.log(latestTerm);
         <Card className="shadow-sm border-0">
           <Card.Body className="py-5">
             <FiBookOpen size={48} className="text-danger mb-3" />
-            <h4 className="text-danger">Course not found</h4>
-            <p className="text-muted">The course you're looking for doesn't exist.</p>
+            <h4 className="text-danger">Không tìm thấy khóa học</h4>
+            <p className="text-muted">Khóa học bạn đang tìm kiếm không tồn tại.</p>
             <Button onClick={() => navigate(-1)} className="px-4">
-              <FiArrowLeft className="me-2" /> Go Back
+              <FiArrowLeft className="me-2" /> Quay lại
             </Button>
           </Card.Body>
         </Card>
@@ -348,11 +348,11 @@ console.log(latestTerm);
                     <h5 className="fw-bold mb-0">{mod.title}</h5>
                     <div className="d-flex align-items-center gap-2 mt-1">
                       <Badge bg={moduleStudied ? 'success' : 'warning'} text="white">
-                        {moduleStudied ? 'Completed' : 'In Progress'}
+                        {moduleStudied ? 'Hoàn thành' : 'Đang học'}
                       </Badge>
                       {total > 0 && (
                         <small className="text-muted">
-                          {studied}/{total} lessons completed
+                          {studied}/{total} Khóa học đã hoàn thành
                         </small>
                       )}
                     </div>
@@ -380,7 +380,7 @@ console.log(latestTerm);
                   {lessons.length > 0 && (
                     <small className="text-muted">
                       <FiBookOpen className="me-1" />
-                      {lessons.length} lessons
+                      {lessons.length} bài học
                     </small>
                   )}
                 </div>
@@ -402,12 +402,12 @@ console.log(latestTerm);
                     {isLoadingLessons ? (
                       <div className="text-center py-2">
                         <Spinner size="sm" animation="border" />
-                        <small className="text-muted ms-2">Loading lessons...</small>
+                        <small className="text-muted ms-2">Tải bài học...</small>
                       </div>
                     ) : lessons.length > 0 ? (
                       <div className="border rounded p-2 bg-light">
                         <small className="text-muted fw-bold mb-2 d-block">
-                          Lessons:
+                          Bài học:
                         </small>
 
                         {displayedLessons.map((lesson) => {

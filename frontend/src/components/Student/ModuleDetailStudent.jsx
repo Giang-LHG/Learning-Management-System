@@ -260,11 +260,11 @@ console.log("term =", term1);
               <div className="d-flex align-items-center justify-content-between mt-auto pt-2 border-top">
                 <Badge bg={isStudied ? "success" : "primary"} className="px-2 py-1">
                   {isStudied ? <FiCheckCircle size={12} className="me-1" /> : <FiBookOpen size={12} className="me-1" />}
-                  {isStudied ? "Studied" : "Lesson"}
+                  {isStudied ? "Đã học" : "Bài học"}
                 </Badge>
                 <div className={`${isStudied ? 'text-success' : 'text-primary'} d-flex align-items-center`}>  
                   <span className="me-2 small text-muted">
-                    {isStudied ? "Review" : "Start"}
+                    {isStudied ? "Xem" : "Học"}
                   </span>
                   <FiPlay size={18} />
                 </div>
