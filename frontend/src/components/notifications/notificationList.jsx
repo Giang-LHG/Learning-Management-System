@@ -41,14 +41,21 @@ const NotificationList = () => {
   const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+ const [user, setUser] = useState(null);
   const getUserId = () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      return user._id || null;
-    } catch {
-      return null;
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser) {
+      setUser(storedUser); // Lưu vào state để render sau
+      return storedUser._id || null; // Trả ngay _id từ localStorage
     }
+    return null;
+  } catch {
+    return null;
+  }
   };
+  
+
 
   const fetchNotifications = async () => {
     const userId = getUserId();
@@ -333,10 +340,16 @@ const NotificationList = () => {
                   <option value="all">Total</option>
                   <option value="unread">Unread</option>
                   <option value="read">Read</option>
-                     <option value="newSubmission">New submissions</option>
-                  <option value="gradePosted ">Grade</option>
-                  <option value="reportReady">Appeal</option>
+                    {user?.role === 'student' && (
+        <option value="gradePosted">Grade</option>
+      )}
 
+      {user?.role === 'instructor' && (
+        <>
+          <option value="newSubmission">Submission</option>
+          <option value="reportReady">Grade</option>
+        </>
+      )}
                 </Form.Select>
               </InputGroup>
             </Col>
