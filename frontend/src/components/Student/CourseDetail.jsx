@@ -36,9 +36,9 @@ import {
 import {useMemo} from 'react';
 
 const sortOptions = [
-  { label: 'Title A→Z',       value: 'title:asc' },
-  { label: 'Title Z→A',       value: 'title:desc' },
-  { label: 'Order (Default)', value: 'order:asc' }
+  { label: 'Tiêu đề A→Z',       value: 'title:asc' },
+  { label: 'Tiểu đề Z→A',       value: 'title:desc' },
+  { label: 'Thứ tự (Mặc định)', value: 'order:asc' }
 ];
 
 export default function CourseDetail() {
@@ -447,14 +447,14 @@ console.log(latestTerm);
                                 navigate(`/student/course/${courseId}/module/${moduleId}`)
                               }
                             >
-                              View all {lessons.length} lessons →
+                           Xem toàn bộ {lessons.length} bài học →
                             </Button>
                           </div>
                         )}
                       </div>
                     ) : (
                       <Alert variant="info" className="py-2 mb-0">
-                        <small>No lessons available for this module.</small>
+                        <small>Không có bài học nào ở trong chương học.</small>
                       </Alert>
                     )}
                   </div>
@@ -484,7 +484,7 @@ console.log(latestTerm);
             variant="outline-primary"
             onClick={() => navigate(`/student/courses?subjectId=${course.subjectId}&enrolled=true`)}
           >
-            <FiArrowLeft className="me-2" /> Back to Courses List
+            <FiArrowLeft className="me-2" /> Quay lại danh sách khóa học
           </Button>
           
           <div className="d-flex gap-2">
@@ -493,14 +493,14 @@ console.log(latestTerm);
               disabled={currentCourseIndex <= 0}
               onClick={goToPreviousCourse}
             >
-              <FiChevronLeft className="me-1" /> Previous Course
+              <FiChevronLeft className="me-1" /> Khóa học trước
             </Button>
             <Button
               variant="outline-secondary"
               disabled={currentCourseIndex >= currentList.length - 1}
               onClick={goToNextCourse}
             >
-              Next Course <FiChevronRight className="ms-1" />
+             Khóa học sau <FiChevronRight className="ms-1" />
             </Button>
           </div>
         </div>
@@ -511,10 +511,10 @@ console.log(latestTerm);
           <Alert variant="info" className="mb-4">
             <div className="d-flex justify-content-between align-items-center">
               <small>
-                Course {currentCourseIndex + 1} of {currentList.length}
-                {currentListKey==='noneEnrolled' && ' (not enrolled)'}
-                {currentListKey==='otherTerms' && ' (enrolled in other terms)'}
-                {currentListKey==='sameTerm' && ' (enrolled in same term)'}
+                Khóa học {currentCourseIndex + 1} trong {currentList.length}
+                {currentListKey==='noneEnrolled' && ' (chưa đăng kí)'}
+                {currentListKey==='otherTerms' && ' (đăng kí ở kì khác)'}
+                {currentListKey==='sameTerm' && ' (đang đăng kí)'}
               </small>
               <div className="progress" style={{ width: '200px', height: '4px' }}>
                 <div 
@@ -535,7 +535,7 @@ console.log(latestTerm);
             <h2 className="fw-bold">{course.title}</h2>
             <div className="d-flex align-items-center mb-2">
               <FiUser className="me-2" /> Instructor:&nbsp;
-              {course.instructorName||'Unknown'}
+              {course.instructorName||'Không rõ'}
             </div>
             {course.description && (
               <p className="mb-3 opacity-75">{course.description}</p>
@@ -543,15 +543,15 @@ console.log(latestTerm);
             <div className="d-flex flex-wrap gap-2">
               <Badge bg="light" text="dark">
                 <FiBookOpen className="me-1" />
-                {modules.length} Modules
+                {modules.length} Chương học
               </Badge>
               <Badge bg="light" text="dark">
                 <FiCheckCircle className="me-1" />
-                {studiedModules.length} Completed
+                {studiedModules.length} Hoàn thành
               </Badge>
               <Badge bg="light" text="dark">
                 <FiCircle className="me-1" />
-                {notStudiedModules.length} In Progress
+                {notStudiedModules.length} Đang tiến hành
               </Badge>
               {course.duration && (
                 <Badge bg="light" text="dark">
@@ -572,7 +572,7 @@ console.log(latestTerm);
                 <InputGroup>
                   <InputGroup.Text><FiSearch /></InputGroup.Text>
                   <Form.Control
-                    placeholder="Search modules..."
+                    placeholder="Tìm kiếm chương học..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                   />
@@ -604,7 +604,7 @@ console.log(latestTerm);
               className="d-flex align-items-center"
             >
               <FiBookOpen className="me-2" />
-              All Modules ({modules.length})
+             Tất cả các chương học ({modules.length})
             </Nav.Link>
           </Nav.Item>
           <Nav.Item>
@@ -614,7 +614,7 @@ console.log(latestTerm);
               className="d-flex align-items-center"
             >
               <FiCheckCircle className="me-2" />
-              Completed ({studiedModules.length})
+              Hoàn thành ({studiedModules.length})
             </Nav.Link>
           </Nav.Item>
           <Nav.Item>
@@ -624,7 +624,7 @@ console.log(latestTerm);
               className="d-flex align-items-center"
             >
               <FiCircle className="me-2" />
-              In Progress ({notStudiedModules.length})
+              Tiến độ ({notStudiedModules.length})
             </Nav.Link>
           </Nav.Item>
         </Nav>
@@ -634,11 +634,11 @@ console.log(latestTerm);
         {filteredModules.length === 0 ? (
           <Card className="text-center py-5">
             <FiBookOpen size={48} className="text-muted mb-3" />
-            <h5 className="text-muted mb-2">No modules found</h5>
+            <h5 className="text-muted mb-2">Không tồn tại chương học</h5>
             <p className="text-muted">
               {searchQuery
-                ? 'Try adjusting your search terms'
-                : 'This course has no modules yet'}
+                ? 'Hãy thử điều chỉnh tìm kiếm '
+                : 'Chương học chưa tồn tại'}
             </p>
           </Card>
         ) : (
@@ -655,7 +655,7 @@ console.log(latestTerm);
       <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:0.4}} className="mt-5">
         <Card className="shadow-sm">
           <Card.Body>
-            <h5 className="mb-3">Quick Actions</h5>
+            <h5 className="mb-3">Hành động</h5>
             <div className="d-flex flex-wrap gap-3">
               <Button
                 variant="primary"
@@ -663,7 +663,7 @@ console.log(latestTerm);
                 onClick={() => navigate(`/student/subject/${subjectId}/grades/${course._id}`)}
               >
                 <FiBookOpen className="me-2" />
-                Grade Overview
+              Tổng quan điểm số
               </Button>
               {showAssignments && (
                 <Button
@@ -672,7 +672,7 @@ console.log(latestTerm);
                   onClick={() => navigate(`/student/assignments/${course._id}`)}
                 >
                   <FiBookOpen className="me-2" />
-                  Assignments
+             Bài tập
                 </Button>
               )}
             </div>

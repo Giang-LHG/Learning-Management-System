@@ -157,7 +157,7 @@ console.log(studentId, courseId, currentTerm);
       }
     } catch (err) {
       console.error("Error marking lesson complete:", err);
-      setStudyError("Failed to mark lesson as complete. Please try again.");
+      setStudyError("Không thể đánh dấu bài học là đã hoàn thành. Vui lòng thử lại.");
     } finally {
       setIsMarkingComplete(false);
     }
@@ -181,7 +181,7 @@ console.log(studiedLessons);
       <Container className="py-5 text-center">
         <div className="d-flex flex-column align-items-center">
           <Spinner animation="border" variant="primary" size="lg" />
-          <p className="mt-3 text-muted">Loading lesson...</p>
+          <p className="mt-3 text-muted">Tải bài tập...</p>
         </div>
       </Container>
     );
@@ -195,14 +195,14 @@ console.log(studiedLessons);
             <div className="text-danger mb-3">
               <FiBookOpen size={48} />
             </div>
-            <h4 className="text-danger mb-3">Lesson not found</h4>
-            <p className="text-muted mb-4">The lesson you're looking for doesn't exist or has been removed.</p>
+            <h4 className="text-danger mb-3">Bài tập không tìm thấy</h4>
+            <p className="text-muted mb-4">Bài học bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
             <Button 
               variant="primary" 
               onClick={() => navigate(`/student/course/${courseId}/module/${moduleId}`)}
               className="px-4"
             >
-              <FiArrowLeft className="me-2" /> Back to Module
+              <FiArrowLeft className="me-2" /> Quay trở lại chương học
             </Button>
           </Card.Body>
         </Card>
@@ -248,12 +248,12 @@ console.log(studiedLessons);
                     <h2 className="mb-1 fw-bold">{lesson.title}</h2>
                     <div className="d-flex align-items-center gap-3">
                       <span className="opacity-90">
-                        Lesson {navigationInfo.currentIndex} of {navigationInfo.totalLessons}
+                       Bài học {navigationInfo.currentIndex} trong {navigationInfo.totalLessons} bài học
                       </span>
                       {isLessonCompleted && (
                         <div className="d-flex align-items-center bg-success bg-opacity-20 px-2 py-1 rounded">
                           <FiCheck size={16} className="me-1" />
-                          <small>Completed</small>
+                          <small>Hoàn thành</small>
                         </div>
                       )}
                     </div>
@@ -276,7 +276,7 @@ console.log(studiedLessons);
           >
             <Card className="mb-4 shadow-sm border-0">
               <Card.Body className="p-4">
-                <h4 className="mb-3">Lesson Content</h4>
+                <h4 className="mb-3">Nội dung bài học</h4>
                 <div 
                   className="lesson-content"
                   dangerouslySetInnerHTML={{ __html: lesson.content }}
@@ -297,7 +297,7 @@ console.log(studiedLessons);
             <Card className="mb-4 shadow-sm border-0">
               <Card.Body>
                 <div className="d-flex align-items-center justify-content-between mb-3">
-                  <h5 className="mb-0">Notes</h5>
+                  <h5 className="mb-0">Ghi chú</h5>
                   <Button
                     variant="link"
                     size="sm"
@@ -316,7 +316,7 @@ console.log(studiedLessons);
                       onChange={(e) => setNotes(e.target.value)}
                     />
                     <Form.Text className="text-muted">
-                      Notes are stored locally in your browser session.
+                    Ghi chú được lưu trữ cục bộ trong phiên trình duyệt của bạn.
                     </Form.Text>
                   </Form.Group>
                 )}
@@ -332,7 +332,7 @@ console.log(studiedLessons);
           >
             <Card className="mb-4 shadow-sm border-0">
               <Card.Body>
-                <h5 className="mb-3">Lesson Progress</h5>
+                <h5 className="mb-3">Tiến độ bài học</h5>
                 {studyError && (
                   <Alert variant="danger" className="mb-3">
                     {studyError}
@@ -354,14 +354,14 @@ console.log(studiedLessons);
                         Completed
                       </>
                     ) : (
-                      "Mark as Complete"
+                      "Đánh dấu là đã hoàn thành"
                     )}
                   </Button>
                 </div>
                 {isLessonCompleted && (
                   <div className="mt-2 text-center">
                     <small className="text-success">
-                      Great job! You've completed this lesson.
+                     Làm tốt lắm! Bạn đã hoàn thành bài học này.
                     </small>
                   </div>
                 )}
@@ -377,7 +377,7 @@ console.log(studiedLessons);
           >
             <Card className="shadow-sm border-0">
               <Card.Body>
-                <h5 className="mb-3">Navigation</h5>
+                <h5 className="mb-3">Điều hướng</h5>
                 <div className="d-grid gap-2">
                   <Button
                     variant="outline-primary"
@@ -385,20 +385,20 @@ console.log(studiedLessons);
                     disabled={!navigationInfo.previousLesson}
                   >
                     <FiSkipBack className="me-2" />
-                    Previous Lesson
+                  Bài học trước
                   </Button>
                   <Button
                     variant="primary"
                     onClick={goToNextLesson}
                     disabled={!navigationInfo.nextLesson}
                   >
-                    Next Lesson
+                   Bài học tiếp theo
                     <FiSkipForward className="ms-2" />
                   </Button>
                 </div>
                 {navigationInfo.nextLesson && (
                   <div className="mt-3 p-3 bg-light rounded">
-                    <small className="text-muted">Up next:</small>
+                    <small className="text-muted">Tiếp theo:</small>
                     <div className="fw-bold">{navigationInfo.nextLesson.title}</div>
                   </div>
                 )}

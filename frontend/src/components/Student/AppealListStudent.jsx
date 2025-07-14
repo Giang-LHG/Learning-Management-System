@@ -30,12 +30,12 @@ import {
 } from "react-icons/fi";
 
 const sortOptions = [
-  { label: "Newest First", value: "appealCreatedAt:desc" },
-  { label: "Oldest First", value: "appealCreatedAt:asc" },
-  { label: "Subject A→Z", value: "subjectName:asc" },
-  { label: "Subject Z→A", value: "subjectName:desc" },
-  { label: "Course A→Z", value: "courseTitle:asc" },
-  { label: "Course Z→A", value: "courseTitle:desc" }
+  { label: "Mới nhất", value: "appealCreatedAt:desc" },
+  { label: "Cũ nhất", value: "appealCreatedAt:asc" },
+  { label: "Môn học A→Z", value: "subjectName:asc" },
+  { label: "Môn học Z→A", value: "subjectName:desc" },
+  { label: "Khóa học A→Z", value: "courseTitle:asc" },
+  { label: "Khóa học Z→A", value: "courseTitle:desc" }
 ];
 
 const getStatusIcon = (status) => {
@@ -405,11 +405,10 @@ export default function AppealList() {
                     </div>
                     <div>
                       <h2 className="mb-2 fw-bold" style={{ fontSize: '32px' }}>
-                        My Appeals
+                        Phúc khảo của tôi
                       </h2>
                       <p className="mb-0 opacity-75" style={{ fontSize: '18px' }}>
-                        Track and manage your grade appeals
-                      </p>
+Theo dõi và quản lý đơn kháng cáo điểm của bạn                      </p>
                     </div>
                   </div>
                 </Card.Body>
@@ -426,7 +425,7 @@ export default function AppealList() {
                 </InputGroup.Text>
                 <Form.Control
                   type="text"
-                  placeholder="Search modules by title..."
+                  placeholder="Tìm kiếm mô-đun theo tiêu đề..."
                   className="search-input"
                   style={{ borderLeft: 'none', borderRadius: '0 12px 12px 0' }}
                   value={searchQuery}
@@ -458,7 +457,7 @@ export default function AppealList() {
                     <FiFileText size={18} />
                   </div>
                   <div>
-                    <p className="mb-1 text-muted small">Total Appeals</p>
+                    <p className="mb-1 text-muted small">Tổng đơn phúc khảo</p>
                     <h4 className="mb-0 fw-bold">{appeals.length}</h4>
                   </div>
                 </Card.Body>
@@ -471,7 +470,7 @@ export default function AppealList() {
                     <FiClock size={18} />
                   </div>
                   <div>
-                    <p className="mb-1 text-muted small">Pending</p>
+                    <p className="mb-1 text-muted small">Đang xử lí</p>
                     <h4 className="mb-0 fw-bold">
                       {appeals.filter(a => a.appealStatus === "open").length}
                     </h4>
@@ -486,7 +485,7 @@ export default function AppealList() {
                     <FiCheckCircle size={18} />
                   </div>
                   <div>
-                    <p className="mb-1 text-muted small">Resolved</p>
+                    <p className="mb-1 text-muted small">Xử lí xong</p>
                     <h4 className="mb-0 fw-bold">
                       {appeals.filter(a => a.appealStatus === "resolved").length}
                     </h4>
@@ -501,7 +500,7 @@ export default function AppealList() {
                     <FiCheckCircle size={18} />
                   </div>
                   <div>
-                    <p className="mb-1 text-muted small">Rejected</p>
+                    <p className="mb-1 text-muted small">Loại bỏ</p>
                     <h4 className="mb-0 fw-bold">
                       {appeals.filter(a => a.appealStatus === "rejected").length}
                     </h4>
@@ -516,15 +515,15 @@ export default function AppealList() {
             <Row>
               <Col className="text-center py-5">
                 <Spinner animation="border" variant="primary" className="me-3" />
-                <span className="text-muted fs-5">Loading appeals...</span>
+                <span className="text-muted fs-5">Đang tải ...</span>
               </Col>
             </Row>
           ) : filtered.length === 0 ? (
             <Row>
               <Col className="text-center py-5">
                 <FiFileText size={64} className="text-muted mb-3" />
-                <h5 className="text-muted">No appeals found.</h5>
-                <p className="text-muted">Try adjusting your search criteria.</p>
+                <h5 className="text-muted">Không tìm thấy.</h5>
+                <p className="text-muted">Hãy thử điều chỉnh tiêu chí tìm kiếm của bạn.</p>
               </Col>
             </Row>
           ) : (
@@ -553,7 +552,7 @@ export default function AppealList() {
                                 </Badge>
                               </div>
                               <p className="mb-0 text-muted">
-                                <strong>Course:</strong> {appeal.courseTitle}
+                                <strong>Khóa học:</strong> {appeal.courseTitle}
                               </p>
                             </div>
                           </div>
@@ -569,13 +568,13 @@ export default function AppealList() {
                             </small>
                           </div>
                           <div className="d-flex align-items-center justify-content-lg-end">
-                            <span className="me-2 text-muted small">Grade:</span>
+                            <span className="me-2 text-muted small">Điểm:</span>
                             {appeal.gradeScore != null ? (
                               <span className={`fw-bold fs-5 ${getGradeColor(appeal.gradeScore)}`}>
                                 {appeal.gradeScore}/10
                               </span>
                             ) : (
-                              <span className="text-muted fst-italic">Not graded</span>
+                              <span className="text-muted fst-italic">Không có điểm</span>
                             )}
                           </div>
                         </Col>
@@ -588,7 +587,7 @@ export default function AppealList() {
                             <span className="text-muted">
                               {appeal.appealComments.length
                                 ? appeal.appealComments[appeal.appealComments.length - 1].text
-                                : "No comments available"}
+                                : "Không có bình luận tồn tại"}
                             </span>
                           </p>
                           <Button
@@ -596,7 +595,7 @@ export default function AppealList() {
                             onClick={() => toggleAppealExpansion(appeal.appealId)}
                           >
                             <FiMessageCircle className="me-2" size={16} />
-                            {appeal.appealComments.length} Comments
+                            {appeal.appealComments.length} Bình luận
                             {expandedAppeal === appeal.appealId ? (
                               <FiChevronUp className="ms-2" size={16} />
                             ) : (
@@ -609,11 +608,11 @@ export default function AppealList() {
                       {/* Expanded Comments Section */}
                       <Collapse in={expandedAppeal === appeal.appealId}>
                         <div className="comments-expanded">
-                          <h6 className="fw-bold mb-3">All Comments</h6>
+                          <h6 className="fw-bold mb-3">Tất cả bình luận</h6>
                           
                           {/* Comments List */}
                           {appeal.appealComments.length === 0 ? (
-                            <p className="text-muted fst-italic">No comments yet. Be the first to add one!</p>
+                            <p className="text-muted fst-italic">Chưa có bình luận nào. Hãy là người đầu tiên thêm bình luận!</p>
                           ) : (
                             appeal.appealComments.map((comment, commentIndex) => (
                               <div key={commentIndex} className="comment-item">
@@ -621,7 +620,7 @@ export default function AppealList() {
                                   <div className="d-flex align-items-center">
                                     <FiUser size={16} className="text-muted me-2" />
                                     <small className="fw-semibold">
-                                      {comment.userId === studentId ? "You" : `User ${comment.by.slice(-4)}`}
+                                      {comment.by === studentId ? "Bạn" : `Người dùng ${comment.by.slice(-4)}`}
                                     </small>
                                   </div>
                                   {comment.createdAt && (
@@ -645,12 +644,12 @@ export default function AppealList() {
                           {(appeal.appealStatus === "resolved" || appeal.appealStatus === "rejected") ? (
   <div className="mt-4">
     <Alert variant="info">
-      This appeal has been <strong>{appeal.appealStatus}</strong>. No further comments can be added.
+     Phúc khảo này đã <strong>{appeal.appealStatus}</strong>. Không thể thêm bình luận nào nữa.
     </Alert>
   </div>
 ) : (
                           <div className="comment-form">
-                            <h6 className="fw-bold mb-3">Add a Comment</h6>
+                            <h6 className="fw-bold mb-3">Thêm một bình luận</h6>
                             
                             {/* Success Alert */}
                             {commentSuccess[appeal.appealId] && (
@@ -670,7 +669,7 @@ export default function AppealList() {
                               <Form.Control
                                 as="textarea"
                                 rows={3}
-                                placeholder="Enter your comment here..."
+                                placeholder="Thêm bình luận của bạn..."
                                 value={commentTexts[appeal.appealId] || ""}
                                 onChange={(e) => handleCommentChange(appeal.appealId, e.target.value)}
                                 style={{ borderRadius: '12px' }}
@@ -689,12 +688,12 @@ export default function AppealList() {
                                 {submittingComment[appeal.appealId] ? (
                                   <>
                                     <Spinner animation="border" size="sm" className="me-2" />
-                                    Sending...
+                                    Đang gửi...
                                   </>
                                 ) : (
                                   <>
                                     <FiSend className="me-2" size={16} />
-                                    Send Comment
+                                    Gửi bình luận
                                   </>
                                 )}
                               </Button>

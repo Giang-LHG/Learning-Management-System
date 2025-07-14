@@ -301,7 +301,7 @@ export default function CourseList() {
           placement="top"
           overlay={
             <Tooltip id={`tooltip-detail-${course._id}`}>
-              View details
+              Xem chi tiết
             </Tooltip>
           }
         >
@@ -326,7 +326,7 @@ export default function CourseList() {
             placement="top"
             overlay={
               <Tooltip id={`tooltip-modules-${course._id}`}>
-                {isExpanded ? 'Hide modules' : 'Show modules'}
+                {isExpanded ? 'Ẩn danh sách chương' : 'Hiển thị danh sách chương'}
               </Tooltip>
             }
           >
@@ -335,10 +335,10 @@ export default function CourseList() {
               size="sm"
               onClick={() => toggleCourseExpansion(course._id)}
               className="d-flex align-items-center justify-content-center"
-              style={{ minWidth: '90px', width: '90px' }}
+              style={{ minWidth: '90px', width: '180px' }}
             >
               <FiList style={{ marginRight: '4px' }} /> 
-              {isExpanded ? 'Hide' : 'Modules'}
+              {isExpanded ? 'Ẩn' : 'danh sách chương'}
             </Button>
           </OverlayTrigger>
         </div>
@@ -352,7 +352,7 @@ export default function CourseList() {
             placement="top"
             overlay={
               <Tooltip id={`tooltip-detail-other-${course._id}`}>
-                View details
+             Xem chi tiết
               </Tooltip>
             }
           >
@@ -360,7 +360,7 @@ export default function CourseList() {
           placement="top"
           overlay={
             <Tooltip id={`tooltip-detail-${course._id}`}>
-              View details
+                 Xem chi tiết
             </Tooltip>
           }
         >
@@ -386,7 +386,7 @@ export default function CourseList() {
           placement="top"
           overlay={
             <Tooltip id={`tooltip-reenroll-${course._id}`}>
-              Re-enroll
+              Đăng kí lại
             </Tooltip>
           }
         >
@@ -423,7 +423,7 @@ export default function CourseList() {
               style={{ minWidth: '90px', width: '90px' }}
             >
               <FiList style={{ marginRight: '4px' }} /> 
-              {isExpanded ? 'Hide' : 'Modules'}
+              {isExpanded ? 'Ẩn' : 'Chương học'}
             </Button>
           </OverlayTrigger>
         </div>
@@ -435,7 +435,7 @@ export default function CourseList() {
         placement="top"
         overlay={
           <Tooltip id={`tooltip-enroll-${course._id}`}>
-            Enroll
+           Đăng kí
           </Tooltip>
         }
       >
@@ -490,10 +490,10 @@ export default function CourseList() {
                 
                 if (isFromSameTerm) {
                   borderVariant = 'success';
-                  statusBadge = <Badge bg="success">Current Term</Badge>;
+                  statusBadge = <Badge bg="success">Kì hiện tại</Badge>;
                 } else if (isFromOtherTerms) {
                   borderVariant = 'warning';
-                  statusBadge = <Badge bg="warning">Previously Enrolled</Badge>;
+                  statusBadge = <Badge bg="warning">Kì trước</Badge>;
                 }
 
                 return (
@@ -516,24 +516,24 @@ export default function CourseList() {
                           <div className="mb-3 flex-grow-1">
                             {c.term && (
                               <Card.Text className="text-muted mb-1 small">
-                                <strong>Term:</strong> {c.term[c.term.length - 1]}
+                                <strong>Kì:</strong> {c.term[c.term.length - 1]}
                               </Card.Text>
                             )}
                             
                             {c.credits && (
                               <Card.Text className="text-muted mb-1 small">
-                                <strong>Credits:</strong> {c.credits}
+                                <strong>Tín chỉ:</strong> {c.credits}
                               </Card.Text>
                             )}
                            
                             {c.startDate && (
                               <Card.Text className="text-muted mb-1 small">
-                                <strong>Start:</strong> {new Date(c.startDate).toLocaleDateString()}
+                                <strong>Bắt đầu:</strong> {new Date(c.startDate).toLocaleDateString()}
                               </Card.Text>
                             )}
                              {c.endDate && (
                               <Card.Text className="text-muted small">
-                                <strong>End:</strong> {new Date(c.endDate).toLocaleDateString()}
+                                <strong>Kết thúc:</strong> {new Date(c.endDate).toLocaleDateString()}
                               </Card.Text>
                             )}
                           </div>
@@ -574,13 +574,13 @@ export default function CourseList() {
                                           size="sm"
                                           onClick={() => navigate(`/student/subject/${subjectId}/course/${c._id}`)}
                                         >
-                                          Show All ({courseModules.length} modules)
+                                          Hiển thị toàn bộ ({courseModules.length} chương học)
                                         </Button>
                                       </div>
                                     )}
                                   </div>
                                 ) : (
-                                  <small className="text-muted">No modules available</small>
+                                  <small className="text-muted">Không có chương học tồn tại</small>
                                 )}
                               </div>
                             </Collapse>
@@ -601,7 +601,7 @@ export default function CourseList() {
                   className="px-4"
                 >
                   <FiPlus className="me-2" />
-                  Show More ({Math.min(coursesPerPage, courses.length - visibleCounts[listType])} more courses)
+                  Hiển thị nhiều hơn ({Math.min(coursesPerPage, courses.length - visibleCounts[listType])} chương học)
                 </Button>
               </div>
             )}
@@ -609,7 +609,7 @@ export default function CourseList() {
             {/* Course Count Info */}
             <div className="text-center text-muted mt-2">
               <small>
-                Showing {visibleCourses.length} of {courses.length} courses
+              Hiển thị {visibleCourses.length} của {courses.length} chương học
               </small>
             </div>
           </>
@@ -647,7 +647,7 @@ console.log(firstCourse);
   className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-all duration-200 ease-in-out shadow-sm hover:shadow-md active:scale-98 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
 >
   <FiArrowLeft className="w-4 h-4" /> 
-  Back to Subjects
+Quay lại danh sách môn học
 </Button>
         </Col>
       </Row>
@@ -674,7 +674,7 @@ console.log(firstCourse);
               
               <div className="ps-5">
                 <small className="text-muted fw-semibold d-block mb-2">
-                  Course Description
+             Miêu tả môn học
                 </small>
                 <p className="text-secondary mb-0 lh-base">
                   {firstCourse?.subjectId?.description}
@@ -703,12 +703,12 @@ console.log(firstCourse);
         <Col md={4}>
           <InputGroup>
             <Form.Select value={`${sortBy}:${order}`} onChange={e => onSortChange(e.target.value)}>
-              <option value="title:asc">Title A→Z</option>
-              <option value="title:desc">Title Z→A</option>
-              <option value="term:asc">Term ↑</option>
-              <option value="term:desc">Term ↓</option>
-              <option value="credits:asc">Credits ↑</option>
-              <option value="credits:desc">Credits ↓</option>
+              <option value="title:asc">Tiêu đề A→Z</option>
+              <option value="title:desc">Tiêu đề Z→A</option>
+              <option value="term:asc">Kì ↑</option>
+              <option value="term:desc">Kì ↓</option>
+              <option value="credits:asc">Tín chỉ ↑</option>
+              <option value="credits:desc">Tín chỉ ↓</option>
             </Form.Select>
           
           </InputGroup>
@@ -722,7 +722,7 @@ console.log(firstCourse);
         </div>
       ) : (coursesData.sameTerm.length + coursesData.otherTerms.length + coursesData.noneEnrolled.length) === 0 ? (
         <div className="text-center py-5">
-          <p className="text-muted">No courses available for this subject.</p>
+          <p className="text-muted">Không có khóa học nào ở trong môn học</p>
         </div>
       ) : (
         <div>
@@ -730,22 +730,22 @@ console.log(firstCourse);
           {renderCourseList(
             processedCourses.enrolled,
             'enrolled',
-            'My Current Enrollments',
-            'No current enrollments found.'
+            'Danh sách khóa học bạn đang đăng kí',
+            'Không có khóa học nào được tìm thấy.'
           )}
         
           {renderCourseList(
             processedCourses.preEnrolled,
             'preEnrolled',
-            'Previously Enrolled Courses',
-            'No previously enrolled courses found.'
+            'Danh sách khóa học đăng kí trước đây',
+            'Không có khóa học nào được tìm thấy.'
           )}
 
           {renderCourseList(
             processedCourses.available,
             'available',
-            'Available Courses for Enrollment',
-            'No available courses found.'
+            'Các khóa học có sẵn để đăng ký',
+            'Không tìm thấy khóa học có sẵn để đăng kí.'
           )}
         </div>
       )}

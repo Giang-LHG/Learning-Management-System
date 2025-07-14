@@ -8,10 +8,10 @@ import { useNavigate } from 'react-router-dom';
 
 // sort options
 const sortOptions = [
-  { label: 'Created Date ↑', value: 'createdAt:asc' },
-  { label: 'Created Date ↓', value: 'createdAt:desc' },
-  { label: 'Name A→Z',       value: 'name:asc' },
-  { label: 'Name Z→A',       value: 'name:desc' }
+  { label: 'Thời gian tạo ↑', value: 'createdAt:asc' },
+  { label: 'Thời gian tạo ↓', value: 'createdAt:desc' },
+  { label: 'Tên A→Z',       value: 'name:asc' },
+  { label: 'Tên Z→A',       value: 'name:desc' }
 ];
 
 // debounce hook
@@ -260,13 +260,13 @@ const getCodeBoxColor = (code,name) => {
             size="sm"
             onClick={() => setShowMore(prev => prev + 8)}
           >
-            Show More ({subjects.length - showMore} remaining)
+            Hiển thị thêm ({subjects.length - showMore} )
           </Button>
         )}
       </div>
       
       {subjects.length === 0 ? (
-        <p className="text-muted">No recommendations available at the moment.</p>
+        <p className="text-muted">Không có môn học khuyến nghị.</p>
       ) : (
         renderCards(subjects.slice(0, showMore), variant, btnVariant, false)
       )}
@@ -277,10 +277,10 @@ const getCodeBoxColor = (code,name) => {
     <>
       <h4 className="d-flex align-items-center">
         <FiBookOpen className="me-2" />
-        My Enrolled Subjects
+        Môn học bạn đã đăng kí
       </h4>
       {enrolled.length === 0 ? (
-        <p>You have not enrolled in any subject yet.</p>
+        <p>Bạn chưa đăng kí môn học nào.</p>
       ) : (
         renderCards(enrolled, 'primary', 'primary', true)
       )}
@@ -288,7 +288,7 @@ const getCodeBoxColor = (code,name) => {
       {isRecommendationsLoading ? (
         <div className="text-center py-4 my-4">
           <Spinner animation="border" className="me-2" />
-          <span>Loading recommendations...</span>
+          <span>Đang tải môn học khuyến nghị...</span>
         </div>
       ) : (
         <div className="my-5">
@@ -316,10 +316,10 @@ const getCodeBoxColor = (code,name) => {
 
       <h4 className="mt-4 d-flex align-items-center">
         <FiSearch className="me-2" />
-        Other Subjects
+       Môn học khác
       </h4>
       {others.length === 0 ? (
-        <p>No other subjects found.</p>
+        <p>Không có môn học nào.</p>
       ) : (
         renderCards(others, 'warning', 'warning', false)
       )}
@@ -330,15 +330,15 @@ const getCodeBoxColor = (code,name) => {
     <>
       <h4 className="d-flex align-items-center">
         <FiClock className="me-2" />
-        Previously Completed Subjects
+       Các môn học đã hoàn thành trước đó
       </h4>
       {isPreviousLoading ? (
         <div className="text-center py-4">
           <Spinner animation="border" className="me-2" />
-          <span>Loading previous subjects...</span>
+          <span>Đang tải các môn học ...</span>
         </div>
       ) : filteredPreviousSubjects.length === 0 ? (
-        <p>No previously completed subjects found.</p>
+        <p>Không tìm thấy môn học nào đã hoàn thành trước đó.</p>
       ) : (
         renderCards(filteredPreviousSubjects, 'success', 'success', true, true)
       )}
@@ -349,7 +349,7 @@ const getCodeBoxColor = (code,name) => {
     return (
       <Container className="py-4 text-center">
         <Spinner animation="border" className="me-2" />
-        <span>Loading your subjects...</span>
+        <span>Đang tải môn học...</span>
       </Container>
     );
   }
@@ -364,7 +364,7 @@ const getCodeBoxColor = (code,name) => {
             className="d-flex align-items-center"
           >
             <FiBookOpen className="me-2" />
-            Current Subjects
+          Môn học hiện tại
           </Nav.Link>
         </Nav.Item>
         <Nav.Item>
@@ -374,7 +374,7 @@ const getCodeBoxColor = (code,name) => {
             className="d-flex align-items-center"
           >
             <FiClock className="me-2" />
-            Previous Subjects
+           Môn học trước đây
           </Nav.Link>
         </Nav.Item>
       </Nav>
@@ -384,7 +384,7 @@ const getCodeBoxColor = (code,name) => {
           <InputGroup>
             <InputGroup.Text><FiSearch /></InputGroup.Text>
             <Form.Control
-              placeholder={activeTab === 'current' ? "Search subjects..." : "Search previous subjects..."}
+              placeholder={activeTab === 'current' ? "Tìm kiếm môn học..." : "Tìm kiếm môn học trước đây..."}
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => {
@@ -415,7 +415,7 @@ const getCodeBoxColor = (code,name) => {
       {(isSearchLoading || (activeTab === 'previous' && isPreviousLoading)) && (
         <div className="text-center mb-3">
           <Spinner animation="border" size="sm" className="me-2" />
-          <small className="text-muted">Updating results...</small>
+          <small className="text-muted">Cập nhật kết quả...</small>
         </div>
       )}
 

@@ -7,12 +7,12 @@ import { FiArrowLeft, FiSearch, FiChevronDown, FiMoreVertical, FiCalendar, FiUse
 import { motion } from "framer-motion";
 
 const sortOptions = [
-  { label: "Grade ↑",      value: "grade:asc" },
-  { label: "Grade ↓",      value: "grade:desc" },
-  { label: "Assignment A→Z", value: "assignmentTitle:asc" },
-  { label: "Assignment Z→A", value: "assignmentTitle:desc" },
-  { label: "Date ↑", value: "date:asc" },
-  { label: "Date ↓", value: "date:desc" }
+  { label: "Điểm ↑",      value: "grade:asc" },
+  { label: "Điểm ↓",      value: "grade:desc" },
+  { label: "Bài tập A→Z", value: "assignmentTitle:asc" },
+  { label: "Bài tập Z→A", value: "assignmentTitle:desc" },
+  { label: "Ngày ↑", value: "date:asc" },
+  { label: "Ngày ↓", value: "date:desc" }
 ];
 
 const getTermColor = (term) => {
@@ -270,7 +270,7 @@ export default function GradeOverview() {
                 style={{ minWidth: '120px' }}
               >
                 <FiChevronLeft className="me-2" />
-                Previous
+                Phía trước
               </Button>
 
               <div className="text-center flex-grow-1 mx-3">
@@ -292,7 +292,7 @@ export default function GradeOverview() {
                 className="d-flex align-items-center px-3 py-2 rounded-pill"
                 style={{ minWidth: '120px' }}
               >
-                Next
+                Tiếp
                 <FiChevronRight className="ms-2" />
               </Button>
             </div>
@@ -355,10 +355,10 @@ export default function GradeOverview() {
                         {stat.term}
                       </div>
                       <div className="small text-muted">
-                        {stat.count} submissions
+                        {stat.count} bài nộp
                       </div>
                       <div className="small fw-medium" style={{ color: stat.color }}>
-                        Avg: {stat.avgGrade}
+                        Trung bình: {stat.avgGrade}
                       </div>
                     </div>
                   </motion.div>
@@ -483,14 +483,14 @@ export default function GradeOverview() {
                         <div className={`text-${getGradeColor(s.grade.score)} fw-bold h5 mb-1`}>
                           {s.grade.score}/10
                         </div>
-                        <small className="text-muted">Graded</small>
+                        <small className="text-muted">Điểm</small>
                       </div>
                     ) : (
                       <div className="text-center">
                         <div className="text-warning h6 mb-1">
-                          Pending
+                          Đang xử lí
                         </div>
-                        <small className="text-muted">Not graded yet</small>
+                        <small className="text-muted">Không có điểm hiện tại</small>
                       </div>
                     )}
                   </div>
@@ -544,7 +544,7 @@ export default function GradeOverview() {
             onClick={goBack}
             style={{ borderWidth: '2px' }}
           >
-            <FiArrowLeft className="me-2" /> Back to Course Detail
+            <FiArrowLeft className="me-2" /> Quay lại chi tiết khóa học
           </Button>
         </motion.div>
 
@@ -566,7 +566,7 @@ export default function GradeOverview() {
                 </div>
                 <div>
                   <Card.Title className="h3 text-white mb-1">
-                    Grade Overview
+                   Tổng quan điểm số
                   </Card.Title>
                   <Card.Subtitle className="text-white-50 h5">
                     {courseTitle || `Course ${courseId}`}
@@ -597,7 +597,7 @@ export default function GradeOverview() {
                         className="border-0 ps-2"
                         style={{ borderRadius: '0 10px 10px 0' }}
                       >
-                        <option value="">All Assignments</option>
+                        <option value="">Tất cả bài tập</option>
                         {assignments.map(a => (
                           <option key={a._id} value={a.title}>{a.title}</option>
                         ))}
@@ -618,7 +618,7 @@ export default function GradeOverview() {
                         className="border-0"
                         style={{ borderRadius: '0 10px 10px 0' }}
                       >
-                        <option value="all">All Terms</option>
+                        <option value="all">Tất cả kì</option>
                         {availableTerms.map(term => (
                           <option key={term} value={term}>{term}</option>
                         ))}
@@ -672,7 +672,7 @@ export default function GradeOverview() {
                       }}
                     >
                       <FiAward className="me-2" />
-                      Graded ({filteredGraded.length})
+                     Điểm ({filteredGraded.length})
                     </Nav.Link>
                   </Nav.Item>
                   <Nav.Item>
@@ -686,7 +686,7 @@ export default function GradeOverview() {
                       }}
                     >
                       <FiClock className="me-2" />
-                      Pending ({filteredPending.length})
+                     Đang xử lí ({filteredPending.length})
                     </Nav.Link>
                   </Nav.Item>
                   <Nav.Item>
@@ -719,7 +719,7 @@ export default function GradeOverview() {
             >
               <Spinner animation="border" variant="primary" />
             </motion.div>
-            <p className="mt-3 text-muted">Loading submissions...</p>
+            <p className="mt-3 text-muted">Đang tải bài nộp...</p>
           </div>
         ) : (
           <motion.div

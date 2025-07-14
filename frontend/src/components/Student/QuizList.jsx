@@ -140,7 +140,7 @@ if (resp.data.success) {
     const now = new Date();
     const due = new Date(assignment.dueDate);
     if (now > due) {
-      alert("Deadline has passed. Cannot submit.");
+      alert("Quá hạn nộp. Không thể nộp.");
       return;
     }
 
@@ -170,9 +170,9 @@ if (resp.data.success) {
         );
         
         if (response.data.success) {
-          alert("Resubmission successful!");
+          alert("Nộp lại thành công!");
         } else {
-          alert(response.data.message || "Resubmission failed!");
+          alert(response.data.message || "Nộp lại không thành công!");
         }
         
       } else {
@@ -197,9 +197,9 @@ if (resp.data.success) {
         const response = await axios.post("/api/student/submissions/submit", payload);
         
         if (response.data.success) {
-          alert("Submission successful!");
+          alert("Nộp thành công!");
         } else {
-          alert(response.data.message || "Submission failed!");
+          alert(response.data.message || "Nộp không thành công!");
         }
       }
       
@@ -208,7 +208,7 @@ if (resp.data.success) {
       
     } catch (err) {
       console.error("Submit error:", err);
-      const errorMsg = err.response?.data?.message || "Failed to submit.";
+      const errorMsg = err.response?.data?.message || "Nộp lỗi.";
       alert(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -222,14 +222,14 @@ if (resp.data.success) {
     const due = new Date(assignment.dueDate);
     const diff = due - now;
     
-    if (diff <= 0) return "Overdue";
+    if (diff <= 0) return "Quá hạn";
     
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     
-    if (days > 0) return `${days} day${days > 1 ? 's' : ''} remaining`;
-    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} remaining`;
-    return "Less than 1 hour remaining";
+    if (days > 0) return `${days} ngày  còn lại`;
+    if (hours > 0) return `${hours} giờ còn lại`;
+    return "Còn lại 1 giờ ";
   };
 
   const getQuizProgress = () => {
@@ -241,15 +241,15 @@ if (resp.data.success) {
 
   const getStatusBadge = () => {
     if (hasSubmitted && submission?.grade?.score != null) {
-      return <Badge bg="success" className="ms-2"><FiCheckCircle className="me-1" />Graded</Badge>;
+      return <Badge bg="success" className="ms-2"><FiCheckCircle className="me-1" />Điểm</Badge>;
     }
     if (hasSubmitted) {
-      return <Badge bg="info" className="ms-2"><FiCheckCircle className="me-1" />Submitted</Badge>;
+      return <Badge bg="info" className="ms-2"><FiCheckCircle className="me-1" />Đã nộp</Badge>;
     }
     if (!canEdit) {
-      return <Badge bg="danger" className="ms-2"><FiAlertTriangle className="me-1" />Overdue</Badge>;
+      return <Badge bg="danger" className="ms-2"><FiAlertTriangle className="me-1" />Quá hạn</Badge>;
     }
-    return <Badge bg="warning" className="ms-2"><FiClock className="me-1" />In Progress</Badge>;
+    return <Badge bg="warning" className="ms-2"><FiClock className="me-1" />Đang tiến hành</Badge>;
   };
 
   // Show last submission info
@@ -260,15 +260,15 @@ if (resp.data.success) {
       <Alert variant="info" className="mb-4">
         <div className="d-flex justify-content-between align-items-center">
           <div>
-            <strong>Last submitted:</strong> {new Date(submission.submittedAt).toLocaleString()}
+            <strong>Lần nộp cuối:</strong> {new Date(submission.submittedAt).toLocaleString()}
             {submission.grade?.score != null && (
               <span className="ms-3">
-                <strong>Grade:</strong> <span className="text-success">{submission.grade.score}/10</span>
+                <strong>Điểm:</strong> <span className="text-success">{submission.grade.score}/10</span>
               </span>
             )}
           </div>
           {canEdit && (
-            <small className="text-muted">You can still resubmit before the deadline</small>
+            <small className="text-muted">Bạn cần nộp lại trước hạn</small>
           )}
         </div>
       </Alert>
@@ -284,7 +284,7 @@ if (resp.data.success) {
           transition={{ duration: 0.5 }}
         >
           <Spinner animation="border" variant="primary" size="lg" />
-          <p className="mt-3 text-muted">Loading assignment...</p>
+          <p className="mt-3 text-muted">Đang tải bài tập...</p>
         </motion.div>
       </Container>
     );
@@ -308,7 +308,7 @@ if (resp.data.success) {
             className="mb-4 d-flex align-items-center"
             onClick={() => navigate(-1)}
           >
-            <FiArrowLeft className="me-2" /> Back to Assignments
+            <FiArrowLeft className="me-2" /> Quay trở lại danh sách bài tập
           </Button>
         </motion.div>
 
@@ -333,7 +333,7 @@ if (resp.data.success) {
                 {submission?.grade?.score != null && (
                   <div className="text-end">
                     <div className="h2 text-success mb-0">{submission.grade.score}/10</div>
-                    <small className="text-muted">Your Score</small>
+                    <small className="text-muted">Điểm</small>
                   </div>
                 )}
               </div>
@@ -342,7 +342,7 @@ if (resp.data.success) {
                 <Col md={6}>
                   <div className="d-flex align-items-center text-muted mb-2">
                     <FiClock className="me-2" />
-                    <strong>Due:</strong> {new Date(assignment.dueDate).toLocaleString()}
+                    <strong>Hạn:</strong> {new Date(assignment.dueDate).toLocaleString()}
                   </div>
                 </Col>
                 <Col md={6} className="text-md-end">
@@ -355,7 +355,7 @@ if (resp.data.success) {
               {assignment.type === 'quiz' && (
                 <div className="mt-3">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="text-muted">Progress</span>
+                    <span className="text-muted">Tiến độ</span>
                     <span className="text-muted">{Object.keys(answers).length}/{assignment.questions.length} questions</span>
                   </div>
                   <ProgressBar 
@@ -381,7 +381,7 @@ if (resp.data.success) {
           >
             <Alert variant="danger" className="mb-4">
               <FiAlertTriangle className="me-2" />
-              <strong>Deadline has passed!</strong> You can no longer submit or modify your answers.
+              <strong>Đã quá hạn!</strong> Bạn không thể nộp hay chỉnh sửa.
             </Alert>
           </motion.div>
         )}
@@ -455,7 +455,7 @@ if (resp.data.success) {
                 <Form.Group>
                   <Form.Label className="h5 mb-3">
                     <FiEdit3 className="me-2" />
-                    Your Answer
+                   Câu trả lời của bạn
                   </Form.Label>
                   <Form.Control
                     as="textarea"
@@ -469,7 +469,7 @@ if (resp.data.success) {
                   />
                   {canEdit && (
                     <Form.Text className="text-muted">
-                      {essayContent.length} characters
+                      {essayContent.length} kí tự
                     </Form.Text>
                   )}
                 </Form.Group>
@@ -496,19 +496,19 @@ if (resp.data.success) {
               {isSubmitting ? (
                 <>
                   <Spinner animation="border" size="sm" className="me-2" />
-                  {hasSubmitted ? 'Resubmitting...' : 'Submitting...'}
+                  {hasSubmitted ? 'Đang nộp lại...' : 'Đang nộp...'}
                 </>
               ) : (
                 <>
                   <FiSend className="me-2" />
-                  {hasSubmitted ? 'Resubmit Assignment' : 'Submit Assignment'}
+                  {hasSubmitted ? 'Nộp lại bài' : 'Nộp bài'}
                 </>
               )}
             </Button>
           ) : (
             <Alert variant="secondary" className="d-inline-block">
               <FiAlertTriangle className="me-2" />
-              Submission period has ended
+             Thời gian nộp bài đã kết thúc
             </Alert>
           )}
         </motion.div>

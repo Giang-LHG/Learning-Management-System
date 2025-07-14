@@ -105,7 +105,7 @@ export default function AppealForm() {
       }}>
         <div className="text-center text-white">
           <Spinner animation="border" variant="light" size="lg" />
-          <p className="mt-3 fs-5">Loading submission...</p>
+          <p className="mt-3 fs-5">Đang tải bài nộp...</p>
         </div>
       </div>
     );
@@ -126,7 +126,7 @@ export default function AppealForm() {
               <div className="text-danger mb-3">
                 <i className="fas fa-exclamation-triangle fa-3x"></i>
               </div>
-              <h5 className="text-danger mb-3">Submission not found</h5>
+              <h5 className="text-danger mb-3">Không thấy bài nộp</h5>
               <Button 
                 variant="primary" 
                 onClick={() => navigate(-1)}
@@ -137,7 +137,7 @@ export default function AppealForm() {
                   borderRadius: '8px'
                 }}
               >
-                <FiArrowLeft className="me-2" /> Back
+                <FiArrowLeft className="me-2" /> Quay lại
               </Button>
             </Card.Body>
           </Card>
@@ -168,7 +168,7 @@ export default function AppealForm() {
             fontWeight: '500'
           }}
         >
-          <FiArrowLeft className="me-2" /> Back to Grades
+          <FiArrowLeft className="me-2" /> Quay lại danh sách điểm
         </Button>
 
         {/* Header Card */}
@@ -178,15 +178,15 @@ export default function AppealForm() {
             borderRadius: '16px 16px 0 0',
             padding: '2rem'
           }}>
-            <h2 className="text-white mb-3 fw-bold">Appeal for Submission</h2>
+            <h2 className="text-white mb-3 fw-bold">Phúc khảo cho bài nộp</h2>
             {assignment && (
               <div className="text-white mb-2">
-                <strong>Assignment:</strong> {assignment.title}
+                <strong>Bài tập:</strong> {assignment.title}
               </div>
             )}
             {student?.profile && (
               <div className="text-white">
-                <strong>Student:</strong> {student.profile.fullName}
+                <strong>Học sinh:</strong> {student.profile.fullName}
               </div>
             )}
           </div>
@@ -196,12 +196,12 @@ export default function AppealForm() {
         <Card className="mb-4 shadow-lg border-0" style={{ borderRadius: '16px' }}>
           <Card.Body className="p-4">
             <h5 className="mb-4" style={{ color: '#1976D2', fontWeight: '600' }}>
-              Submission Details
+            Thông tin bài nộp
             </h5>
             
             {assignment?.type === 'quiz' ? (
               <div>
-                <h6 className="mb-3 text-muted">Your Answers:</h6>
+                <h6 className="mb-3 text-muted">Điểm của bạn:</h6>
                 {assignment.questions.map((q, idx) => {
                   const sel = answers.find(a => a.questionId === q.questionId)?.selectedOption;
                   const isCorrect = hasGrade && sel === q.correctOption;
@@ -216,9 +216,9 @@ export default function AppealForm() {
                         ? `2px solid ${isCorrect ? '#4caf50' : '#f44336'}`
                         : '2px solid #e9ecef'
                     }}>
-                      <div className="fw-bold mb-2">Question {idx + 1}: {q.text}</div>
+                      <div className="fw-bold mb-2">Câu hỏi {idx + 1}: {q.text}</div>
                       <div className="mb-1">
-                        <span className="text-muted">Your choice:</span> 
+                        <span className="text-muted">Lựu chọn của bạn:</span> 
                         <span className={`ms-2 ${hasGrade ? (isCorrect ? 'text-success' : 'text-danger') : 'text-dark'}`}>
                           {sel || 'None'}
                         </span>
@@ -229,7 +229,7 @@ export default function AppealForm() {
                       {/* Thông báo khi chưa có điểm */}
                       {!hasGrade && (
                         <div className="text-muted fst-italic">
-                          Correct answer will be shown after grading
+                        Câu trả lời đúng sẽ được hiển thị sau khi chấm điểm
                         </div>
                       )}
                     </div>
@@ -238,7 +238,7 @@ export default function AppealForm() {
               </div>
             ) : (
               <div>
-                <h6 className="mb-3 text-muted">Your Submission:</h6>
+                <h6 className="mb-3 text-muted">Bài nộp của bạn:</h6>
                 <div style={{
                   backgroundColor: '#f8f9fa',
                   padding: '1.5rem',
@@ -253,7 +253,7 @@ export default function AppealForm() {
             <hr className="my-4" />
 
             <div className="d-flex align-items-center">
-              <h6 className="mb-0 me-3" style={{ color: '#1976D2' }}>Grade:</h6>
+              <h6 className="mb-0 me-3" style={{ color: '#1976D2' }}>Điểm:</h6>
               {hasGrade ? (
                 <div style={{
                   background: 'linear-gradient(45deg, #4caf50, #2e7d32)',
@@ -273,7 +273,7 @@ export default function AppealForm() {
                   borderRadius: '20px',
                   fontSize: '1rem'
                 }}>
-                  Not graded yet
+               Chưa có điểm
                 </div>
               )}
             </div>
@@ -284,16 +284,16 @@ export default function AppealForm() {
         <Card className="mb-4 shadow-lg border-0" style={{ borderRadius: '16px' }}>
           <Card.Body className="p-4">
             <h5 className="mb-4" style={{ color: '#1976D2', fontWeight: '600' }}>
-              Appeal Request
+             Yêu cầu phúc khảo
             </h5>
             <Form.Group controlId="appealContent">
               <Form.Label className="fw-bold text-muted mb-3">
-                Please explain your appeal request in detail:
+             Vui lòng giải thích chi tiết yêu cầu kháng cáo của bạn:
               </Form.Label>
               <Form.Control
                 as="textarea"
                 rows={8}
-                placeholder="Write your appeal here... Please be specific about why you believe your submission deserves a different grade."
+                placeholder="Viết đơn kháng cáo của bạn tại đây... Vui lòng nêu rõ lý do tại sao bạn tin rằng bài nộp của bạn xứng đáng được chấm điểm khác."
                 value={appealContent}
                 onChange={e => setAppealContent(e.target.value)}
                 style={{
@@ -333,10 +333,10 @@ export default function AppealForm() {
                   role="status"
                   className="me-2"
                 />
-                Submitting Appeal...
+            Đang nộp...
               </>
             ) : (
-              'Submit Appeal'
+              'Nộp đơn phúc khảo'
             )}
           </Button>
         </div>

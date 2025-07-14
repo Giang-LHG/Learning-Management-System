@@ -26,12 +26,12 @@ import {
 } from 'react-bootstrap';
 
 const sortOptions = [
-  { label: 'Due Date ↑', value: 'dueDate:asc' },
-  { label: 'Due Date ↓', value: 'dueDate:desc' },
-  { label: 'Title A→Z', value: 'title:asc' },
-  { label: 'Title Z→A', value: 'title:desc' },
-  { label: 'Created ↑', value: 'createdAt:asc' },
-  { label: 'Created ↓', value: 'createdAt:desc' }
+  { label: 'Ngày đến hạn ↑', value: 'dueDate:asc' },
+  { label: 'Ngày đến hạn ↓', value: 'dueDate:desc' },
+  { label: 'Tiêu đề A→Z', value: 'title:asc' },
+  { label: 'Tiêu đề Z→A', value: 'title:desc' },
+  { label: 'Ngày tạo ↑', value: 'createdAt:asc' },
+  { label: 'Ngày tạo ↓', value: 'createdAt:desc' }
 ];
 
 export default function AssignmentList() {
@@ -186,7 +186,7 @@ useEffect(() => {
               background: 'linear-gradient(45deg, #1976d2, #2196f3)'
             }}
           >
-            <FiArrowLeft className="me-2" /> Back to Courses
+            <FiArrowLeft className="me-2" /> Quay lại danh sách khóa học
           </Button>
         </motion.div>
 
@@ -226,7 +226,7 @@ useEffect(() => {
                     <div className="d-flex align-items-center" style={{ color: '#616161' }}>
                       <FiUser className="me-1" size={14} />
                       <span style={{ fontSize: '0.95rem' }}>
-                        Instructor: {course.instructorName}
+                        Giáo viên: {course.instructorName}
                       </span>
                     </div>
                   )}
@@ -242,7 +242,7 @@ useEffect(() => {
                   border: 'none'
                 }}
               >
-                {filtered.length} Assignment{filtered.length !== 1 ? 's' : ''}
+                {filtered.length} Bài tập {filtered.length !== 1 ? 's' : ''}
               </Badge>
             </Card.Body>
           </Card>
@@ -277,7 +277,7 @@ useEffect(() => {
                       <FiSearch />
                     </InputGroup.Text>
                     <Form.Control
-                      placeholder="Search assignments..."
+                      placeholder="Tìm kiếm bài tập..."
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                       style={{
@@ -329,7 +329,7 @@ useEffect(() => {
               animation="border" 
               style={{ color: '#1976d2', width: '3rem', height: '3rem' }}
             />
-            <p className="mt-3" style={{ color: '#1976d2' }}>Loading assignments...</p>
+            <p className="mt-3" style={{ color: '#1976d2' }}>Tải bài tập...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-5">
@@ -344,9 +344,9 @@ useEffect(() => {
             >
               <Card.Body className="p-4">
                 <FiFileText size={48} style={{ color: '#90caf9' }} className="mb-3" />
-                <h5 style={{ color: '#1976d2' }}>No assignments found</h5>
+                <h5 style={{ color: '#1976d2' }}>Không tìm thấy bài tập</h5>
                 <p className="text-muted small mb-0">
-                  {searchQuery ? 'Try adjusting your search criteria' : 'No assignments available for this course'}
+                  {searchQuery ? 'Hãy thử điều chỉnh tiêu chí tìm kiếm của bạn' : 'Không có bài tập nào có sẵn cho khóa học này'}
                 </p>
               </Card.Body>
             </Card>
@@ -378,7 +378,7 @@ useEffect(() => {
                       <Card.Text className="mt-auto mb-3">
                         <FiCalendar className="me-2" size={14} />
                         <small style={{ color: '#616161' }}>
-                          Due: {new Date(a.dueDate).toLocaleDateString()}
+                     Hạn: {new Date(a.dueDate).toLocaleDateString()}
                         </small>
                       </Card.Text>
                       {(() => {
@@ -401,7 +401,7 @@ useEffect(() => {
                         size="sm"
                       >
                         <FiPlay className="me-2" size={14} />
-                        View Quiz
+                       Xem bài tập
                       </Button>
                     </Card.Body>
                   </Card>

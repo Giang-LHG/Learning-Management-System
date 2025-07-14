@@ -135,26 +135,9 @@ const ParentStatsDashboard = () => {
         {/* Header */}
         <div style={{ backgroundColor: '#0d6efd', color: 'white', padding: '2rem' }}>
           <Container>
-            <div className="d-flex align-items-center justify-content-between mb-3">
-              <div className="d-flex align-items-center">
-                <ArrowLeft size={20} className="me-2" style={{ cursor: 'pointer' }} />
-                <small>Back to Dashboard</small>
-              </div>
-              <Dropdown>
-                <Dropdown.Toggle variant="light" size="sm" className="d-flex align-items-center">
-                  <User size={16} className="me-2" />
-                  {user?.profile?.fullName || user?.username || 'Parent'}
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item onClick={handleLogout} className="text-danger">
-                    <LogOut size={16} className="me-2" />
-                    Logout
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
-            </div>
-            <h1 className="h2 mb-2">Student Progress Overview</h1>
-            <p className="text-light">Track your children's academic performance</p>
+           
+            <h1 className="h2 mb-2">Tổng quan tiến độ học sinh </h1>
+            <p className="text-light">Theo dõi kết quả học tập của con bạn</p>
           </Container>
         </div>
         
@@ -173,35 +156,18 @@ const ParentStatsDashboard = () => {
         {/* Header */}
         <div style={{ backgroundColor: '#0d6efd', color: 'white', padding: '2rem' }}>
           <Container>
-            <div className="d-flex align-items-center justify-content-between mb-3">
-              <div className="d-flex align-items-center">
-                <ArrowLeft size={20} className="me-2" style={{ cursor: 'pointer' }} />
-                <small>Back to Dashboard</small>
-              </div>
-              <Dropdown>
-                <Dropdown.Toggle variant="light" size="sm" className="d-flex align-items-center">
-                  <User size={16} className="me-2" />
-                  {user?.profile?.fullName || user?.username || 'Parent'}
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item onClick={handleLogout} className="text-danger">
-                    <LogOut size={16} className="me-2" />
-                    Logout
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
-            </div>
-            <h1 className="h2 mb-2">Student Progress Overview</h1>
-            <p className="text-light">Track your children's academic performance</p>
+          
+             <h1 className="h2 mb-2">Tổng quan tiến độ học sinh </h1>
+            <p className="text-light">Theo dõi kết quả học tập của con bạn</p>
           </Container>
         </div>
         
         <Container className="mt-4">
           <Alert variant="danger">
-            <Alert.Heading>Error Loading Statistics</Alert.Heading>
+            <Alert.Heading>Lỗi tải thống kê</Alert.Heading>
             <p>{error}</p>
             <Button variant="primary" onClick={fetchParentStats}>
-              Retry
+              Thử lại
             </Button>
           </Alert>
         </Container>
@@ -215,11 +181,11 @@ const ParentStatsDashboard = () => {
       <div style={{ backgroundColor: '#0d6efd', color: 'white', padding: '2rem' }}>
         <Container>
           
-          <h1 className="h2 mb-2">Student Progress Overview</h1>
-          <p className="text-light">Track your children's academic performance</p>
+           <h1 className="h2 mb-2">Tổng quan tiến độ học sinh </h1>
+            <p className="text-light">Theo dõi kết quả học tập của con bạn</p>
           <div className="d-flex align-items-center mt-3">
             <User size={16} className="me-2" />
-            <small>{stats.length} Student{stats.length !== 1 ? 's' : ''}</small>
+            <small>{stats.length} Học sinh {stats.length !== 1 ? 's' : ''}</small>
           </div>
         </Container>
       </div>
@@ -229,8 +195,8 @@ const ParentStatsDashboard = () => {
         {stats.length === 0 ? (
           <div className="text-center py-5">
             <BookOpen size={64} className="text-muted mb-3" />
-            <h3 className="text-muted mb-2">No Students Found</h3>
-            <p className="text-muted">No student data available for this parent account.</p>
+            <h3 className="text-muted mb-2">Không tìm thấy student</h3>
+            <p className="text-muted">Không có dữ liệu học sinh nào có sẵn cho tài khoản phụ huynh này..</p>
           </div>
         ) : (
           <div>
@@ -253,13 +219,13 @@ const ParentStatsDashboard = () => {
                         </div>
                         <div>
                           <h5 className="mb-1">{student.fullName}</h5>
-                          <small className="text-muted">Student ID: {student.studentId.slice(-6)}</small>
+                          <small className="text-muted">Mã số học sinh : {student.studentId.slice(-6)}</small>
                         </div>
                       </div>
                     </Col>
                     <Col xs="auto" className="text-end">
                       <div className="h2 text-primary mb-0">{student.totalCourses}</div>
-                      <small className="text-muted">Total Courses</small>
+                      <small className="text-muted">Tổng số khóa học</small>
                     </Col>
                   </Row>
                 </Card.Header>
@@ -273,7 +239,7 @@ const ParentStatsDashboard = () => {
                         <Card.Body>
                           <div className="d-flex align-items-center mb-2">
                             <TrendingUp size={20} className="text-primary me-2" />
-                            <span className="fw-medium">Average Grade</span>
+                            <span className="fw-medium">Điểm trung bình</span>
                           </div>
                           <Badge 
                             bg={student.avgGrade ? getGradeVariant(student.avgGrade) : 'secondary'} 
@@ -291,7 +257,7 @@ const ParentStatsDashboard = () => {
                         <Card.Body>
                           <div className="d-flex align-items-center mb-2">
                             <BarChart3 size={20} className="text-primary me-2" />
-                            <span className="fw-medium">Completion Rate</span>
+                            <span className="fw-medium">Tỉ lệ hoàn thành</span>
                           </div>
                           <Badge 
                             bg={student.completionRate !== 'N/A' ? getCompletionVariant(student.completionRate) : 'secondary'} 
@@ -309,7 +275,7 @@ const ParentStatsDashboard = () => {
                         <Card.Body>
                           <div className="d-flex align-items-center mb-2">
                             <Calendar size={20} className="text-primary me-2" />
-                            <span className="fw-medium">Active Terms</span>
+                            <span className="fw-medium">Kì học</span>
                           </div>
                           <div className="h2 mb-0">
                             {Object.keys(student.byTerm).length}
@@ -324,7 +290,7 @@ const ParentStatsDashboard = () => {
                     <div>
                       <h5 className="d-flex align-items-center mb-3">
                         <Award size={20} className="me-2" />
-                        Performance by Term
+                       Hiệu suất ở kì
                       </h5>
                       <Row>
                         {Object.entries(student.byTerm).map(([term, data]) => (
@@ -336,15 +302,15 @@ const ParentStatsDashboard = () => {
                               <Card.Body>
                                 <ListGroup variant="flush">
                                   <ListGroup.Item className="d-flex justify-content-between px-0">
-                                    <span>Courses:</span>
+                                    <span>Khóa học:</span>
                                     <Badge bg="info">{data.courses}</Badge>
                                   </ListGroup.Item>
                                   <ListGroup.Item className="d-flex justify-content-between px-0">
-                                    <span>Submissions:</span>
+                                    <span>Bài nộp:</span>
                                     <Badge bg="info">{data.subs}</Badge>
                                   </ListGroup.Item>
                                   <ListGroup.Item className="d-flex justify-content-between px-0">
-                                    <span>Avg Grade:</span>
+                                    <span>Điểm trung bình:</span>
                                     <Badge 
                                       bg={data.avgGrade ? getGradeVariant(parseFloat(data.avgGrade)) : 'secondary'}
                                     >

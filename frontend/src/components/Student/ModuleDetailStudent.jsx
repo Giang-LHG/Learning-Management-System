@@ -31,9 +31,9 @@ import {
 } from 'react-bootstrap';
 
 const sortOptions = [
-  { label: "Title A→Z", value: "title:asc" },
-  { label: "Title Z→A", value: "title:desc" },
-  { label: "Order (Default)", value: "order:asc" }
+  { label: "Tiêu đề A→Z", value: "title:asc" },
+  { label: "Tiêu đề Z→A", value: "title:desc" },
+  { label: "Thứ tự sắp xếp (Mặc định)", value: "order:asc" }
 ];
 
 export default function ModuleDetail() {
@@ -237,7 +237,7 @@ console.log("term =", term1);
                     {lesson.title}
                   </h5>
                   <small className="text-muted">
-                    Lesson #{index + 1}
+                    Khóa học #{index + 1}
                   </small>
                 </div>
               </div>
@@ -300,7 +300,7 @@ console.log("term =", term1);
       <Container className="py-5 text-center">
         <div className="d-flex flex-column align-items-center">
           <Spinner animation="border" variant="primary" size="lg" />
-          <p className="mt-3 text-muted">Loading module details...</p>
+          <p className="mt-3 text-muted">Đang tải thông tin chương học...</p>
         </div>
       </Container>
     );
@@ -314,14 +314,14 @@ console.log("term =", term1);
             <div className="text-danger mb-3">
               <FiBookOpen size={48} />
             </div>
-            <h4 className="text-danger mb-3">Module not found</h4>
-            <p className="text-muted mb-4">The module you're looking for doesn't exist or has been removed.</p>
+            <h4 className="text-danger mb-3">Không tìm thấy chương học</h4>
+            <p className="text-muted mb-4">Chương học bạn đang tìm kiếm không tồn tại hoặc đã bị xóa</p>
             <Button 
               variant="primary" 
               onClick={() => navigate(`/student/course/${courseId}`)}
               className="px-4"
             >
-              <FiArrowLeft className="me-2" /> Back to Course Detail
+              <FiArrowLeft className="me-2" /> Quay trở lại khóa học
             </Button>
           </Card.Body>
         </Card>
@@ -345,7 +345,7 @@ console.log("term =", term1);
           className="shadow-sm"
           onClick={() => navigate(`/student/subject/${subjectId}/course/${courseId}`)}
         >
-          <FiArrowLeft className="me-2" /> Back to Course
+          <FiArrowLeft className="me-2" /> Quay trở lại khóa học
         </Button>
 
         <ButtonGroup>
@@ -355,7 +355,7 @@ console.log("term =", term1);
             onClick={goToPrevModule}
             className="d-flex align-items-center"
           >
-            <FiChevronLeft className="me-1" /> Previous Module
+            <FiChevronLeft className="me-1" /> Chương học trước
           </Button>
           <Button
             variant="outline-secondary"
@@ -363,7 +363,7 @@ console.log("term =", term1);
             onClick={goToNextModule}
             className="d-flex align-items-center"
           >
-            Next Module <FiChevronRight className="ms-1" />
+            Chương học tiếp theo<FiChevronRight className="ms-1" />
           </Button>
         </ButtonGroup>
       </motion.div>
@@ -382,18 +382,18 @@ console.log("term =", term1);
                 <div className="d-flex align-items-center gap-3 flex-wrap">
                   <Badge bg="light" text="dark" className="px-3 py-2">
                     <FiBookOpen className="me-1" />
-                    {lessons.length} Total Lessons
+                    {lessons.length} Tổng số bài học
                   </Badge>
                   <Badge bg="info" text="dark" className="px-3 py-2">
-                    Module {currentModuleIndex + 1} of {allModules.length}
+                    Chương học {currentModuleIndex + 1} trong {allModules.length} chương học
                   </Badge>
                   <Badge bg="success" text="dark" className="px-3 py-2">
                     <FiCheckCircle className="me-1" />
-                    {studiedLessons.length} Studied
+                    {studiedLessons.length} Đã học
                   </Badge>
                   <Badge bg="warning" text="dark" className="px-3 py-2">
                     <FiCircle className="me-1" />
-                    {notStudiedLessons.length} Not Studied
+                    {notStudiedLessons.length} Chưa học
                   </Badge>
                 </div>
               </div>
@@ -419,7 +419,7 @@ console.log("term =", term1);
                     <FiSearch className="text-muted" />
                   </InputGroup.Text>
                   <Form.Control
-                    placeholder="Search lessons by title..."
+                    placeholder="Tìm kiếm bài học theo tiêu đề..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="border-start-0 ps-0"
@@ -461,7 +461,7 @@ console.log("term =", term1);
               className="d-flex align-items-center"
             >
               <FiBookOpen className="me-2" />
-              All Lessons 
+              Tất cả bài học 
               <Badge bg="secondary" className="ms-2">{tabCounts.all}</Badge>
             </Nav.Link>
           </Nav.Item>
@@ -472,7 +472,7 @@ console.log("term =", term1);
               className="d-flex align-items-center"
             >
               <FiCheckCircle className="me-2" />
-              Studied 
+           Đã học
               <Badge bg="success" className="ms-2">{tabCounts.studied}</Badge>
             </Nav.Link>
           </Nav.Item>
@@ -483,7 +483,7 @@ console.log("term =", term1);
               className="d-flex align-items-center"
             >
               <FiCircle className="me-2" />
-              Not Studied 
+             Chưa học
               <Badge bg="warning" className="ms-2">{tabCounts.notStudied}</Badge>
             </Nav.Link>
           </Nav.Item>
@@ -501,11 +501,11 @@ console.log("term =", term1);
               <div className="text-muted mb-3">
                 <FiBookOpen size={48} />
               </div>
-              <h5 className="text-muted mb-2">No lessons found</h5>
+              <h5 className="text-muted mb-2">Không tìm kiếm bài học</h5>
               <p className="text-muted">
                 {searchQuery 
-                  ? 'Try adjusting your search terms or switch to a different tab' 
-                  : `This module has no ${activeTab === 'studied' ? 'studied' : activeTab === 'notStudied' ? 'unstudied' : ''} lessons yet`
+                  ? 'Hãy thử điều chỉnh  tìm kiếm của bạn hoặc chuyển sang một tab khác' 
+                  : `Chương học này không có ${activeTab === 'studied' ? 'đã học' : activeTab === 'notStudied' ? 'chưa học' : ''} bài học`
                 }
               </p>
             </Card.Body>
