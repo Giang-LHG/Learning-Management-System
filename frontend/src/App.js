@@ -7,8 +7,8 @@ import store from './store/store';
 // --- Header----
 import Header from './components/header/Header.js';
 // --- layouts ---
-import MainLayout from './layouts/MainLayout.jsx';
-import AuthLayout from './layouts/AuthLayout.jsx';
+import MainLayout from './Layouts/MainLayout.jsx';
+import AuthLayout from './Layouts/AuthLayout.jsx';
 
 // --- Components ---
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
@@ -56,14 +56,14 @@ import QuizList from './components/Student/QuizList';
 import GradeOverview from './components/Student/GradeOverview';
 import AppealListStudent from './components/Student/AppealListStudent';
 import AppealFormStudent from './components/Student/AppealFormStudent';
-import SidebarStudent from './layouts/Student/SideBarStudent.js';
+import SidebarStudent from './Layouts/Student/SideBarStudent.js';
 import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 
 const queryClient = new QueryClient();
 
 import SubjectOverView from './components/parent/SubjectOverView';
-import SideBarParent from './layouts/parent/SideBarParent.js';
-import SidebarParent from './layouts/parent/SideBarParent.js';
+import SidebarParent from './Layouts/parent/SideBarParent';
+import NotificationList from './components/notifications/notificationList';
 function App() {
   return (
     <Provider store={store}>
@@ -134,7 +134,11 @@ function App() {
               <Profile />
             </ProtectedRoute>
           } />
-
+<Route path ="/notifications" element ={
+  <ProtectedRoute>
+    <NotificationList/>
+  </ProtectedRoute>
+}/>
           {/* Student Routes - Chỉ cho phép student */}
           <Route path="/student" element={
             <ProtectedRoute allowedRoles={['student']}>

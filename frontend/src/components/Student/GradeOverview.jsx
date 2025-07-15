@@ -640,7 +640,7 @@ export default function GradeOverview() {
                       ))}
                     </Form.Select>
                     <InputGroup.Text className="bg-light border-0 px-3">
-                      <FiChevronDown className="text-muted" />
+                    
                     </InputGroup.Text>
                   </InputGroup>
                 </Col>

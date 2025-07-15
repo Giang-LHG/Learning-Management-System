@@ -13,6 +13,7 @@ const createSubject = async (req, res) => {
             name,
             description: description || '',
             prerequisites: prerequisites || [],
+            status: 'approved',
             createdBy
         });
 

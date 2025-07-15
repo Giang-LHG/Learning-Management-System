@@ -389,7 +389,7 @@ export default function AppealList() {
                 onClick={() => navigate("/student/subjects")}
               >
                 <FiArrowLeft className="me-2" size={18} />
-                Back to Courses
+                Back to Subjects
               </Button>
             </Col>
           </Row>
@@ -489,6 +489,21 @@ export default function AppealList() {
                     <p className="mb-1 text-muted small">Resolved</p>
                     <h4 className="mb-0 fw-bold">
                       {appeals.filter(a => a.appealStatus === "resolved").length}
+                    </h4>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+               <Col md={4} className="mb-3">
+              <Card className="stats-card h-100">
+                <Card.Body className="d-flex align-items-center">
+                  <div className="module-icon me-3" style={{ background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)' }}>
+                    <FiCheckCircle size={18} />
+                  </div>
+                  <div>
+                    <p className="mb-1 text-muted small">Rejected</p>
+                    <h4 className="mb-0 fw-bold">
+                      {appeals.filter(a => a.appealStatus === "rejected").length}
                     </h4>
                   </div>
                 </Card.Body>
@@ -627,6 +642,13 @@ export default function AppealList() {
                           )}
 
                           {/* Add Comment Form */}
+                          {(appeal.appealStatus === "resolved" || appeal.appealStatus === "rejected") ? (
+  <div className="mt-4">
+    <Alert variant="info">
+      This appeal has been <strong>{appeal.appealStatus}</strong>. No further comments can be added.
+    </Alert>
+  </div>
+) : (
                           <div className="comment-form">
                             <h6 className="fw-bold mb-3">Add a Comment</h6>
                             
@@ -678,7 +700,9 @@ export default function AppealList() {
                               </Button>
                             </div>
                           </div>
+                            )}
                         </div>
+                            
                       </Collapse>
                     </Card.Body>
                   </Card>
