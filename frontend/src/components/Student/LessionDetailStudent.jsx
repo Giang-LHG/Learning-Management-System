@@ -223,7 +223,7 @@ console.log(studiedLessons);
           className="mb-4 shadow-sm"
           onClick={() => navigate(`/student/course/${courseId}/module/${moduleId}`)}
         >
-          <FiArrowLeft className="me-2" /> Back to Module
+          <FiArrowLeft className="me-2" /> Quay trở lại chương học
         </Button>
       </motion.div>
 
@@ -303,7 +303,7 @@ console.log(studiedLessons);
                     size="sm"
                     onClick={() => setShowNotes(!showNotes)}
                   >
-                    {showNotes ? 'Hide' : 'Show'}
+                    {showNotes ? 'Ẩn' : 'Hiện'}
                   </Button>
                 </div>
                 {showNotes && (
@@ -311,7 +311,7 @@ console.log(studiedLessons);
                     <Form.Control
                       as="textarea"
                       rows={4}
-                      placeholder="Take notes about this lesson..."
+                      placeholder="Ghi chép nhanh tạm thời về bài học..."
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                     />

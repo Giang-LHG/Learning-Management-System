@@ -389,7 +389,7 @@ export default function AppealList() {
                 onClick={() => navigate("/student/subjects")}
               >
                 <FiArrowLeft className="me-2" size={18} />
-                Back to Courses
+                Quay lại danh sách môn học
               </Button>
             </Col>
           </Row>
