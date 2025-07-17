@@ -136,6 +136,7 @@ function App() {
           } />
 <Route path ="/notifications" element ={
   <ProtectedRoute>
+      <Header />
     <NotificationList/>
   </ProtectedRoute>
 }/>

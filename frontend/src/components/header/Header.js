@@ -154,7 +154,7 @@ function Header() {
                   to="/student/subjects"
                   className={`nav-link ${location.pathname === '/subject' ? 'active' : ''}`}
                 >
-                  subjects
+                  Subjects
                 </Link>
               </li>
             </>)}
@@ -269,7 +269,7 @@ function Header() {
                     </div>
 
                     <ul className="dropdown-links">
-                      <li>
+                      {user?.role !== 'student' && (<li>
                         <Link
                           to={user?.role === 'admin' ? '/admin' : user?.role === 'student' ? '/student' : user?.role === 'parent' ? '/parent/dashboard' : '/dashboard'}
                           className="dropdown-link"
@@ -278,7 +278,8 @@ function Header() {
                           <FaChalkboardTeacher className="dropdown-icon" />
                           Dashboard
                         </Link>
-                      </li>
+                      </li>)}
+
                       <li
                       className="dropdown-link"
                           onClick={handleNotificationClick}>
