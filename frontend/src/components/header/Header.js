@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiMenu, FiX, FiSearch, FiUser, FiLogOut, FiLogIn, FiLock } from 'react-icons/fi';
+import { FiMenu, FiX, FiSearch, FiUser, FiLogOut, FiLogIn, FiLock, FiBell } from 'react-icons/fi';
 import { FaChalkboardTeacher } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
