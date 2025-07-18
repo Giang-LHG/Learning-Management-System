@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const Assignment = require('../../models/Assignment');
 const Submission = require('../../models/Submission');
 const Course = require('../../models/Course');
+const Notification = require('../../models/Notification');
+const User = require('../../models/User')
 /**
  * POST /submissions/submit
  * Cho học sinh nộp bài (essay hoặc quiz).
@@ -42,8 +44,20 @@ exports.submitAssignment = async (req, res) => {
       content: content || '',
       answers: answers || [] // chỉ dùng khi type === 'quiz'
     });
-
+const user = await User.findById(studentId);
     await newSubmission.save();
+       const course = await Course.findById(assignment.courseId).select(' title instructorId').lean();
+    if (course?.instructorId) {
+      await Notification.create({
+        toUserId: course.instructorId,
+        type: 'newSubmission',
+        payload: {
+          text: `New submission in assigment ${assignment.title} in course ${course.title} from student ${user.profile.fullName}`,  
+         
+        }
+      });
+    }
+
     return res.status(201).json({ success: true, data: newSubmission });
   } catch (err) {
     console.error('Error in submitAssignment:', err);
@@ -288,7 +302,7 @@ exports.getSubmissionById = async (req, res) => {
     // Tìm submission theo ID và populate các thông tin cần thiết
     const submission = await Submission.findById(submissionId)
       .populate('assignmentId')                     
-      .populate('studentId', 'name profile.email')  
+      .populate('studentId', 'name profile.email profile.fullName')  
       .lean();
 
     if (!submission) {
@@ -339,8 +353,21 @@ exports.addAppeal = async (req, res) => {
         }
       ]
     };
-
+const user = await User.findById(studentId);
     submission.appeals.push(newAppeal);
+const assignment = await Assignment.findById(submission.assignmentId).lean();
+    const course     = await Course.findById(assignment.courseId).select(' title instructorId').lean();
+    if (course?.instructorId) {
+      await Notification.create({
+        toUserId: course.instructorId,
+        type: 'reportReady',       // hoặc type khác nếu phù hợp
+        payload: {
+          text:`new appeal about submission have id : ${submission._id} assigment ${assignment.title} in course ${course.title} from student ${user.profile.fullName}`,
+ 
+         
+        }
+      });
+    }
 
     await submission.save();
 

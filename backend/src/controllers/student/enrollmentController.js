@@ -341,14 +341,9 @@ exports.addStudiedLesson = async (req, res) => {
     const update = {
       $addToSet: { studiedLessons: lessonId }
     };
-console.log('📌 Filter about to query:', {
-  studentId: studentId.toString(),
-  courseId: courseId.toString(),
-  term
-});
 
-const exists = await Enrollment.findOne({ studentId, courseId, term }).lean();
-console.log('📋 Enrollment found manually:', exists);
+
+
     const enrollment = await Enrollment.findOneAndUpdate(
       filter,
       update,

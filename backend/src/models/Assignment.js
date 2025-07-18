@@ -70,10 +70,7 @@ const AssignmentSchema = new Schema(
       type: Boolean,
       default: true
     },
-    term: {
-        type: [String],
-        required: true
-    },
+  
     questions: {
       type: [QuestionSchema],
       default: undefined

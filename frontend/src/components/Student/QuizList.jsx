@@ -329,6 +329,9 @@ if (resp.data.success) {
                   <Badge bg={assignment.type === 'quiz' ? 'primary' : 'secondary'} className="mb-2">
                     {assignment.type.toUpperCase()}
                   </Badge>
+                   <div className="text-muted mb-2">
+    {assignment.description}
+  </div>
                 </div>
                 {submission?.grade?.score != null && (
                   <div className="text-end">

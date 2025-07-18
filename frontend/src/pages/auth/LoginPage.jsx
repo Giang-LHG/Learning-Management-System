@@ -12,6 +12,19 @@ const LoginSchema = Yup.object().shape({
   password: Yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
 });
 
+/*************  ✨ Windsurf Command ⭐  *************/
+/**
+ * LoginPage component provides a user interface for users to log into the system.
+ * It utilizes Formik for form handling and validation with Yup schema.
+ * 
+ * The component includes fields for an email or username and a password, and it 
+ * manages the login process by dispatching a login action. Upon successful login,
+ * users are redirected based on their role. Error messages are displayed in case 
+ * of failure. The component also includes UI elements for password visibility toggle, 
+ * remember me checkbox, password reset link, and social login options.
+ */
+
+/*******  d05bd578-21c6-46e8-979b-d97de1ff0fca  *******/
 const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -29,6 +42,8 @@ const LoginPage = () => {
         const user = resultAction.payload.user;
         if (user.role === 'admin') {
           navigate('/admin');
+        } else if (user.role === 'instructor') {
+          navigate('/instructor');
         } else if (user.role === 'student') {
           navigate('/student');
         } else if (user.role === 'parent') {

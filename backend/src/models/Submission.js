@@ -87,10 +87,7 @@ const SubmissionSchema = new Schema(
       ref: 'User',
       required: true
     },
-    term: {
-        type: String,
-        required: true
-    },
+    
     submittedAt: {
       type: Date,
       default: () => new Date()
