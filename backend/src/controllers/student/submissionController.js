@@ -302,7 +302,7 @@ exports.getSubmissionById = async (req, res) => {
     // Tìm submission theo ID và populate các thông tin cần thiết
     const submission = await Submission.findById(submissionId)
       .populate('assignmentId')                     
-      .populate('studentId', 'name profile.email')  
+      .populate('studentId', 'name profile.email profile.fullName')  
       .lean();
 
     if (!submission) {
