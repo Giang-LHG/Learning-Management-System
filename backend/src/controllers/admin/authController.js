@@ -3,6 +3,7 @@ const User = require('../../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
+const { sendMail } = require('../../utils/email');
 
 const createErrorResponse = (status, message) => ({ status, message });
 
@@ -115,5 +116,85 @@ exports.login = async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json(createErrorResponse(500, 'Login failed'));
+  }
+};
+
+// Gửi OTP quên mật khẩu
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    console.log(user)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Email không tồn tại' });
+    }
+    // Sinh OTP 6 số
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetPasswordOTP = otp;
+    user.resetPasswordOTPExpires = Date.now() + 10 * 60 * 1000; // 10 phút
+    await user.save();
+    // Gửi email
+    await sendMail(email, 'Mã OTP đặt lại mật khẩu', `Mã OTP của bạn là: ${otp}`);
+    res.json({ success: true, message: 'Đã gửi OTP về email' });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
+// Đặt lại mật khẩu bằng OTP
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const user = await User.findOne({ email });
+    if (!user || !user.resetPasswordOTP || !user.resetPasswordOTPExpires) {
+      return res.status(400).json({ success: false, message: 'Yêu cầu không hợp lệ' });
+    }
+    if (user.resetPasswordOTP !== otp) {
+      return res.status(400).json({ success: false, message: 'OTP không đúng' });
+    }
+    if (user.resetPasswordOTPExpires < Date.now()) {
+      return res.status(400).json({ success: false, message: 'OTP đã hết hạn' });
+    }
+    // Đặt lại mật khẩu
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    user.resetPasswordOTP = null;
+    user.resetPasswordOTPExpires = null;
+    await user.save();
+    res.json({ success: true, message: 'Đặt lại mật khẩu thành công' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ thông tin.' });
+    }
+
+    const user = await User.findById(userId).select('+passwordHash');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Người dùng không tồn tại.' });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Mật khẩu cũ không đúng.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.json({ success: true, message: 'Đổi mật khẩu thành công.' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ success: false, message: 'Lỗi server.' });
   }
 };

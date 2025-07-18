@@ -5,13 +5,13 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const studentRoute = require('./routes/student/index.js');
-const parentRoute = require('./routes/parent/index.js');
-const userRoutes = require('./routes/admin/userRoutes.js');
-const subjectRoutes = require('./routes/admin/subjectRoutes.js');
-const dashboardRoutes = require('./routes/admin/dashboardRoutes.js');
-const authRoutes = require('./routes/auth/authRoutes.js');
-const instructorRoute = require('./routes/instructor/index.js'); // NEW
+const studentRoute = require('./src/routes/student/index.js');
+const parentRoute = require('./src/routes/parent/index.js');
+const userRoutes = require('./src/routes/admin/userRoutes.js');
+const subjectRoutes = require('./src/routes/admin/subjectRoutes.js');
+const dashboardRoutes = require('./src/routes/admin/dashboardRoutes.js');
+const authRoutes = require('./src/routes/auth/authRoutes.js');
+const instructorRoute = require('./src/routes/instructor/index.js'); // NEW
 
 dotenv.config();
 
@@ -21,8 +21,6 @@ app.use(cors({
   origin: 'http://localhost:8081',
   credentials: true, // nếu có dùng cookie, token
 }));
-
-app.use(cors());
 
 // Middleware
 app.use(express.json());
@@ -39,16 +37,14 @@ mongoose.connect(process.env.MONGODB_URI, {
         console.error('Error connecting to MongoDB:', error);
     });
 
-
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use("/api/student/", studentRoute);
-app.use("/api/parent/", parentRoute);
-app.use("/api/student/", studentRoute);
-app.use("/api/instructor/", instructorRoute);
+app.use('/api/student/', studentRoute);
+app.use('/api/parent/', parentRoute);
+app.use('/api/instructor/', instructorRoute);
 // Xử lý lỗi
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -58,4 +54,3 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 8021;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-// server.js

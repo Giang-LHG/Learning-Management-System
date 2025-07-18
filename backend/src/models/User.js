@@ -56,7 +56,10 @@ const UserSchema = new Schema(
       // Chỉ có khi role === 'instructor'
       department: { type: String, default: '' },
       expertise: { type: [String], default: [] }
-    }
+    },
+    // Thêm trường cho OTP reset password
+    resetPasswordOTP: { type: String, default: null },
+    resetPasswordOTPExpires: { type: Date, default: null }
     // timestamps sẽ tự động tạo ra createdAt / updatedAt
   },
    {

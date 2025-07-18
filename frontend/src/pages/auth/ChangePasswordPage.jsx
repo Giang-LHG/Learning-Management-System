@@ -1,33 +1,40 @@
 import React, { useState } from 'react';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import api from '../../utils/api';
+import { useNavigate } from 'react-router-dom';
 
-const ResetPasswordSchema = Yup.object().shape({
-  email: Yup.string().email('Invalid email address').required('Email is required'),
+const ChangePasswordSchema = Yup.object().shape({
+  oldPassword: Yup.string().required('Mật khẩu cũ là bắt buộc'),
+  newPassword: Yup.string()
+    .min(8, 'Mật khẩu mới phải có ít nhất 8 ký tự')
+    .required('Mật khẩu mới là bắt buộc'),
 });
 
-const ResetPasswordPage = () => {
+const ChangePasswordPage = () => {
   const [loading, setLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (values) => {
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
-      await api.post('/auth/forgot-password', { email: values.email });
-      setEmailSent(true);
-      // Chuyển sang trang nhập OTP, truyền email qua state
+      const token = localStorage.getItem('token');
+      const res = await axios.post(
+        '/api/auth/change-password',
+        { oldPassword: values.oldPassword, newPassword: values.newPassword },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSuccess(res.data.message);
       setTimeout(() => {
-        navigate('/reset-password-otp', { state: { email: values.email } });
-      }, 1000);
+        navigate('/profile'); // Or wherever you want to redirect after success
+      }, 1500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send reset email. Please try again later.');
+      setError(err.response?.data?.message || 'Đổi mật khẩu thất bại');
     } finally {
       setLoading(false);
     }
@@ -65,16 +72,16 @@ const ResetPasswordPage = () => {
                    height: '80px', 
                    boxShadow: '0 5px 15px rgba(0,0,0,0.1)'
                  }}>
-              <i className="bi bi-key" style={{ fontSize: '36px', color: '#4e73df' }}></i>
+              <i className="bi bi-shield-lock" style={{ fontSize: '36px', color: '#4e73df' }}></i>
             </div>
           </div>
-          <h2 className="text-white fw-bold mb-1">Reset Your Password</h2>
-          <p className="text-white mb-0 opacity-85">Enter your email to reset your password</p>
+          <h2 className="text-white fw-bold mb-1">Đổi Mật Khẩu</h2>
+          <p className="text-white mb-0 opacity-85">Nhập mật khẩu cũ và mật khẩu mới của bạn</p>
         </div>
         
         {/* Card Body */}
         <div className="card-body p-4 p-lg-5">
-          {emailSent ? (
+          {success ? (
             <div className="text-center py-4">
               <div className="d-flex justify-content-center mb-4">
                 <div className="bg-light rounded-circle d-flex align-items-center justify-content-center" 
@@ -83,75 +90,87 @@ const ResetPasswordPage = () => {
                        height: '100px', 
                        border: '2px dashed #4e73df'
                      }}>
-                  <i className="bi bi-envelope-check" style={{ fontSize: '48px', color: '#4e73df' }}></i>
+                  <i className="bi bi-check-circle" style={{ fontSize: '48px', color: '#4e73df' }}></i>
                 </div>
               </div>
-              <h3 className="fw-bold mb-3">Check Your Email</h3>
+              <h3 className="fw-bold mb-3">Thành Công!</h3>
               <p className="text-muted mb-4">
-                We've sent a password reset link to your email address. 
-                Please check your inbox and follow the instructions to reset your password.
-              </p>
-              <p className="text-muted small mb-4">
-                Didn't receive the email? Check your spam folder or 
-                <button 
-                  className="btn btn-link p-0 ms-1" 
-                  onClick={() => setEmailSent(false)}
-                  style={{ color: '#4e73df' }}
-                >
-                  resend
-                </button>.
+                {success}
               </p>
               <a 
-                href="/login" 
+                href="/profile" 
                 className="btn btn-outline-primary w-100 py-2 fw-medium"
                 style={{
                   borderRadius: '10px',
                   transition: 'all 0.2s'
                 }}
               >
-                <i className="bi bi-arrow-left me-2"></i>Back to Login
+                <i className="bi bi-arrow-left me-2"></i>Quay lại trang cá nhân
               </a>
             </div>
           ) : (
             <Formik
-              initialValues={{ email: '' }}
-              validationSchema={ResetPasswordSchema}
+              initialValues={{ oldPassword: '', newPassword: '' }}
+              validationSchema={ChangePasswordSchema}
               onSubmit={handleSubmit}
             >
               {({ errors, touched, handleChange, handleBlur, handleSubmit }) => (
                 <form onSubmit={handleSubmit}>
-                  {/* Email Field */}
+                  {/* Old Password Field */}
                   <div className="mb-4">
-                    <label htmlFor="email" className="form-label fw-medium text-dark mb-2">
-                      <i className="bi bi-envelope me-2"></i>Email Address
+                    <label htmlFor="oldPassword" className="form-label fw-medium text-dark mb-2">
+                      <i className="bi bi-lock me-2"></i>Mật khẩu cũ
                     </label>
-                    <div className="input-group">
-                      {/* <span className="input-group-text">
-                        <i className="bi bi-envelope"></i>
-                      </span> */}
-                      <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={`form-control ${touched.email && errors.email ? 'is-invalid' : ''}`}
-                        placeholder="your.email@example.com"
-                        style={{
-                          padding: '14px 16px',
-                          borderRadius: '10px',
-                          border: '1px solid #e1e5f1',
-                          transition: 'all 0.3s'
-                        }}
-                      />
-                      {touched.email && errors.email && (
-                        <div className="invalid-feedback d-block mt-2">
-                          <i className="bi bi-exclamation-circle me-2"></i>{errors.email}
-                        </div>
-                      )}
-                      {error && <div className="alert alert-danger mt-2">{error}</div>}
-                    </div>
+                    <input
+                      id="oldPassword"
+                      name="oldPassword"
+                      type="password"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`form-control ${touched.oldPassword && errors.oldPassword ? 'is-invalid' : ''}`}
+                      placeholder="Nhập mật khẩu cũ"
+                      style={{
+                        padding: '14px 16px',
+                        borderRadius: '10px',
+                        border: '1px solid #e1e5f1',
+                        transition: 'all 0.3s'
+                      }}
+                    />
+                    {touched.oldPassword && errors.oldPassword && (
+                      <div className="invalid-feedback d-block mt-2">
+                        <i className="bi bi-exclamation-circle me-2"></i>{errors.oldPassword}
+                      </div>
+                    )}
                   </div>
+
+                  {/* New Password Field */}
+                  <div className="mb-4">
+                    <label htmlFor="newPassword" className="form-label fw-medium text-dark mb-2">
+                      <i className="bi bi-lock-fill me-2"></i>Mật khẩu mới
+                    </label>
+                    <input
+                      id="newPassword"
+                      name="newPassword"
+                      type="password"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`form-control ${touched.newPassword && errors.newPassword ? 'is-invalid' : ''}`}
+                      placeholder="Nhập mật khẩu mới"
+                      style={{
+                        padding: '14px 16px',
+                        borderRadius: '10px',
+                        border: '1px solid #e1e5f1',
+                        transition: 'all 0.3s'
+                      }}
+                    />
+                    {touched.newPassword && errors.newPassword && (
+                      <div className="invalid-feedback d-block mt-2">
+                        <i className="bi bi-exclamation-circle me-2"></i>{errors.newPassword}
+                      </div>
+                    )}
+                  </div>
+
+                  {error && <div className="alert alert-danger mt-2">{error}</div>}
 
                   {/* Submit Button */}
                   <button
@@ -181,25 +200,25 @@ const ResetPasswordPage = () => {
                     {loading ? (
                       <span>
                         <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Sending Email...
+                        Đang xử lý...
                       </span>
                     ) : (
                       <span>
-                        <i className="bi bi-send me-2"></i>Send Reset Link
+                        <i className="bi bi-key me-2"></i>Đổi mật khẩu
                       </span>
                     )}
                   </button>
 
-                  {/* Back to Login */}
+                  {/* Back to Profile */}
                   <div className="text-center mt-4 pt-2">
                     <p className="mb-0 text-muted">
-                      Remembered your password? 
+                      Quay lại trang cá nhân? 
                       <a 
-                        href="/login" 
+                        href="/profile" 
                         className="ms-2 fw-medium text-decoration-none"
                         style={{ color: '#4e73df' }}
                       >
-                        Sign in
+                        Trang cá nhân
                       </a>
                     </p>
                   </div>
@@ -217,7 +236,7 @@ const ResetPasswordPage = () => {
                fontSize: '0.85rem'
              }}>
           <p className="mb-0 text-muted">
-            &copy; {new Date().getFullYear()} Security System. All rights reserved.
+            &copy; {new Date().getFullYear()} Hệ thống bảo mật. Bảo lưu mọi quyền.
           </p>
         </div>
       </div>
@@ -225,4 +244,4 @@ const ResetPasswordPage = () => {
   );
 };
 
-export default ResetPasswordPage;
+export default ChangePasswordPage;

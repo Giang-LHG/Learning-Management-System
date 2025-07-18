@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../../controllers/admin/authController');
 const { body } = require('express-validator');
+const { requireAuth } = require('../../middlewares/authMiddleware');
 
 // Đăng ký
 router.post(
@@ -18,5 +19,12 @@ router.post(
 
 // Đăng nhập
 router.post('/login', authController.login);
+
+// Quên mật khẩu - gửi OTP
+router.post('/forgot-password', authController.forgotPassword);
+// Đặt lại mật khẩu bằng OTP
+router.post('/reset-password', authController.resetPassword);
+
+router.post('/change-password', requireAuth, authController.changePassword);
 
 module.exports = router;

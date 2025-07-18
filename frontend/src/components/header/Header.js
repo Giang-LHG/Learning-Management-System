@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FiMenu, FiX, FiSearch, FiUser, FiLogOut, FiLogIn } from 'react-icons/fi';
+import { FiMenu, FiX, FiSearch, FiUser, FiLogOut, FiLogIn, FiLock } from 'react-icons/fi';
 import { FaChalkboardTeacher } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
@@ -257,9 +257,9 @@ function Header() {
                         </Link>
                       </li>
                       <li>
-                        <Link to="/settings" className="dropdown-link" onClick={() => setUserDropdownOpen(false)}>
-                          <FiUser className="dropdown-icon" />
-                          Account Settings
+                        <Link to="/change-password" className="dropdown-link" onClick={() => setUserDropdownOpen(false)}>
+                          <FiLock className="dropdown-icon" />
+                          Change password
                         </Link>
                       </li>
                       <li className="dropdown-divider"></li>

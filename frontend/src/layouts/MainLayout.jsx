@@ -7,11 +7,11 @@ import {
   BookOutlined,
   PieChartOutlined,
   FileTextOutlined,
-  SettingOutlined,
   BellOutlined,
   MenuUnfoldOutlined,
   MenuFoldOutlined,
-  LogoutOutlined
+  LogoutOutlined,
+  UnlockOutlined
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
@@ -54,6 +54,12 @@ const MainLayout = () => {
       icon: <UserOutlined />,
       label: 'Profile',
       onClick: () => navigate('/profile')
+    },
+    {
+      key: 'change-password',
+      icon: <UnlockOutlined />,
+      label: 'Change password',
+      onClick: () => navigate('/change-password')
     },
     {
       key: 'logout',

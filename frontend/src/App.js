@@ -27,7 +27,7 @@ import UserManagementPage from './pages/UserManagementPage.jsx';
 import SubjectManagerPage from './pages/SubjectManagerPage.jsx';
 import AnalyticsDashboard from './pages/AnalyticsDashboard.jsx';
 import ReportGeneratorPage from './pages/ReportGeneratorPage.jsx';
-import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
+import ChangePasswordPage from './pages/auth/ChangePasswordPage.jsx';
 import Profile from './pages/Profile.jsx';
 
 // --- Pages/Components for Instructor ---
