@@ -40,7 +40,7 @@ const NotificationList = () => {
   const [markingAsRead, setMarkingAsRead] = useState(new Set());
   const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-
+const token = localStorage.getItem('token');
  const [user, setUser] = useState(null);
   const getUserId = () => {
     try {
@@ -68,7 +68,12 @@ const NotificationList = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/notifications?userId=${userId}`);
+      const response = await fetch(`/api/notifications?userId=${userId}`,{
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  }
+});
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -100,6 +105,7 @@ const NotificationList = () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ read: true })
       });

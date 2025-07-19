@@ -1,59 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FiClock, 
-  FiBook, 
-  FiShoppingCart, 
-  FiBarChart2,
+import {
   FiArrowRight
 } from 'react-icons/fi';
 import './CourseList.css';
 import { useNavigate } from 'react-router-dom';
+
 function CourseList() {
   const [subjects, setSubjects] = useState([]);
-const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
   useEffect(() => {
-    setTimeout(() => {
-   const dummySubjects = [
-        { 
-          _id: "60b000000000000000000001", 
-          code: "CS101", 
-          name: "Lập trình căn bản", 
-          description: "Khóa học nhập môn lập trình cơ bản (Ngôn ngữ Python).",
-   badge: "Hot",
-          prerequisites: [],
-          numberCourse:6,
-            image: "",
-        },
-        { 
-          _id: "60b000000000000000000002", 
-          code: "CS102", 
-          name: "Cấu trúc dữ liệu", 
-             badge: "Hot",
-          description: "Khóa học về cấu trúc dữ liệu, yêu cầu phải hoàn thành Lập trình căn bản trước.",
-          prerequisites: ["60b000000000000000000001"],
-           numberCourse:6,
-                image: "",
-        },
-        { 
-          _id: "68462da3733701e65633bec0", 
-          code: "CS103", 
-          name: "Lập trình căn bản", 
-             badge: "Hot",
-          description: "Khóa học nhập môn lập trình cơ bản (Ngôn ngữ Python).",
-          prerequisites: [],
-           numberCourse:6,
-           
-                image: "",
-     
-        }
-      ];
-      setSubjects(dummySubjects);
-      setLoading(false);
-    }, 800);
+    const fetchHotSubjects = async () => {
+      try {
+        const res = await fetch('/api/parent/subjects/subjects-overview');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const result = await res.json();
+        const data = result.data?.hotSubjects || [];
+
+        const processed = data.map(item => ({
+          ...item,
+          badge: 'Hot',
+          numberCourse: item.enrollCount,  // số lượt đăng ký
+          image: '' // hoặc gán ảnh nếu có
+        }));
+
+        setSubjects(processed);
+      } catch (error) {
+        console.error('Failed to fetch hot subjects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHotSubjects();
   }, []);
 
-  // Function to get gradient style based on course type
   const getGradientStyle = (imageType) => {
     switch (imageType) {
       case 'web-dev':
@@ -69,30 +51,29 @@ const navigate = useNavigate();
     }
   };
 
-  // Function to get badge class based on type
   const getBadgeStyle = (badge) => {
     switch (badge) {
-      case "Bestseller":
+      case 'Bestseller':
         return { background: '#ef4444' };
-      case "New":
+      case 'New':
         return { background: '#3b82f6' };
-      case "Hot":
+      case 'Hot':
         return { background: '#f97316' };
       default:
         return { background: '#4F46E5' };
     }
   };
-
+console.log(subjects);
   return (
     <section className="courses">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">Popular Courses</h2>
+          <h2 className="section-title">Hot Subjects</h2>
           <p className="section-subtitle">
-            Discover our top-rated courses chosen by thousands of learners to advance their careers
+            Explore the subjects with the most enrollments recently
           </p>
         </div>
-        
+
         {loading ? (
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -100,12 +81,9 @@ const navigate = useNavigate();
         ) : (
           <div className="course-grid">
             {subjects.map((subject) => (
-              <div 
-                key={subject._id} 
-                className="course-card"
-              >
+              <div key={subject._id} className="course-card">
                 <div className="course-image-container">
-                  <div 
+                  <div
                     className="course-image"
                     style={getGradientStyle(subject.image)}
                   >
@@ -113,36 +91,20 @@ const navigate = useNavigate();
                       {subject.code.split(' ').map(word => word[0]).join('')}
                     </div>
                   </div>
-                  
+
                   {subject.badge && (
-                    <span 
-                      className="course-badge"
-                      style={getBadgeStyle(subject.badge)}
-                    >
+                    <span className="course-badge" style={getBadgeStyle(subject.badge)}>
                       {subject.badge}
                     </span>
                   )}
-                  
-                 
                 </div>
-                
+
                 <div className="course-content">
                   <h3>{subject.name}</h3>
-                  
-                  
-                  
-                  <div className="course-details">
-                    
-                    <div className="course-lessons">
-                      <FiBook className="detail-icon" />
-                      <span>{subject.numberCourse} Courses</span>
-                    </div>
-                  </div>
-                  
-                
-                  
-                  <button className="btn-enroll"   onClick={() => navigate(`/student/courses?subjectId=${subject._id}`)}>
-                 
+                  <button
+                    className="btn-enroll"
+                    onClick={() => navigate(`/student/courses?subjectId=${subject._id}`)}
+                  >
                     Enroll Now
                   </button>
                 </div>
@@ -150,7 +112,7 @@ const navigate = useNavigate();
             ))}
           </div>
         )}
-        
+
         <div className="view-all-container">
           <button className="btn-view-all" onClick={() => navigate('/student/subjects')}>
             View All Subjects
