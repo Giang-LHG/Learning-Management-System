@@ -46,6 +46,8 @@ export default function AssignmentList() {
   const [order, setOrder] = useState('asc');
   const [isLoading, setIsLoading] = useState(true);
 const [studentId, setStudentId] = useState('');
+const token = localStorage.getItem('token'); 
+
 useEffect(() => {
   try {
     const stored = localStorage.getItem('user');
@@ -59,7 +61,12 @@ useEffect(() => {
 }, []);
   const fetchCourseDetail = useCallback(async () => {
     try {
-      const resp = await axios.get(`/api/student/courses/${courseId}`);
+      const resp = await axios.get(`/api/student/courses/${courseId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (resp.data.success) {
         setCourse(resp.data.data);
       }
@@ -74,7 +81,12 @@ useEffect(() => {
     try {
       setIsLoading(true);
       console.log(studentId);
-      const resp = await axios.get(`/api/student/assignments/course/${courseId}/student/${studentId}`);
+      const resp = await axios.get(`/api/student/assignments/course/${courseId}/student/${studentId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (resp.data.success) {
         setAssignments(resp.data.data);
         setFiltered(resp.data.data);

@@ -56,6 +56,7 @@ export default function ModuleDetail() {
   const [order, setOrder] = useState("asc");
   const [activeTab, setActiveTab] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const token = localStorage.getItem('token');
 const [term,setTerm]= useState([]);
   const getStudentId = () => {
    
@@ -84,6 +85,10 @@ console.log("term =", term1);
           courseId,
           
           term: term1
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
         }
       });
       if (response.data.success) {
@@ -98,7 +103,12 @@ console.log("term =", term1);
   const fetchModule = useCallback(async () => {
     try {
       setIsLoading(true);
-      const courseResp = await axios.get(`/api/student/courses/${courseId}`);
+      const courseResp = await axios.get(`/api/student/courses/${courseId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (courseResp.data.success) {
         const courseData = courseResp.data.data;
         setTerm(courseData.term);

@@ -31,7 +31,7 @@ export default function QuizList() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Lấy studentId từ localStorage hoặc mặc định
-
+const token = localStorage.getItem('token');
   const [studentId, setStudentId] = useState("");
   
   useEffect(() => {
@@ -50,7 +50,13 @@ export default function QuizList() {
   const fetchAssignment = useCallback(async () => {
    if(!studentId) return;
     try {
-      const resp = await axios.get(`/api/student/assignments/${assignmentId}/student/${studentId}`);
+      const resp = await axios.get(`/api/student/assignments/${assignmentId}/student/${studentId}`, {
+ 
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`  // Gắn token vào đây
+  }
+});
       if (resp.data.success) {
         setAssignment(resp.data.data);
       }
@@ -62,7 +68,13 @@ export default function QuizList() {
   // Fetch submission (if có) for this student
   const fetchSubmission = useCallback(async () => {
     try {
-     const resp = await axios.get(`/api/student/submissions/student/${studentId}`);
+     const resp = await axios.get(`/api/student/submissions/student/${studentId}`, {
+ 
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`  // Gắn token vào đây
+  }
+});
 
 if (resp.data.success) {
   const allSubs = resp.data.data;
@@ -167,7 +179,12 @@ if (resp.data.success) {
         const response = await axios.put(
           `/api/student/submissions/resubmit/${submission._id}`, 
           resubmitPayload
-        );
+      ,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
         
         if (response.data.success) {
           alert("Resubmission successful!");
@@ -194,8 +211,12 @@ if (resp.data.success) {
           payload.content = essayContent;
         }
 
-        const response = await axios.post("/api/student/submissions/submit", payload);
-        
+        const response = await axios.post("/api/student/submissions/submit", payload,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
         if (response.data.success) {
           alert("Submission successful!");
         } else {

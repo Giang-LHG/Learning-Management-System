@@ -8,6 +8,9 @@ const submissionRoutes = require('./submissionRoutes');
 const subjectRoutes = require('./subjectRoutes');
 const enrollmentRoutes = require('./enrollmentRoutes');
 const appealRoutes = require('./appealRoutes');
+const authMiddleware = require('../../middlewares/authMiddleware');
+
+router.use(authMiddleware.requireAuth);
 router.use('/assignments', assignmentRoutes);
 router.use('/courses', courseRoutes);
 router.use('/enrollments', enrollmentRoutes);

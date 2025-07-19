@@ -38,7 +38,7 @@ export default function LessonDetail() {
   const [studentId, setStudentId] = useState(""); 
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   const [studyError, setStudyError] = useState("");
-
+const token = localStorage.getItem('token');
   const [navigationInfo, setNavigationInfo] = useState({
     previousLesson: null,
     nextLesson: null,
@@ -72,6 +72,10 @@ console.log(studentId, courseId, currentTerm);
           studentId,
           courseId   ,
           term: currentTerm
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
         }
       });
       
@@ -85,7 +89,12 @@ console.log(studentId, courseId, currentTerm);
   const fetchLesson = useCallback(async () => {
     try {
       setIsLoading(true);
-      const courseResp = await axios.get(`/api/student/courses/${courseId}`);
+      const courseResp = await axios.get(`/api/student/courses/${courseId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (courseResp.data.success) {
         const courseData = courseResp.data.data;
         setCourseTitle(courseData.title);
@@ -150,6 +159,11 @@ console.log(studentId, courseId, currentTerm);
         courseId,
         lessonId: lesson.lessonId ,
         term: currentTerm
+      },{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
       });
       
       if (response.data.success) {

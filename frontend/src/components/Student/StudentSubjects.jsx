@@ -50,7 +50,7 @@ export default function StudentSubjects() {
   const [isPreviousLoading, setIsPreviousLoading] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
-
+const token = localStorage.getItem('token'); 
   useEffect(() => {
     try {
       const u = JSON.parse(localStorage.getItem('user'));
@@ -65,7 +65,13 @@ export default function StudentSubjects() {
     
     setIsRecommendationsLoading(true);
     try {
-      const res = await fetch(`/api/student/subjects/recommentsubject/student/${studentId}`);
+      const res = await fetch(`/api/student/subjects/recommentsubject/student/${studentId}`, {
+ 
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`  // Gắn token vào đây
+  }
+});
       const body = await res.json();
       if (body.success) {
         setMostEnrolledSubjects(body.data.mostEnrolledSubjects || []);
@@ -83,7 +89,13 @@ export default function StudentSubjects() {
     
     setIsPreviousLoading(true);
     try {
-      const res = await fetch(`/api/student/subjects/by-student/PreviousSubject/${studentId}`);
+      const res = await fetch(`/api/student/subjects/by-student/PreviousSubject/${studentId}`, {
+ 
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`  // Gắn token vào đây
+  }
+});
       const body = await res.json();
       if (body.success) {
         setPreviousSubjects(body.data);
@@ -101,7 +113,13 @@ export default function StudentSubjects() {
     const loadInitialData = async () => {
       setIsInitialLoading(true);
       try {
-        const enrolledPromise = fetch(`/api/student/subjects/by-student/${studentId}`)
+        const enrolledPromise = fetch(`/api/student/subjects/by-student/${studentId}`, {
+ 
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`  // Gắn token vào đây
+  }
+})
           .then(res => res.json())
           .then(body => {
             if (body.success) setEnrolledIds(new Set(body.data.map(s => s._id)));
@@ -146,7 +164,13 @@ export default function StudentSubjects() {
       }
       
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, {
+ 
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`  // Gắn token vào đây
+  }
+});
         const body = await res.json();
         if (body.success) setSubjects(body.data);
       } catch (err) {

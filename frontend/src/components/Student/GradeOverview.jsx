@@ -84,13 +84,19 @@ export default function GradeOverview() {
   const [allCourses, setAllCourses] = useState([]);
   const [currentCourseIndex, setCurrentCourseIndex] = useState(-1);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
+const token = localStorage.getItem('token'); 
 
   const fetchCourses = useCallback(async () => {
     if (!studentId || !subjectId) return;
     
     try {
       setIsLoadingCourses(true);
-      const resp = await axios.get(`/api/student/courses/subject/${subjectId}/student/${studentId}`);
+      const resp = await axios.get(`/api/student/courses/subject/${subjectId}/student/${studentId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (resp.data.success) {
         const { sameTerm, otherTerms, noneEnrolled } = resp.data.data;
         const courses = [...sameTerm, ...otherTerms, ...noneEnrolled];
@@ -109,7 +115,12 @@ export default function GradeOverview() {
   const fetchGrades = useCallback(async () => {
     try {
       setIsLoading(true);
-      const resp = await axios.get(`/api/student/submissions/student/${studentId}/course/${courseId}`);
+      const resp = await axios.get(`/api/student/submissions/student/${studentId}/course/${courseId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (resp.data.success) {
         const currentTermData = resp.data.data || [];
         const previousTermData = resp.data.preTermSubmissions || [];

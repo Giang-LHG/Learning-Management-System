@@ -101,11 +101,17 @@ export default function AppealList() {
   const [submittingComment, setSubmittingComment] = useState({});
   const [commentErrors, setCommentErrors] = useState({});
   const [commentSuccess, setCommentSuccess] = useState({});
+const token = localStorage.getItem('token'); 
 
   const fetchAppeals = useCallback(async () => {
     try {
       setIsLoading(true);
-      const resp = await axios.get(`/api/student/appeals?studentId=${studentId}`);
+      const resp = await axios.get(`/api/student/appeals?studentId=${studentId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (resp.data.success) {
         setAppeals(resp.data.data);
         setFiltered(resp.data.data);
@@ -204,7 +210,12 @@ export default function AppealList() {
           userId: studentId,
           text: commentText
         }
-      );
+     ,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
 
       if (response.data.success) {
         setCommentTexts(prev => ({ ...prev, [appealId]: "" }));

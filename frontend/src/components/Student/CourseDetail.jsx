@@ -68,6 +68,7 @@ export default function CourseDetail() {
   const [moduleLessons, setModuleLessons] = useState({});
   const [loadingLessons, setLoadingLessons] = useState({});
   const [currentListKey, setCurrentListKey] = useState('sameTerm');
+const token = localStorage.getItem('token'); 
 
   const getStudentId = () => {
     try {
@@ -87,7 +88,13 @@ export default function CourseDetail() {
       const studentId = getStudentId();
       if (!studentId || !subjectId) return;
 
-      const resp = await axios.get(`/api/student/courses/subject/${subjectId}/student/${studentId}`);
+      const resp = await axios.get(`/api/student/courses/subject/${subjectId}/student/${studentId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log("✅ Response from server:", resp.data);
       if (resp.data.success) {
         const data = resp.data.data;
         setCoursesList(data);
@@ -120,12 +127,16 @@ export default function CourseDetail() {
       if (!latestTerm) return;
 console.log(latestTerm);
       const resp = await axios.get(`/api/student/enrollments/study`, {
-        params: {
-          courseId: courseId,
-          studentId: studentId,
-          term: latestTerm
-        }
-      });
+  params: {
+    courseId: courseId,
+    studentId: studentId,
+    term: latestTerm
+  },
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  }
+});
 
       if (resp.data.success) {
         const studiedLessonIds = resp.data.data || [];
@@ -164,7 +175,12 @@ console.log(latestTerm);
   const fetchCourseDetail = useCallback(async () => {
     try {
       setIsLoading(true);
-      const resp = await axios.get(`/api/student/courses/${courseId}`);
+      const resp = await axios.get(`/api/student/courses/${courseId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (resp.data.success) {
         const data = resp.data.data;
         setCourse(data);
@@ -211,7 +227,12 @@ console.log(latestTerm);
     if (!course) return;
     const studentId = getStudentId();
     axios
-      .get(`/api/student/enrollments?studentId=${studentId}&courseId=${courseId}`)
+      .get(`/api/student/enrollments?studentId=${studentId}&courseId=${courseId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      })
       .then(resp => {
         if (!resp.data.success) return;
         const enrolls = resp.data.data;

@@ -22,6 +22,7 @@ export default function AppealForm() {
   const [submitting, setSubmitting] = useState(false);
 
  const [studentId, setStudentId] = useState("");
+const token = localStorage.getItem('token'); 
 
   useEffect(() => {
     try {
@@ -39,7 +40,12 @@ export default function AppealForm() {
   const fetchSubmission = useCallback(async () => {
     try {
       setIsLoading(true);
-      const resp = await axios.get(`/api/student/submissions/${submissionId}`);
+      const resp = await axios.get(`/api/student/submissions/${submissionId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       if (resp.data.success) {
         setSubmission(resp.data.data);
       }
@@ -76,7 +82,12 @@ export default function AppealForm() {
         studentId,                  
         text: appealContent.trim() 
       }
-    );
+    ,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
 
     if (resp.data.success) {
       alert("Appeal submitted successfully.");

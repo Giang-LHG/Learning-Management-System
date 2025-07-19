@@ -56,7 +56,8 @@ export default function CourseList() {
     noneEnrolled: []
   });
   const [isLoading, setIsLoading] = useState(true);
-  
+  const token = localStorage.getItem('token'); 
+console.log(token);
   const [expandedCourses, setExpandedCourses] = useState(new Set());
   const [coursesWithModules, setCoursesWithModules] = useState({});
   
@@ -129,8 +130,13 @@ export default function CourseList() {
 
   const loadCourseModules = async (courseId) => {
    try {
-    const { data } = await axios.get(`/api/student/courses/${courseId}`);
-   
+    const { data } = await axios.get(`/api/student/courses/${courseId}`,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+   console.log("Đây là", data);
     if (data.success) {
       const course = data.data;
       const modules = course.modules || [];
@@ -183,8 +189,11 @@ export default function CourseList() {
     
     axios.get(
       `/api/student/courses/subject/${subjectId}/student/${studentId}`,
-      { cancelToken: cancel.token }
-    )
+      { cancelToken: cancel.token, headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        } }
+   )
     .then(response => {
       if (response.data.success) {
         setCoursesData(response.data.data || {
@@ -230,7 +239,12 @@ export default function CourseList() {
       const { data } = await axios.post(
         '/api/student/enrollments/enroll',
         { studentId, courseId }
-      );
+      ,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       
       if (data.success) {
         setCoursesData(prev => {
@@ -262,7 +276,12 @@ export default function CourseList() {
       const { data } = await axios.post(
         '/api/student/enrollments/enroll',
         { studentId, courseId }
-      );
+     ,{
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
       
       if (data.success) {
         setCoursesData(prev => {
