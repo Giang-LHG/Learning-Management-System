@@ -1,143 +1,88 @@
+// controllers/subjectController.js
 const Subject = require('../../models/Subject');
 const { Types } = require('mongoose');
 
-/**
- * @desc Create a new subject
- * @route POST /api/subjects
- * @access Private
- */
+// Create a new subject
 const createSubject = async (req, res) => {
     try {
         const { code, name, description, prerequisites } = req.body;
-        
-        // Validate required fields
-        if (!code || !name) {
-            return res.status(400).json({
-                success: false,
-                message: 'Subject code and name are required'
-            });
-        }
-
-        // Check for existing subject code
-        const existingSubject = await Subject.findOne({ code });
-        if (existingSubject) {
-            return res.status(409).json({
-                success: false,
-                message: 'Subject code already exists'
-            });
-        }
+        const createdBy = req.user.id; // Assume user ID is obtained from authentication middleware
 
         const newSubject = new Subject({
             code,
             name,
             description: description || '',
             prerequisites: prerequisites || [],
-            status: 'pending', // Default to pending for admin approval
-            createdBy: req.user.id
+            status: 'approved',
+            createdBy
         });
 
         const savedSubject = await newSubject.save();
-        
         res.status(201).json({
             success: true,
-            message: 'Subject created successfully and pending approval',
-            data: {
-                id: savedSubject._id,
-                code: savedSubject.code,
-                name: savedSubject.name,
-                status: savedSubject.status
-            }
+            message: 'Subject created successfully!',
+            subject: savedSubject
         });
     } catch (error) {
-        console.error('Subject creation error:', error);
+        if (error.name === 'MongoError' && error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: 'Subject code already exists in the system'
+            });
+        }
         res.status(500).json({
             success: false,
-            message: 'Internal server error while creating subject'
+            message: 'Error creating subject',
+            error: error.message
         });
     }
 };
 
-/**
- * @desc Get all subjects with pagination and filtering
- * @route GET /api/subjects
- * @access Public
- */
+// Get all subjects (with pagination and filtering)
 const getAllSubjects = async (req, res) => {
     try {
         const { page = 1, limit = 10, status, search } = req.query;
         const filter = {};
 
-        // Validate pagination parameters
-        const parsedPage = Math.max(1, parseInt(page));
-        const parsedLimit = Math.min(100, Math.max(1, parseInt(limit))); // Limit max 100 items per page
-
-        // Build filter conditions
-        if (status) {
-            const validStatuses = ['pending', 'approved', 'rejected'];
-            if (validStatuses.includes(status)) {
-                filter.status = status;
-            }
-        }
-
-        if (search && search.length >= 3) { // Minimum 3 characters for search
+        if (status) filter.status = status;
+        if (search) {
             filter.$or = [
                 { code: { $regex: search, $options: 'i' } },
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } }
+                { name: { $regex: search, $options: 'i' } }
             ];
         }
 
-        // Execute query with pagination
-        const [subjects, total] = await Promise.all([
-            Subject.find(filter)
-                .populate('createdBy', 'username email')
-                .populate('prerequisites', 'code name')
-                .skip((parsedPage - 1) * parsedLimit)
-                .limit(parsedLimit)
-                .sort({ createdAt: -1 })
-                .lean(),
-            Subject.countDocuments(filter)
-        ]);
-
-        res.status(200).json({
-            success: true,
-            data: {
-                items: subjects,
-                pagination: {
-                    total,
-                    page: parsedPage,
-                    pages: Math.ceil(total / parsedLimit),
-                    limit: parsedLimit
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Get subjects error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error while fetching subjects'
-        });
-    }
-};
-
-/**
- * @desc Get subject details by ID
- * @route GET /api/subjects/:id
- * @access Public
- */
-const getSubjectById = async (req, res) => {
-    try {
-        if (!Types.ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid subject ID format'
-            });
-        }
-
-        const subject = await Subject.findById(req.params.id)
+        const subjects = await Subject.find(filter)
             .populate('createdBy', 'username email')
             .populate('prerequisites', 'code name')
-            .lean();
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit))
+            .sort({ createdAt: -1 });
+
+        const total = await Subject.countDocuments(filter);
+
+        res.status(200).json({
+            success: true,
+            total,
+            page: parseInt(page),
+            pages: Math.ceil(total / limit),
+            subjects
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching subject list',
+            error: error.message
+        });
+    }
+};
+
+// Get subject details by ID
+const getSubjectById = async (req, res) => {
+    try {
+        const subject = await Subject.findById(req.params.id)
+            .populate('createdBy', 'username email')
+            .populate('prerequisites', 'code name');
 
         if (!subject) {
             return res.status(404).json({
@@ -148,35 +93,29 @@ const getSubjectById = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: subject
+            subject
         });
     } catch (error) {
-        console.error('Get subject by ID error:', error);
+        if (error.kind === 'ObjectId') {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid subject ID'
+            });
+        }
         res.status(500).json({
             success: false,
-            message: 'Internal server error while fetching subject'
+            message: 'Error fetching subject information',
+            error: error.message
         });
     }
 };
 
-/**
- * @desc Update subject information
- * @route PUT /api/subjects/:id
- * @access Private
- */
+// Update subject information
 const updateSubject = async (req, res) => {
     try {
-        const { id } = req.params;
         const { code, name, description, prerequisites } = req.body;
 
-        if (!Types.ObjectId.isValid(id)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid subject ID format'
-            });
-        }
-
-        const subject = await Subject.findById(id);
+        const subject = await Subject.findById(req.params.id);
         if (!subject) {
             return res.status(404).json({
                 success: false,
@@ -184,43 +123,34 @@ const updateSubject = async (req, res) => {
             });
         }
 
-        // Authorization check - only creator or admin can update
-        if (subject.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
-            return res.status(403).json({
-                success: false,
-                message: 'Unauthorized to update this subject'
-            });
-        }
-
-        // Check for duplicate subject code (excluding current subject)
+        // Check for duplicate subject code (excluding itself)
         if (code && code !== subject.code) {
-            const existingSubject = await Subject.findOne({ code, _id: { $ne: id } });
+            const existingSubject = await Subject.findOne({ code });
             if (existingSubject) {
-                return res.status(409).json({
+                return res.status(400).json({
                     success: false,
                     message: 'Subject code already exists'
                 });
             }
         }
 
-        // Prepare update data
+        // In updateSubject (after finding subject)
+        // if (subject.createdBy.toString() !== req.user.id) {
+        //     return res.status(403).json({
+        //         success: false,
+        //         message: 'You do not have permission to edit this subject'
+        //     });
+        // }
+
         const updateData = {
             code: code || subject.code,
             name: name || subject.name,
             description: description || subject.description,
-            prerequisites: prerequisites || subject.prerequisites,
-            status: req.user.role === 'admin' ? (req.body.status || subject.status) : subject.status
+            prerequisites: prerequisites || subject.prerequisites
         };
 
-        // Admin-only fields
-        if (req.user.role === 'admin') {
-            if (req.body.rejectionReason) {
-                updateData.rejectionReason = req.body.rejectionReason;
-            }
-        }
-
         const updatedSubject = await Subject.findByIdAndUpdate(
-            id,
+            req.params.id,
             updateData,
             { new: true, runValidators: true }
         ).populate('prerequisites', 'code name');
@@ -228,41 +158,28 @@ const updateSubject = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Subject updated successfully',
-            data: updatedSubject
+            subject: updatedSubject
         });
     } catch (error) {
-        console.error('Update subject error:', error);
-        if (error.name === 'ValidationError') {
+        if (error.name === 'MongoError' && error.code === 11000) {
             return res.status(400).json({
                 success: false,
-                message: 'Validation error',
-                errors: error.errors
+                message: 'Subject code already exists'
             });
         }
         res.status(500).json({
             success: false,
-            message: 'Internal server error while updating subject'
+            message: 'Error updating subject',
+            error: error.message
         });
     }
 };
 
-/**
- * @desc Delete subject
- * @route DELETE /api/subjects/:id
- * @access Private
- */
+// Delete subject
 const deleteSubject = async (req, res) => {
     try {
-        const { id } = req.params;
+        const subject = await Subject.findByIdAndDelete(req.params.id);
 
-        if (!Types.ObjectId.isValid(id)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid subject ID format'
-            });
-        }
-
-        const subject = await Subject.findById(id);
         if (!subject) {
             return res.status(404).json({
                 success: false,
@@ -270,66 +187,27 @@ const deleteSubject = async (req, res) => {
             });
         }
 
-        // Authorization check - only creator or admin can delete
-        if (subject.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
-            return res.status(403).json({
-                success: false,
-                message: 'Unauthorized to delete this subject'
-            });
-        }
-
-        await Subject.findByIdAndDelete(id);
-
         res.status(200).json({
             success: true,
             message: 'Subject deleted successfully'
         });
     } catch (error) {
-        console.error('Delete subject error:', error);
         res.status(500).json({
             success: false,
-            message: 'Internal server error while deleting subject'
+            message: 'Error deleting subject',
+            error: error.message
         });
     }
 };
 
-/**
- * @desc Change subject status (Admin only)
- * @route PATCH /api/subjects/:id/status
- * @access Private/Admin
- */
-const changeSubjectStatus = async (req, res) => {
+// Approve subject (Admin)
+const approveSubject = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { status, rejectionReason } = req.body;
-
-        if (!Types.ObjectId.isValid(id)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid subject ID format'
-            });
-        }
-
-        const validStatuses = ['pending', 'approved', 'rejected'];
-        if (!validStatuses.includes(status)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid status value'
-            });
-        }
-
-        if (status === 'rejected' && !rejectionReason) {
-            return res.status(400).json({
-                success: false,
-                message: 'Rejection reason is required when rejecting a subject'
-            });
-        }
-
         const subject = await Subject.findByIdAndUpdate(
-            id,
-            { 
-                status,
-                rejectionReason: status === 'rejected' ? rejectionReason : ''
+            req.params.id,
+            {
+                status: 'approved',
+                rejectionReason: ''
             },
             { new: true }
         );
@@ -343,14 +221,93 @@ const changeSubjectStatus = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: `Subject status updated to ${status}`,
-            data: subject
+            message: 'Subject approved',
+            subject
         });
     } catch (error) {
-        console.error('Change subject status error:', error);
         res.status(500).json({
             success: false,
-            message: 'Internal server error while updating subject status'
+            message: 'Error approving subject',
+            error: error.message
+        });
+    }
+};
+
+// Reject subject (Admin)
+const rejectSubject = async (req, res) => {
+    try {
+        const { reason } = req.body;
+
+        if (!reason) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide a rejection reason'
+            });
+        }
+
+        const subject = await Subject.findByIdAndUpdate(
+            req.params.id,
+            {
+                status: 'rejected',
+                rejectionReason: reason
+            },
+            { new: true }
+        );
+
+        if (!subject) {
+            return res.status(404).json({
+                success: false,
+                message: 'Subject not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Subject rejected',
+            subject
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error rejecting subject',
+            error: error.message
+        });
+    }
+};
+
+// Change subject status
+const changeSubjectStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        console.log(status)
+        const allowedStatuses = ['pending', 'approved', 'rejected'];
+        if (!allowedStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid status value',
+            });
+        }
+        const subject = await Subject.findByIdAndUpdate(
+            req.params.id,
+            { status, rejectionReason: status === 'rejected' ? (req.body.rejectionReason || '') : '' },
+            { new: true, runValidators: true }
+        );
+        if (!subject) {
+            return res.status(404).json({
+                success: false,
+                message: 'Subject not found',
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: `Subject status updated to ${status}`,
+            subject,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error updating subject status',
+            error: error.message,
         });
     }
 };
@@ -361,5 +318,7 @@ module.exports = {
     getSubjectById,
     updateSubject,
     deleteSubject,
-    changeSubjectStatus
+    approveSubject,
+    rejectSubject,
+    changeSubjectStatus,
 };

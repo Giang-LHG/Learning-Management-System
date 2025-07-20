@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const { sendMail } = require('../../utils/email');
+const crypto = require('crypto');
 
 const createErrorResponse = (status, message) => ({ status, message });
 
@@ -37,6 +38,38 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    let parentId = null;
+    let parentAccountInfo = null;
+
+    // If registering a student, create a parent account automatically
+    if (role === 'student') {
+      // Generate random parent username and password
+      const parentUsername = `${username}_parent_${Math.floor(Math.random() * 10000)}`;
+      const parentPassword = crypto.randomBytes(6).toString('base64');
+      // Use a fake/virtual email for parent (not student's email)
+      const parentEmail = `${parentUsername}@noemail.local`;
+      const parentPasswordHash = await bcrypt.hash(parentPassword, salt);
+      // Create parent user
+      const parentUser = new User({
+        username: parentUsername,
+        email: parentEmail,
+        passwordHash: parentPasswordHash,
+        role: 'parent',
+        profile: {
+          fullName: profile.fullName + ' Parent',
+          avatarUrl: '',
+        }
+      });
+      await parentUser.save();
+      parentId = parentUser._id;
+      parentAccountInfo = {
+        username: parentUsername,
+        password: parentPassword,
+        email: parentEmail
+      };
+    }
+
+    // Create student user
     const newUser = new User({
       username,
       email,
@@ -45,7 +78,7 @@ exports.register = async (req, res) => {
       profile: {
         fullName: profile.fullName,
         avatarUrl: profile.avatarUrl || '',
-        ...(role === 'student' && { parentIds: profile.parentIds || [] }),
+        ...(role === 'student' && { parentIds: parentId ? [parentId] : [] }),
         ...(role === 'instructor' && {
           bio: profile.bio || '',
           expertise: profile.expertise || ''
@@ -53,12 +86,21 @@ exports.register = async (req, res) => {
       }
     });
 
-    const savedUser = await newUser.save();
-    const userResponse = savedUser.toObject();
+    await newUser.save();
+    const userResponse = newUser.toObject();
     delete userResponse.passwordHash;
 
     // Generate token for newly registered user
-    const token = generateToken(savedUser._id);
+    const token = generateToken(newUser._id);
+
+    // If parent account was created, send credentials to student's email
+    if (parentAccountInfo) {
+      await sendMail(
+        email,
+        'Your Parent Account Credentials',
+        `A parent account has been created for you.\n\nUsername: ${parentAccountInfo.username}\nPassword: ${parentAccountInfo.password}\nLogin at: [http://localhost:8081/login]`
+      );
+    }
 
     res.status(201).json({
       user: userResponse,
