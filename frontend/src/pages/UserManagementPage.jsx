@@ -2,33 +2,37 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   Table, Button, Space, Input, Modal, message, Tag, 
-  Form, Select, Switch, InputNumber, DatePicker 
+  Form, Select, Switch, InputNumber, DatePicker, Card, 
+  Typography, Divider, Avatar, Badge 
 } from 'antd';
 import { 
   EditOutlined, DeleteOutlined, PlusOutlined, 
   SearchOutlined, UserOutlined, MailOutlined, 
-  LockOutlined, SolutionOutlined 
+  LockOutlined, SolutionOutlined, TeamOutlined,
+  CheckCircleOutlined, StopOutlined, ClockCircleOutlined
 } from '@ant-design/icons';
 import { 
-  fetchUsers, deleteUser, createUser, updateUser 
+  fetchUsers, deleteUser, createUser, updateUser, changeUserStatus 
 } from '../services/userService';
 
 const { Search } = Input;
 const { Option } = Select;
 const { TextArea } = Input;
+const { Title, Text } = Typography;
 
 const UserManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [userModalVisible, setUserModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [formMode, setFormMode] = useState('add'); // 'add' or 'edit'
+  const [formMode, setFormMode] = useState('add');
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
 
   const { data: responseData, isLoading, error } = useQuery({
     queryKey: ['users'],
-    queryFn: fetchUsers
+    queryFn: fetchUsers,
+    refetchOnWindowFocus: false
   });
 
   const users = useMemo(() => {
@@ -62,6 +66,23 @@ const UserManagementPage = () => {
     }
   });
 
+  const statusOptions = [
+    { label: 'Active', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
+    { label: 'Blocked', value: 'blocked' },
+  ];
+
+  const changeStatusMutation = useMutation({
+    mutationFn: ({ userId, status }) => changeUserStatus(userId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['users']);
+      message.success('User status updated successfully');
+    },
+    onError: (error) => {
+      message.error(error?.response?.data?.message || 'Failed to update user status');
+    }
+  });
+
   const handleDelete = (user) => {
     setSelectedUser(user);
     setDeleteModalVisible(true);
@@ -83,10 +104,8 @@ const UserManagementPage = () => {
   const openEditModal = (user) => {
     setFormMode('edit');
     setSelectedUser(user);
-    // Định dạng lại dữ liệu cho form
     const formData = { ...user };
     if (user.profile) {
-      // Tách fullName thành firstName, lastName (nếu có)
       if (user.profile.fullName) {
         const nameParts = user.profile.fullName.split(' ');
         formData.firstName = nameParts.slice(0, -1).join(' ') || '';
@@ -107,7 +126,6 @@ const UserManagementPage = () => {
   const handleFormSubmit = () => {
     form.validateFields()
       .then(values => {
-        // Chuẩn bị dữ liệu để gửi API
         const userData = {
           username: values.username,
           email: values.email,
@@ -119,12 +137,10 @@ const UserManagementPage = () => {
           }
         };
 
-        // Thêm password nếu là tạo mới
         if (formMode === 'add') {
           userData.password = values.password;
         }
 
-        // Thêm trường đặc thù theo role
         if (values.role === 'instructor') {
           userData.profile.bio = values.bio;
           userData.profile.expertise = values.expertise || [];
@@ -149,25 +165,61 @@ const UserManagementPage = () => {
     return colors[role] || 'default';
   };
 
+  const getStatusBadge = (isActive, isBlocked) => {
+    let status = 'inactive';
+    let icon = <ClockCircleOutlined />;
+    let color = 'default';
+    
+    if (isBlocked) {
+      status = 'blocked';
+      icon = <StopOutlined />;
+      color = 'red';
+    } else if (isActive) {
+      status = 'active';
+      icon = <CheckCircleOutlined />;
+      color = 'green';
+    } else {
+      color = 'orange';
+    }
+    
+    return (
+      <Badge 
+        color={color}
+        text={status.charAt(0).toUpperCase() + status.slice(1)}
+      />
+    );
+  };
+
   const columns = [
     {
-      title: 'Name',
+      title: <Text strong>User</Text>,
       dataIndex: 'username',
       key: 'username',
       sorter: (a, b) => a.username.localeCompare(b.username),
       render: (text, record) => (
-        <div>
-          <div className="font-medium">{text}</div>
-          <div className="text-sm text-gray-500">{record.email}</div>
-        </div>
+        <Space>
+          <Avatar 
+            size="medium" 
+            src={record.profile?.avatar} 
+            icon={<UserOutlined />} 
+          />
+          <div>
+            <Text strong>{text}</Text>
+            <br />
+            <Text type="secondary">{record.email}</Text>
+          </div>
+        </Space>
       ),
     },
     {
-      title: 'Role',
+      title: <Text strong>Role</Text>,
       dataIndex: 'role',
       key: 'role',
       render: (role) => (
-        <Tag color={getRoleColor(role)}>
+        <Tag 
+          color={getRoleColor(role)} 
+          icon={role === 'instructor' ? <SolutionOutlined /> : <TeamOutlined />}
+        >
           {role.charAt(0).toUpperCase() + role.slice(1)}
         </Tag>
       ),
@@ -180,45 +232,62 @@ const UserManagementPage = () => {
       onFilter: (value, record) => record.role === value,
     },
     {
-      title: 'Status',
+      title: <Text strong>Status</Text>,
       dataIndex: 'isActive',
       key: 'isActive',
-      render: (isActive) => (
-        <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Active' : 'Inactive'}
-        </Tag>
-      ),
+      render: (isActive, record) => {
+        let status = 'inactive';
+        if (record.isBlocked) status = 'blocked';
+        else if (isActive) status = 'active';
+        
+        return (
+          <Space align="center">
+            {getStatusBadge(isActive, record.isBlocked)}
+            <Select
+              size="small"
+              value={status}
+              style={{ width: 110 }}
+              onChange={(value) => changeStatusMutation.mutate({ userId: record._id, status: value })}
+              options={statusOptions}
+              disabled={record.role === 'admin'}
+            />
+          </Space>
+        );
+      },
     },
     {
-      title: 'Created At',
+      title: <Text strong>Joined</Text>,
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (date) => new Date(date).toLocaleDateString(),
+      render: (date) => (
+        <Text type="secondary">
+          {new Date(date).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+          })}
+        </Text>
+      ),
       sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
     },
     {
-      title: 'Actions',
+      title: <Text strong>Actions</Text>,
       key: 'action',
       render: (_, record) => (
         <Space size="middle">
           <Button 
-            type="primary" 
+            type="text" 
             icon={<EditOutlined />} 
-            size="small"
             onClick={() => openEditModal(record)}
-          >
-            Edit
-          </Button>
+            style={{ color: '#1890ff' }}
+          />
           <Button 
-            type="primary" 
-            danger 
+            type="text" 
             icon={<DeleteOutlined />} 
-            size="small"
             onClick={() => handleDelete(record)}
             disabled={record.role === 'admin'}
-          >
-            Delete
-          </Button>
+            style={{ color: '#ff4d4f' }}
+          />
         </Space>
       ),
     },
@@ -232,80 +301,92 @@ const UserManagementPage = () => {
       return (
         (user.username && user.username.toLowerCase().includes(term)) ||
         (user.email && user.email.toLowerCase().includes(term)) ||
-        (user.role && user.role.toLowerCase().includes(term))
+        (user.role && user.role.toLowerCase().includes(term)) ||
+        (user.profile?.fullName && user.profile.fullName.toLowerCase().includes(term))
       );
     });
   }, [users, searchTerm]);
 
   if (error) {
     return (
-      <div className="text-center p-8">
-        <div className="text-red-500 text-lg">Error loading users</div>
-        <div className="text-gray-500">{error.message}</div>
-      </div>
+      <Card className="text-center">
+        <Title level={4} type="danger">Error loading users</Title>
+        <Text type="secondary">{error.message}</Text>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">User Management</h1>
-        <div className="flex space-x-4">
-          <Search
-            placeholder="Search users..."
-            allowClear
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-64"
-            prefix={<SearchOutlined />}
-          />
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            onClick={openAddModal}
-          >
-            Add User
-          </Button>
-        </div>
-      </div>
-      
-      <Table 
-        columns={columns} 
-        dataSource={filteredUsers} 
-        rowKey="_id"
-        loading={isLoading}
-        pagination={{ 
-          pageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total, range) => 
-            `${range[0]}-${range[1]} of ${total} users`
-        }}
-        scroll={{ x: 800 }}
-      />
+    <div style={{ padding: 24 }}>
+      <Card 
+        bordered={false}
+        title={<Title level={4}>User Management</Title>}
+        extra={
+          <Space>
+            <Search
+              placeholder="Search users..."
+              allowClear
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: 250 }}
+              prefix={<SearchOutlined />}
+            />
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={openAddModal}
+            >
+              New User
+            </Button>
+          </Space>
+        }
+      >
+        <Table 
+          columns={columns} 
+          dataSource={filteredUsers} 
+          rowKey="_id"
+          loading={isLoading}
+          pagination={{ 
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total) => `Total ${total} users`
+          }}
+          scroll={{ x: '100%' }}
+          bordered
+        />
+      </Card>
       
       {/* Delete Confirmation Modal */}
       <Modal
-        title="Confirm Delete"
+        title={<Title level={4}>Confirm Delete</Title>}
         open={deleteModalVisible}
         onOk={confirmDelete}
         onCancel={() => setDeleteModalVisible(false)}
         confirmLoading={deleteMutation.isPending}
+        okText="Delete"
+        okButtonProps={{ danger: true }}
       >
-        <p>
-          Are you sure you want to delete user "{selectedUser?.username}"? 
+        <Text>
+          Are you sure you want to delete user <Text strong>"{selectedUser?.username}"</Text>? 
           This action cannot be undone.
-        </p>
+        </Text>
       </Modal>
       
       {/* Add/Edit User Modal */}
       <Modal
-        title={`${formMode === 'add' ? 'Add New' : 'Edit'} User`}
+        title={
+          <Title level={4}>
+            {formMode === 'add' ? 'Create New User' : `Edit User: ${selectedUser?.username}`}
+          </Title>
+        }
         open={userModalVisible}
         onOk={handleFormSubmit}
         onCancel={() => setUserModalVisible(false)}
         confirmLoading={userMutation.isPending}
-        width={600}
+        width={700}
+        okText={formMode === 'add' ? 'Create' : 'Update'}
       >
+        <Divider />
         <Form
           form={form}
           layout="vertical"
@@ -318,60 +399,83 @@ const UserManagementPage = () => {
           <div className="grid grid-cols-2 gap-4">
             <Form.Item
               name="firstName"
-              label="First Name"
+              label={<Text strong>First Name</Text>}
               rules={[{ required: true, message: 'Please input first name!' }]}
             >
-              <Input prefix={<UserOutlined />} placeholder="First Name" />
+              <Input 
+                prefix={<UserOutlined />} 
+                placeholder="First Name" 
+                size="large"
+              />
             </Form.Item>
             
             <Form.Item
               name="lastName"
-              label="Last Name"
+              label={<Text strong>Last Name</Text>}
               rules={[{ required: true, message: 'Please input last name!' }]}
             >
-              <Input prefix={<UserOutlined />} placeholder="Last Name" />
+              <Input 
+                prefix={<UserOutlined />} 
+                placeholder="Last Name" 
+                size="large"
+              />
             </Form.Item>
           </div>
           
           <Form.Item
             name="username"
-            label="Username"
+            label={<Text strong>Username</Text>}
             rules={[{ required: true, message: 'Please input username!' }]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Username" />
+            <Input 
+              prefix={<UserOutlined />} 
+              placeholder="Username" 
+              size="large"
+            />
           </Form.Item>
           
           <Form.Item
             name="email"
-            label="Email"
+            label={<Text strong>Email</Text>}
             rules={[
               { required: true, message: 'Please input email!' },
               { type: 'email', message: 'Please enter a valid email!' }
             ]}
           >
-            <Input prefix={<MailOutlined />} placeholder="Email" />
+            <Input 
+              prefix={<MailOutlined />} 
+              placeholder="Email" 
+              size="large"
+            />
           </Form.Item>
           
           {formMode === 'add' && (
             <Form.Item
               name="password"
-              label="Password"
+              label={<Text strong>Password</Text>}
               rules={[
                 { required: true, message: 'Please input password!' },
                 { min: 6, message: 'Password must be at least 6 characters!' }
               ]}
             >
-              <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+              <Input.Password 
+                prefix={<LockOutlined />} 
+                placeholder="Password" 
+                size="large"
+              />
             </Form.Item>
           )}
           
           <div className="grid grid-cols-2 gap-4">
             <Form.Item
               name="role"
-              label="Role"
+              label={<Text strong>Role</Text>}
               rules={[{ required: true, message: 'Please select role!' }]}
             >
-              <Select placeholder="Select role">
+              <Select 
+                placeholder="Select role" 
+                size="large"
+              >
                 <Option value="admin">Admin</Option>
                 <Option value="student">Student</Option>
                 <Option value="parent">Parent</Option>
@@ -381,24 +485,27 @@ const UserManagementPage = () => {
             
             <Form.Item
               name="isActive"
-              label="Status"
+              label={<Text strong>Status</Text>}
               valuePropName="checked"
             >
               <Switch 
                 checkedChildren="Active" 
                 unCheckedChildren="Inactive" 
+                size="default"
               />
             </Form.Item>
           </div>
           
           <Form.Item
             name="phone"
-            label="Phone Number"
+            label={<Text strong>Phone Number</Text>}
           >
-            <Input placeholder="Phone Number" />
+            <Input 
+              placeholder="Phone Number" 
+              size="large"
+            />
           </Form.Item>
           
-          {/* Dynamic fields based on role */}
           <Form.Item
             noStyle
             shouldUpdate={(prevValues, currentValues) => 
@@ -413,18 +520,27 @@ const UserManagementPage = () => {
                   <>
                     <Form.Item
                       name="bio"
-                      label="Biography"
+                      label={<Text strong>Biography</Text>}
                       rules={[{ required: true, message: 'Please input bio!' }]}
                     >
-                      <TextArea rows={3} placeholder="Tell us about yourself" />
+                      <TextArea 
+                        rows={3} 
+                        placeholder="Tell us about yourself" 
+                        showCount 
+                        maxLength={500}
+                      />
                     </Form.Item>
                     
                     <Form.Item
                       name="expertise"
-                      label="Expertise"
+                      label={<Text strong>Expertise</Text>}
                       rules={[{ required: true, message: 'Please input expertise!' }]}
                     >
-                      <Select mode="tags" placeholder="Add expertise areas">
+                      <Select 
+                        mode="tags" 
+                        placeholder="Add expertise areas"
+                        size="large"
+                      >
                         <Option value="math">Mathematics</Option>
                         <Option value="science">Science</Option>
                         <Option value="english">English</Option>
@@ -439,13 +555,14 @@ const UserManagementPage = () => {
                 return (
                   <Form.Item
                     name="parentIds"
-                    label="Parent IDs"
+                    label={<Text strong>Parent Associations</Text>}
                     rules={[{ required: true, message: 'Please select at least one parent!' }]}
                   >
                     <Select 
                       mode="multiple" 
                       placeholder="Select parents"
                       optionFilterProp="children"
+                      size="large"
                     >
                       {users
                         .filter(u => u.role === 'parent')

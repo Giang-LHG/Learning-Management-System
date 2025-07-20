@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Table, Button, Input, Modal } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Table, Button, Input, Modal, Card, Space, Typography, theme, Select, message } from 'antd';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import SubjectForm from '../components/subjects/CreateSubjectForm';
 import StatusBadge from '../components/subjects/StatusBadge';
 import DeleteSubjectConfirmation from '../components/subjects/DeleteSubjectConfirmation';
-import { fetchSubjects, deleteSubject } from '../services/subjectService';
+import { fetchSubjects, deleteSubject, changeSubjectStatus } from '../services/subjectService';
 import useAutoSave from '../hooks/useAutoSave';
+
+const { Title, Text } = Typography;
+const { useToken } = theme;
 
 const statusColors = {
   Active: '#10b981',
@@ -14,7 +17,14 @@ const statusColors = {
   Archived: '#ef4444'
 };
 
+const statusOptions = [
+  { label: 'Pending', value: 'pending' },
+  { label: 'Approved', value: 'approved' },
+  { label: 'Rejected', value: 'rejected' },
+];
+
 const SubjectManagerPage = () => {
+  const { token } = useToken();
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
@@ -35,6 +45,17 @@ const SubjectManagerPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries(['subjects']);
       setDeleteModalVisible(false);
+    }
+  });
+
+  const changeStatusMutation = useMutation({
+    mutationFn: ({ subjectId, status }) => changeSubjectStatus(subjectId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['subjects']);
+      message.success('Status updated successfully');
+    },
+    onError: (error) => {
+      message.error(error?.response?.data?.message || 'Failed to update status');
     }
   });
 
@@ -64,34 +85,49 @@ const SubjectManagerPage = () => {
 
   const columns = [
     {
-      title: 'Subject Name',
+      title: <Text strong>Subject Name</Text>,
       dataIndex: 'name',
       key: 'name',
       sorter: (a, b) => a.name.localeCompare(b.name),
+      render: (text) => <Text>{text}</Text>,
     },
     {
-      title: 'Subject Code',
+      title: <Text strong>Subject Code</Text>,
       dataIndex: 'code',
       key: 'code',
+      render: (text) => <Text code>{text}</Text>,
     },
     {
-      title: 'Status',
+      title: <Text strong>Status</Text>,
       dataIndex: 'status',
       key: 'status',
-      render: (status) => <StatusBadge status={status} color={statusColors[status]} />,
-      filters: [
-        { text: 'Active', value: 'Active' },
-        { text: 'Draft', value: 'Draft' },
-        { text: 'Archived', value: 'Archived' },
-      ],
+      render: (status, record) => (
+        <Space>
+          <StatusBadge status={status} color={statusColors[status]} />
+          <Select
+            size="small"
+            value={status}
+            style={{ width: 110 }}
+            onChange={(value) => changeStatusMutation.mutate({ subjectId: record._id, status: value })}
+            options={statusOptions}
+          />
+        </Space>
+      ),
+      filters: statusOptions.map(opt => ({ text: opt.label, value: opt.value })),
       onFilter: (value, record) => record.status === value,
     },
     {
-      title: 'Actions',
+      title: <Text strong>Actions</Text>,
       key: 'action',
       render: (_, record) => (
-        <div className="flex space-x-2">
-          <Button size="small" onClick={() => handleEdit(record)}>Edit</Button>
+        <Space size="small">
+          <Button 
+            size="small" 
+            onClick={() => handleEdit(record)}
+            style={{ color: token.colorPrimary }}
+          >
+            Edit
+          </Button>
           <Button 
             size="small" 
             danger
@@ -99,7 +135,7 @@ const SubjectManagerPage = () => {
           >
             Delete
           </Button>
-        </div>
+        </Space>
       ),
     },
   ];
@@ -111,29 +147,54 @@ const SubjectManagerPage = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-semibold">Subject Management</h1>
-        <div className="flex space-x-4">
-          <Input.Search 
-            placeholder="Search subjects..." 
-            allowClear
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-64"
-          />
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModalVisible(true)}>
-            Create Subject
-          </Button>
+    <div style={{ padding: 24 }}>
+      <Card 
+        bordered={false}
+        style={{ 
+          boxShadow: token.boxShadow,
+          borderRadius: token.borderRadiusLG
+        }}
+      >
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: 24 
+        }}>
+          <Title level={4} style={{ margin: 0 }}>Subject Management</Title>
+          <Space size="middle">
+            <Input 
+              placeholder="Search subjects..." 
+              allowClear
+              prefix={<SearchOutlined />}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: 250 }}
+            />
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />} 
+              onClick={() => setAddModalVisible(true)}
+            >
+              New Subject
+            </Button>
+          </Space>
         </div>
-      </div>
-      <Table 
-        columns={columns}
-        dataSource={filteredData}
-        loading={isLoading}
-        rowKey="_id"
-        pagination={{ pageSize: 10 }}
-        scroll={{ x: 800 }}
-      />
+        
+        <Table 
+          columns={columns}
+          dataSource={filteredData}
+          loading={isLoading}
+          rowKey="_id"
+          pagination={{ 
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} subjects`
+          }}
+          scroll={{ x: 'max-content' }}
+          bordered
+        />
+      </Card>
+
       <SubjectForm
         visible={addModalVisible}
         onCancel={() => setAddModalVisible(false)}

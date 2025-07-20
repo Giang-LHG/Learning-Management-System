@@ -159,7 +159,7 @@ function Header() {
               </li>
             </>)}
 
-            {["admin", "instructor"].includes(user?.role || '') && (<>
+            {["instructor"].includes(user?.role || '') && (<>
               <li>
                 <Link
                   to="/instructor/course"

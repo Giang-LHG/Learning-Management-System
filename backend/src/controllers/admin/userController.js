@@ -315,3 +315,34 @@ exports.updateUserProfile = async (req, res) => {
     res.status(500).json(createErrorResponse(500, 'Cập nhật thất bại'));
   }
 };
+
+// Change user status (active/inactive/blocked)
+exports.changeUserStatus = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { status } = req.body;
+    // status: 'active', 'inactive', 'blocked'
+    let update = {};
+    if (status === 'active') {
+      update = { isActive: true, isBlocked: false };
+    } else if (status === 'inactive') {
+      update = { isActive: false };
+    } else if (status === 'blocked') {
+      update = { isBlocked: true };
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid status value' });
+    }
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: update },
+      { new: true, runValidators: true }
+    ).select('-passwordHash');
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.json({ success: true, message: `User status updated to ${status}`, user: updatedUser });
+  } catch (err) {
+    console.error('Change user status error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update user status' });
+  }
+};

@@ -123,4 +123,20 @@ router.delete('/:id', [requireAuth, requireAdmin], userController.deleteUser);
  */
 router.get('/by-role', [requireAuth, requireAdmin], userController.getUsersByRole);
 
+/**
+ * @route PATCH /users/:id/status
+ * @description Change the status of a user
+ * @access Private (Admin)
+ */
+router.patch(
+  '/:id/status',
+  [
+    requireAuth,
+    requireAdmin,
+    check('id', 'Invalid ID').isMongoId(),
+    check('status', 'Invalid status').isIn(['active', 'inactive', 'blocked'])
+  ],
+  userController.changeUserStatus
+);
+
 module.exports = router;

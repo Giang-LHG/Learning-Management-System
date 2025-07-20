@@ -7,7 +7,7 @@ const { sendMail } = require('../../utils/email');
 
 const createErrorResponse = (status, message) => ({ status, message });
 
-// Tạo JWT token
+// Generate JWT token
 const generateToken = (userId) => {
   return jwt.sign(
     { userId },
@@ -16,7 +16,7 @@ const generateToken = (userId) => {
   );
 };
 
-// Đăng ký
+// Register
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -57,7 +57,7 @@ exports.register = async (req, res) => {
     const userResponse = savedUser.toObject();
     delete userResponse.passwordHash;
 
-    // Tạo token cho user mới đăng ký
+    // Generate token for newly registered user
     const token = generateToken(savedUser._id);
 
     res.status(201).json({
@@ -70,43 +70,34 @@ exports.register = async (req, res) => {
   }
 };
 
-// Đăng nhập
+// Login
 exports.login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
-    
-    // console.log('Login attempt:', { identifier, password: password ? '***' : 'undefined' });
 
     const user = await User.findOne({
       $or: [{ username: identifier }, { email: identifier }]
     }).select('+passwordHash');
 
-    // console.log('User found:', user ? 'Yes' : 'No');
-
     if (!user) {
-      console.log('No user found with identifier:', identifier);
       return res.status(401).json(createErrorResponse(401, 'Invalid credentials'));
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    // console.log('Password match:', isMatch);
 
     if (!isMatch) {
-      console.log('Password does not match for user:', user.username);
       return res.status(401).json(createErrorResponse(401, 'Invalid password'));
     }
 
-    // Cập nhật lastLoginAt
+    // Update lastLoginAt
     user.lastLoginAt = new Date();
     await user.save();
 
     const userResponse = user.toObject();
     delete userResponse.passwordHash;
 
-    // Tạo JWT token
+    // Generate JWT token
     const token = generateToken(user._id);
-
-    // console.log('Login successful for user:', user.username);
 
     res.json({
       user: userResponse,
@@ -119,53 +110,52 @@ exports.login = async (req, res) => {
   }
 };
 
-// Gửi OTP quên mật khẩu
+// Send forgot password OTP
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    console.log(user)
     if (!user) {
-      return res.status(404).json({ success: false, message: 'Email không tồn tại' });
+      return res.status(404).json({ success: false, message: 'Email does not exist' });
     }
-    // Sinh OTP 6 số
+    // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetPasswordOTP = otp;
-    user.resetPasswordOTPExpires = Date.now() + 10 * 60 * 1000; // 10 phút
+    user.resetPasswordOTPExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
     await user.save();
-    // Gửi email
-    await sendMail(email, 'Mã OTP đặt lại mật khẩu', `Mã OTP của bạn là: ${otp}`);
-    res.json({ success: true, message: 'Đã gửi OTP về email' });
+    // Send email
+    await sendMail(email, 'Your OTP for password reset', `Your OTP is: ${otp}`);
+    res.json({ success: true, message: 'OTP has been sent to your email' });
   } catch (err) {
     console.error('Forgot password error:', err);
-    res.status(500).json({ success: false, message: 'Lỗi server' });
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// Đặt lại mật khẩu bằng OTP
+// Reset password with OTP
 exports.resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
     const user = await User.findOne({ email });
     if (!user || !user.resetPasswordOTP || !user.resetPasswordOTPExpires) {
-      return res.status(400).json({ success: false, message: 'Yêu cầu không hợp lệ' });
+      return res.status(400).json({ success: false, message: 'Invalid request' });
     }
     if (user.resetPasswordOTP !== otp) {
-      return res.status(400).json({ success: false, message: 'OTP không đúng' });
+      return res.status(400).json({ success: false, message: 'Incorrect OTP' });
     }
     if (user.resetPasswordOTPExpires < Date.now()) {
-      return res.status(400).json({ success: false, message: 'OTP đã hết hạn' });
+      return res.status(400).json({ success: false, message: 'OTP has expired' });
     }
-    // Đặt lại mật khẩu
+    // Reset password
     const salt = await bcrypt.genSalt(10);
     user.passwordHash = await bcrypt.hash(newPassword, salt);
     user.resetPasswordOTP = null;
     user.resetPasswordOTPExpires = null;
     await user.save();
-    res.json({ success: true, message: 'Đặt lại mật khẩu thành công' });
+    res.json({ success: true, message: 'Password reset successful' });
   } catch (err) {
     console.error('Reset password error:', err);
-    res.status(500).json({ success: false, message: 'Lỗi server' });
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -175,26 +165,26 @@ exports.changePassword = async (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
-      return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ thông tin.' });
+      return res.status(400).json({ success: false, message: 'Please provide all required information.' });
     }
 
     const user = await User.findById(userId).select('+passwordHash');
     if (!user) {
-      return res.status(404).json({ success: false, message: 'Người dùng không tồn tại.' });
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
     const isMatch = await bcrypt.compare(oldPassword, user.passwordHash);
     if (!isMatch) {
-      return res.status(400).json({ success: false, message: 'Mật khẩu cũ không đúng.' });
+      return res.status(400).json({ success: false, message: 'Old password is incorrect.' });
     }
 
     const salt = await bcrypt.genSalt(10);
     user.passwordHash = await bcrypt.hash(newPassword, salt);
     await user.save();
 
-    res.json({ success: true, message: 'Đổi mật khẩu thành công.' });
+    res.json({ success: true, message: 'Password changed successfully.' });
   } catch (err) {
     console.error('Change password error:', err);
-    res.status(500).json({ success: false, message: 'Lỗi server.' });
+    res.status(500).json({ success: false, message: 'Server error.' });
   }
 };

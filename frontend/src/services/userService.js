@@ -64,6 +64,14 @@ export async function updateCurrentUserProfile(profileData) {
   return response.data;
 }
 
+/**
+ * Change the status of a user
+ */
+export async function changeUserStatus(userId, status) {
+  const response = await api.patch(`/users/${userId}/status`, { status });
+  return response.data;
+}
+
 export default {
   fetchUsers,
   createUser, // Thêm vào export default
@@ -73,4 +81,5 @@ export default {
   fetchUsersByRole,
   fetchCurrentUserProfile,
   updateCurrentUserProfile,
+  changeUserStatus,
 };

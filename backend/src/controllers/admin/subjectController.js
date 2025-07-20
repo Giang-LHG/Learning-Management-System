@@ -1,263 +1,335 @@
-// controllers/subjectController.js
 const Subject = require('../../models/Subject');
 const { Types } = require('mongoose');
 
-// Tạo môn học mới
+/**
+ * @desc Create a new subject
+ * @route POST /api/subjects
+ * @access Private
+ */
 const createSubject = async (req, res) => {
     try {
         const { code, name, description, prerequisites } = req.body;
-        const createdBy = req.user.id; // Giả sử user ID được lấy từ middleware xác thực
+        
+        // Validate required fields
+        if (!code || !name) {
+            return res.status(400).json({
+                success: false,
+                message: 'Subject code and name are required'
+            });
+        }
+
+        // Check for existing subject code
+        const existingSubject = await Subject.findOne({ code });
+        if (existingSubject) {
+            return res.status(409).json({
+                success: false,
+                message: 'Subject code already exists'
+            });
+        }
 
         const newSubject = new Subject({
             code,
             name,
             description: description || '',
             prerequisites: prerequisites || [],
-            status: 'approved',
-            createdBy
+            status: 'pending', // Default to pending for admin approval
+            createdBy: req.user.id
         });
 
         const savedSubject = await newSubject.save();
+        
         res.status(201).json({
             success: true,
-            message: 'Môn học đã được tạo thành công!',
-            subject: savedSubject
+            message: 'Subject created successfully and pending approval',
+            data: {
+                id: savedSubject._id,
+                code: savedSubject.code,
+                name: savedSubject.name,
+                status: savedSubject.status
+            }
         });
     } catch (error) {
-        if (error.name === 'MongoError' && error.code === 11000) {
-            return res.status(400).json({
-                success: false,
-                message: 'Mã môn học đã tồn tại trong hệ thống'
-            });
-        }
+        console.error('Subject creation error:', error);
         res.status(500).json({
             success: false,
-            message: 'Lỗi khi tạo môn học',
-            error: error.message
+            message: 'Internal server error while creating subject'
         });
     }
 };
 
-// Lấy tất cả môn học (có phân trang và lọc)
+/**
+ * @desc Get all subjects with pagination and filtering
+ * @route GET /api/subjects
+ * @access Public
+ */
 const getAllSubjects = async (req, res) => {
     try {
         const { page = 1, limit = 10, status, search } = req.query;
         const filter = {};
 
-        if (status) filter.status = status;
-        if (search) {
+        // Validate pagination parameters
+        const parsedPage = Math.max(1, parseInt(page));
+        const parsedLimit = Math.min(100, Math.max(1, parseInt(limit))); // Limit max 100 items per page
+
+        // Build filter conditions
+        if (status) {
+            const validStatuses = ['pending', 'approved', 'rejected'];
+            if (validStatuses.includes(status)) {
+                filter.status = status;
+            }
+        }
+
+        if (search && search.length >= 3) { // Minimum 3 characters for search
             filter.$or = [
                 { code: { $regex: search, $options: 'i' } },
-                { name: { $regex: search, $options: 'i' } }
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
             ];
         }
 
-        const subjects = await Subject.find(filter)
-            .populate('createdBy', 'username email')
-            .populate('prerequisites', 'code name')
-            .skip((page - 1) * limit)
-            .limit(parseInt(limit))
-            .sort({ createdAt: -1 });
-
-        const total = await Subject.countDocuments(filter);
+        // Execute query with pagination
+        const [subjects, total] = await Promise.all([
+            Subject.find(filter)
+                .populate('createdBy', 'username email')
+                .populate('prerequisites', 'code name')
+                .skip((parsedPage - 1) * parsedLimit)
+                .limit(parsedLimit)
+                .sort({ createdAt: -1 })
+                .lean(),
+            Subject.countDocuments(filter)
+        ]);
 
         res.status(200).json({
             success: true,
-            total,
-            page: parseInt(page),
-            pages: Math.ceil(total / limit),
-            subjects
+            data: {
+                items: subjects,
+                pagination: {
+                    total,
+                    page: parsedPage,
+                    pages: Math.ceil(total / parsedLimit),
+                    limit: parsedLimit
+                }
+            }
         });
     } catch (error) {
+        console.error('Get subjects error:', error);
         res.status(500).json({
             success: false,
-            message: 'Lỗi khi lấy danh sách môn học',
-            error: error.message
+            message: 'Internal server error while fetching subjects'
         });
     }
 };
 
-// Lấy chi tiết môn học theo ID
+/**
+ * @desc Get subject details by ID
+ * @route GET /api/subjects/:id
+ * @access Public
+ */
 const getSubjectById = async (req, res) => {
     try {
+        if (!Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid subject ID format'
+            });
+        }
+
         const subject = await Subject.findById(req.params.id)
             .populate('createdBy', 'username email')
-            .populate('prerequisites', 'code name');
+            .populate('prerequisites', 'code name')
+            .lean();
 
         if (!subject) {
             return res.status(404).json({
                 success: false,
-                message: 'Không tìm thấy môn học'
+                message: 'Subject not found'
             });
         }
 
         res.status(200).json({
             success: true,
-            subject
+            data: subject
         });
     } catch (error) {
-        if (error.kind === 'ObjectId') {
-            return res.status(400).json({
-                success: false,
-                message: 'ID môn học không hợp lệ'
-            });
-        }
+        console.error('Get subject by ID error:', error);
         res.status(500).json({
             success: false,
-            message: 'Lỗi khi lấy thông tin môn học',
-            error: error.message
+            message: 'Internal server error while fetching subject'
         });
     }
 };
 
-// Cập nhật thông tin môn học
+/**
+ * @desc Update subject information
+ * @route PUT /api/subjects/:id
+ * @access Private
+ */
 const updateSubject = async (req, res) => {
     try {
+        const { id } = req.params;
         const { code, name, description, prerequisites } = req.body;
 
-
-        const subject = await Subject.findById(req.params.id);
-        if (!subject) {
-            return res.status(404).json({
+        if (!Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
                 success: false,
-                message: 'Không tìm thấy môn học'
+                message: 'Invalid subject ID format'
             });
         }
 
-        // Kiểm tra trùng mã môn học (trừ chính nó)
+        const subject = await Subject.findById(id);
+        if (!subject) {
+            return res.status(404).json({
+                success: false,
+                message: 'Subject not found'
+            });
+        }
+
+        // Authorization check - only creator or admin can update
+        if (subject.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized to update this subject'
+            });
+        }
+
+        // Check for duplicate subject code (excluding current subject)
         if (code && code !== subject.code) {
-            const existingSubject = await Subject.findOne({ code });
+            const existingSubject = await Subject.findOne({ code, _id: { $ne: id } });
             if (existingSubject) {
-                return res.status(400).json({
+                return res.status(409).json({
                     success: false,
-                    message: 'Mã môn học đã tồn tại'
+                    message: 'Subject code already exists'
                 });
             }
         }
 
-        // Trong updateSubject (sau khi tìm được subject)
-        // if (subject.createdBy.toString() !== req.user.id) {
-        //     return res.status(403).json({
-        //         success: false,
-        //         message: 'Bạn không có quyền chỉnh sửa môn học này'
-        //     });
-        // }
-
+        // Prepare update data
         const updateData = {
             code: code || subject.code,
             name: name || subject.name,
             description: description || subject.description,
-            prerequisites: prerequisites || subject.prerequisites
+            prerequisites: prerequisites || subject.prerequisites,
+            status: req.user.role === 'admin' ? (req.body.status || subject.status) : subject.status
         };
 
+        // Admin-only fields
+        if (req.user.role === 'admin') {
+            if (req.body.rejectionReason) {
+                updateData.rejectionReason = req.body.rejectionReason;
+            }
+        }
+
         const updatedSubject = await Subject.findByIdAndUpdate(
-            req.params.id,
+            id,
             updateData,
             { new: true, runValidators: true }
         ).populate('prerequisites', 'code name');
 
         res.status(200).json({
             success: true,
-            message: 'Cập nhật môn học thành công',
-            subject: updatedSubject
+            message: 'Subject updated successfully',
+            data: updatedSubject
         });
     } catch (error) {
-        if (error.name === 'MongoError' && error.code === 11000) {
+        console.error('Update subject error:', error);
+        if (error.name === 'ValidationError') {
             return res.status(400).json({
                 success: false,
-                message: 'Mã môn học đã tồn tại'
+                message: 'Validation error',
+                errors: error.errors
             });
         }
         res.status(500).json({
             success: false,
-            message: 'Lỗi khi cập nhật môn học',
-            error: error.message
+            message: 'Internal server error while updating subject'
         });
     }
 };
 
-// Xóa môn học
+/**
+ * @desc Delete subject
+ * @route DELETE /api/subjects/:id
+ * @access Private
+ */
 const deleteSubject = async (req, res) => {
     try {
-        const subject = await Subject.findByIdAndDelete(req.params.id);
+        const { id } = req.params;
 
-        if (!subject) {
-            return res.status(404).json({
-                success: false,
-                message: 'Không tìm thấy môn học'
-            });
-        }
-        // Trong deleteSubject (sau khi tìm được subject)
-        // if (subject.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
-        //     return res.status(403).json({
-        //         success: false,
-        //         message: 'Bạn không có quyền xóa môn học này'
-        //     });
-        // }
-
-        res.status(200).json({
-            success: true,
-            message: 'Môn học đã được xóa thành công'
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi khi xóa môn học',
-            error: error.message
-        });
-    }
-};
-
-// Duyệt môn học (Admin)
-const approveSubject = async (req, res) => {
-    try {
-        const subject = await Subject.findByIdAndUpdate(
-            req.params.id,
-            {
-                status: 'approved',
-                rejectionReason: ''
-            },
-            { new: true }
-        );
-
-        if (!subject) {
-            return res.status(404).json({
-                success: false,
-                message: 'Không tìm thấy môn học'
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            message: 'Môn học đã được duyệt',
-            subject
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi khi duyệt môn học',
-            error: error.message
-        });
-    }
-};
-
-// Từ chối môn học (Admin)
-const rejectSubject = async (req, res) => {
-    try {
-        const { reason } = req.body;
-
-        if (!reason) {
+        if (!Types.ObjectId.isValid(id)) {
             return res.status(400).json({
                 success: false,
-                message: 'Vui lòng cung cấp lý do từ chối'
+                message: 'Invalid subject ID format'
+            });
+        }
+
+        const subject = await Subject.findById(id);
+        if (!subject) {
+            return res.status(404).json({
+                success: false,
+                message: 'Subject not found'
+            });
+        }
+
+        // Authorization check - only creator or admin can delete
+        if (subject.createdBy.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized to delete this subject'
+            });
+        }
+
+        await Subject.findByIdAndDelete(id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Subject deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete subject error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error while deleting subject'
+        });
+    }
+};
+
+/**
+ * @desc Change subject status (Admin only)
+ * @route PATCH /api/subjects/:id/status
+ * @access Private/Admin
+ */
+const changeSubjectStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, rejectionReason } = req.body;
+
+        if (!Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid subject ID format'
+            });
+        }
+
+        const validStatuses = ['pending', 'approved', 'rejected'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid status value'
+            });
+        }
+
+        if (status === 'rejected' && !rejectionReason) {
+            return res.status(400).json({
+                success: false,
+                message: 'Rejection reason is required when rejecting a subject'
             });
         }
 
         const subject = await Subject.findByIdAndUpdate(
-            req.params.id,
-            {
-                status: 'rejected',
-                rejectionReason: reason
+            id,
+            { 
+                status,
+                rejectionReason: status === 'rejected' ? rejectionReason : ''
             },
             { new: true }
         );
@@ -265,20 +337,20 @@ const rejectSubject = async (req, res) => {
         if (!subject) {
             return res.status(404).json({
                 success: false,
-                message: 'Không tìm thấy môn học'
+                message: 'Subject not found'
             });
         }
 
         res.status(200).json({
             success: true,
-            message: 'Môn học đã bị từ chối',
-            subject
+            message: `Subject status updated to ${status}`,
+            data: subject
         });
     } catch (error) {
+        console.error('Change subject status error:', error);
         res.status(500).json({
             success: false,
-            message: 'Lỗi khi từ chối môn học',
-            error: error.message
+            message: 'Internal server error while updating subject status'
         });
     }
 };
@@ -289,6 +361,5 @@ module.exports = {
     getSubjectById,
     updateSubject,
     deleteSubject,
-    approveSubject,
-    rejectSubject
+    changeSubjectStatus
 };

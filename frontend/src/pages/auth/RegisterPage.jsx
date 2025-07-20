@@ -205,8 +205,8 @@ const RegisterPage = () => {
                   <select
                     id="role"
                     name="role"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
+                    value="student"
+                    disabled
                     className={`form-select ${touched.role && errors.role ? 'is-invalid' : ''}`}
                     style={{
                       padding: '12px 16px',
@@ -216,7 +216,6 @@ const RegisterPage = () => {
                     }}
                   >
                     <option value="student">Student</option>
-                    <option value="instructor">Instructor</option>
                   </select>
                   {touched.role && errors.role && (
                     <div className="invalid-feedback d-block mt-1">

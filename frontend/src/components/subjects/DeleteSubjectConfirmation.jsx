@@ -5,24 +5,24 @@ import { Modal, Button } from 'antd';
 const DeleteSubjectConfirmation = ({ visible, onCancel, onConfirm, subject }) => {
   return (
     <Modal
-      title="Xác nhận xóa môn học"
+      title="Confirm Delete Subject"
       open={visible}
       onCancel={onCancel}
       footer={[
         <Button key="cancel" onClick={onCancel}>
-          Hủy
+          Cancel
         </Button>,
         <Button key="delete" type="primary" danger onClick={onConfirm}>
-          Xóa
+          Delete
         </Button>,
       ]}
     >
       {subject && (
         <p>
-          Bạn có chắc chắn muốn xóa môn học <strong>{subject.name}</strong> ({subject.code}) không?
+          Are you sure you want to delete the subject <strong>{subject.name}</strong> ({subject.code})?
         </p>
       )}
-      <p className="text-red-500 mt-2">Hành động này không thể hoàn tác!</p>
+      <p className="text-red-500 mt-2">This action cannot be undone!</p>
     </Modal>
   );
 };

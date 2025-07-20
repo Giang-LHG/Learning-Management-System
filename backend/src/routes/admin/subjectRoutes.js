@@ -122,4 +122,20 @@ router.patch(
   subjectController.rejectSubject
 );
 
+/**
+ * @route PATCH /subjects/:id/status
+ * @description Change the status of a subject
+ * @access Private (Admin)
+ */
+router.patch(
+  '/:id/status',
+  [
+    requireAuth,
+    requireAdmin,
+    check('id', 'Invalid ID').isMongoId(),
+    check('status', 'Invalid status').isIn(['pending', 'approved', 'rejected'])
+  ],
+  subjectController.changeSubjectStatus
+);
+
 module.exports = router;

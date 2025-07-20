@@ -9,7 +9,7 @@ const SubjectForm = ({ visible, onCancel, onSuccess, initialValues = {}, isEdit 
   const [confirmLoading, setConfirmLoading] = useState(false);
   const queryClient = useQueryClient();
 
-  // Khi mở modal edit, fill dữ liệu vào form
+  // When opening the edit modal, fill the form with data
   React.useEffect(() => {
     if (visible) {
       form.setFieldsValue(initialValues);
@@ -50,34 +50,34 @@ const SubjectForm = ({ visible, onCancel, onSuccess, initialValues = {}, isEdit 
 
   return (
     <Modal
-      title={isEdit ? 'Chỉnh sửa môn học' : 'Tạo môn học mới'}
+      title={isEdit ? 'Edit Subject' : 'Create New Subject'}
       open={visible}
       onOk={handleSubmit}
       onCancel={onCancel}
       confirmLoading={confirmLoading}
-      okText={isEdit ? 'Lưu thay đổi' : 'Tạo môn học'}
-      cancelText="Hủy"
+      okText={isEdit ? 'Save Changes' : 'Create Subject'}
+      cancelText="Cancel"
     >
       <Form form={form} layout="vertical">
         <Form.Item
           name="name"
-          label="Tên môn học"
-          rules={[{ required: true, message: 'Vui lòng nhập tên môn học' }]}
+          label="Subject Name"
+          rules={[{ required: true, message: 'Please enter the subject name' }]}
         >
-          <Input placeholder="Nhập tên môn học" />
+          <Input placeholder="Enter subject name" />
         </Form.Item>
         <Form.Item
           name="code"
-          label="Mã môn học"
-          rules={[{ required: true, message: 'Vui lòng nhập mã môn học' }]}
+          label="Subject Code"
+          rules={[{ required: true, message: 'Please enter the subject code' }]}
         >
-          <Input placeholder="Nhập mã môn học" disabled={isEdit} />
+          <Input placeholder="Enter subject code" disabled={isEdit} />
         </Form.Item>
         <Form.Item
           name="description"
-          label="Mô tả"
+          label="Description"
         >
-          <Input.TextArea rows={4} placeholder="Nhập mô tả môn học" />
+          <Input.TextArea rows={4} placeholder="Enter subject description" />
         </Form.Item>
       </Form>
     </Modal>
