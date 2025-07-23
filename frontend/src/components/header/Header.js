@@ -43,7 +43,7 @@ function Header() {
     };
 
     fetchUnreadCount();
-    
+
     // Fetch unread count every 30 seconds
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
@@ -163,15 +163,15 @@ function Header() {
               <li>
                 <Link
                   to="/instructor/course"
-                  className={`nav-link ${location.pathname === '/courses' ? 'active' : ''}`}
+                  className={`nav-link ${location.pathname === '/instructor/course' ? 'active' : ''}`}
                 >
                   Courses
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/Learning Analytics"
-                  className={`nav-link ${location.pathname === '/Learning Analytics' ? 'active' : ''}`}
+                  to="/instructor/Learning Analytics"
+                  className={`nav-link ${location.pathname === '/instructor/Learning Analytics' ? 'active' : ''}`}
                 >
                   Learning Analytics
                 </Link>
@@ -281,32 +281,32 @@ function Header() {
                       </li>)}
 
                       <li
-                      className="dropdown-link"
-                          onClick={handleNotificationClick}>
-                       
-                          <FiBell className="dropdown-icon" />
-                          Notifications
-                          {unreadCount > 0 && (
-                            <span style={{
-                              position: 'absolute',
-                              right: '1rem',
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              background: '#ef4444',
-                              color: 'white',
-                              borderRadius: '50%',
-                              width: '20px',
-                              height: '20px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.75rem',
-                              fontWeight: 600
-                            }}>
-                              {unreadCount > 99 ? '99+' : unreadCount}
-                            </span>
-                          )}
-                        
+                        className="dropdown-link"
+                        onClick={handleNotificationClick}>
+
+                        <FiBell className="dropdown-icon" />
+                        Notifications
+                        {unreadCount > 0 && (
+                          <span style={{
+                            position: 'absolute',
+                            right: '1rem',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: '#ef4444',
+                            color: 'white',
+                            borderRadius: '50%',
+                            width: '20px',
+                            height: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 600
+                          }}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+
                       </li>
                       <li>
                         <Link to="/profile" className="dropdown-link" onClick={() => setUserDropdownOpen(false)}>
