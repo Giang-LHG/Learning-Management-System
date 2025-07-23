@@ -1,252 +1,227 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Container, Row, Col, Card, Button, Form, Badge, Modal, Dropdown, Alert } from "react-bootstrap"
-import { Plus, Eye, Edit, Trash2, Calendar, User, BookOpen, GraduationCap, Search, Filter } from "lucide-react"
-import { motion } from "framer-motion"
-import Header from "../header/Header"
-import AddCourseModal from "./AddCourseModal"
-import EditCourseModal from "./EditCourseModal"
-import { useNavigate } from "react-router-dom"
-
-// Dữ liệu mẫu các khóa học
-const coursesData = [
-  {
-    _id: "64f8a1b2c3d4e5f6a7b8c9d0",
-    title: "Lập Trình Web Nâng Cao",
-    description: "Khóa học chuyên sâu về phát triển ứng dụng web hiện đại với React, Node.js và MongoDB.",
-    instructorId: {
-      _id: "64f8a1b2c3d4e5f6a7b8c9d1",
-      name: "Nguyễn Văn An",
-      email: "nguyenvanan@example.com",
-    },
-    subjectId: {
-      _id: "64f8a1b2c3d4e5f6a7b8c9d2",
-      name: "Công Nghệ Thông Tin",
-      code: "CNTT",
-    },
-    startDate: "2024-02-01",
-    endDate: "2024-06-30",
-    credits: 3,
-    term: ["Học kỳ 2", "2023-2024"],
-    modules: [
-      { moduleId: "1", title: "Giới thiệu React", lessons: [{}, {}] },
-      { moduleId: "2", title: "State Management", lessons: [{}] },
-    ],
-    createdAt: "2024-01-15T08:00:00.000Z",
-    status: "active",
-  },
-  {
-    _id: "64f8a1b2c3d4e5f6a7b8c9d3",
-    title: "Cơ Sở Dữ Liệu",
-    description: "Học về thiết kế và quản lý cơ sở dữ liệu quan hệ, SQL và NoSQL.",
-    instructorId: {
-      _id: "64f8a1b2c3d4e5f6a7b8c9d4",
-      name: "Trần Thị Bình",
-      email: "tranthibinh@example.com",
-    },
-    subjectId: {
-      _id: "64f8a1b2c3d4e5f6a7b8c9d2",
-      name: "Công Nghệ Thông Tin",
-      code: "CNTT",
-    },
-    startDate: "2024-03-01",
-    endDate: "2024-07-15",
-    credits: 4,
-    term: ["Học kỳ 2", "2023-2024"],
-    modules: [
-      { moduleId: "3", title: "SQL Cơ bản", lessons: [{}, {}, {}] },
-      { moduleId: "4", title: "Thiết kế CSDL", lessons: [{}, {}] },
-    ],
-    createdAt: "2024-01-20T09:00:00.000Z",
-    status: "active",
-  },
-  {
-    _id: "64f8a1b2c3d4e5f6a7b8c9d5",
-    title: "Trí Tuệ Nhân Tạo",
-    description: "Khóa học về machine learning, deep learning và các ứng dụng AI.",
-    instructorId: {
-      _id: "64f8a1b2c3d4e5f6a7b8c9d6",
-      name: "Lê Văn Cường",
-      email: "levancuong@example.com",
-    },
-    subjectId: {
-      _id: "64f8a1b2c3d4e5f6a7b8c9d7",
-      name: "Khoa Học Máy Tính",
-      code: "KHMT",
-    },
-    startDate: "2024-02-15",
-    endDate: "2024-06-15",
-    credits: 3,
-    term: ["Học kỳ 2", "2023-2024"],
-    modules: [
-      { moduleId: "5", title: "Machine Learning", lessons: [{}, {}, {}, {}] },
-      { moduleId: "6", title: "Deep Learning", lessons: [{}, {}, {}] },
-    ],
-    createdAt: "2024-01-25T10:00:00.000Z",
-    status: "draft",
-  },
-  {
-    _id: "64f8a1b2c3d4e5f6a7b8c9d8",
-    title: "Phát Triển Mobile",
-    description: "Học phát triển ứng dụng di động với React Native và Flutter.",
-    instructorId: {
-      _id: "64f8a1b2c3d4e5f6a7b8c9d9",
-      name: "Phạm Thị Dung",
-      email: "phamthidung@example.com",
-    },
-    subjectId: {
-      _id: "64f8a1b2c3d4e5f6a7b8c9d2",
-      name: "Công Nghệ Thông Tin",
-      code: "CNTT",
-    },
-    startDate: "2024-04-01",
-    endDate: "2024-08-30",
-    credits: 3,
-    term: ["Học kỳ 3", "2023-2024"],
-    modules: [
-      { moduleId: "7", title: "React Native", lessons: [{}, {}] },
-      { moduleId: "8", title: "Flutter", lessons: [{}, {}, {}] },
-    ],
-    createdAt: "2024-02-01T11:00:00.000Z",
-    status: "active",
-  },
-]
+import { useState, useEffect } from "react";
+import { Container, Row, Col, Card, Button, Form, Badge, Modal, Dropdown, Alert } from "react-bootstrap";
+import { Plus, Eye, Edit, Trash2, Calendar, User, BookOpen, GraduationCap, Search, Filter } from "lucide-react";
+import { motion } from "framer-motion";
+import Header from "../header/Header";
+import AddCourseModal from "./AddCourseModal";
+import EditCourseModal from "./EditCourseModal";
+import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
 
 const CourseList = () => {
-  const [courses, setCourses] = useState(coursesData)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [courseToDelete, setCourseToDelete] = useState(null)
-  const [courseToEdit, setCourseToEdit] = useState(null)
-  const navigate = useNavigate()
+  const [courses, setCourses] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState(null);
+  const [courseToEdit, setCourseToEdit] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      console.log("Starting fetchCourses...");
+      try {
+        setLoading(true);
+        console.log("Loading set to true");
+        const user = localStorage.getItem("user");
+        console.log("User from localStorage:", user);
+        if (!user) {
+          setError("Không tìm thấy user trong localStorage. Vui lòng đăng nhập lại.");
+          setLoading(false);
+          console.log("Error set: No user in localStorage");
+          return;
+        }
+        let parsedUser;
+        try {
+          parsedUser = JSON.parse(user);
+          console.log("Parsed User:", parsedUser);
+        } catch (e) {
+          setError("Dữ liệu user trong localStorage không hợp lệ.");
+          setLoading(false);
+          console.log("Error parsing user:", e.message);
+          return;
+        }
+        const instructorId = parsedUser._id;
+        console.log("Extracted instructorId:", instructorId);
+        if (!instructorId) {
+          setError("Không tìm thấy instructorId trong user. Vui lòng kiểm tra dữ liệu.");
+          setLoading(false);
+          console.log("Error set: No instructorId in user");
+          return;
+        }
+        const response = await api.get(`/instructor/courses/instructor/${instructorId}`);
+        console.log("API Response received:", response.data);
+        if (response.data.success) {
+          setCourses(response.data.data || []);
+          console.log("Courses set:", response.data.data);
+        } else {
+          setError(response.data.message || "Không tải được danh sách khóa học.");
+          console.log("Error set from API:", response.data.message);
+        }
+      } catch (err) {
+        console.error("Error fetching courses:", err.response ? err.response.data : err.message);
+        setError("Có lỗi xảy ra khi tải danh sách khóa học. Vui lòng thử lại.");
+        console.log("Catch block error:", err.message);
+      } finally {
+        setLoading(false);
+        console.log("Loading set to false, final state:", { loading, courses, error });
+      }
+    };
+    fetchCourses();
+  }, []);
 
   const handleAddCourse = () => {
-    setShowAddModal(true)
-  }
+    console.log("handleAddCourse triggered");
+    setShowAddModal(true);
+  };
 
-  const handleSubmitCourse = (courseData) => {
-    // Generate new course with ID
-    const newCourse = {
-      _id: Date.now().toString(),
-      ...courseData,
-      createdAt: new Date().toISOString(),
-      status: "draft",
-      // Mock populate instructor and subject data
-      instructorId: {
-        _id: courseData.instructorId,
-        name: "Nguyễn Văn An", // This would come from API
-        email: "nguyenvanan@example.com",
-      },
-      subjectId: {
-        _id: courseData.subjectId,
-        name: "Công Nghệ Thông Tin", // This would come from API
-        code: "CNTT",
-      },
+  const handleSubmitCourse = async (courseData) => {
+    console.log("handleSubmitCourse triggered with data:", courseData);
+    try {
+      const user = localStorage.getItem("user");
+      console.log("User from localStorage for submission:", user);
+      if (!user) {
+        setError("Không tìm thấy user để tạo khóa học.");
+        console.log("Error set: No user for submission");
+        return;
+      }
+      const parsedUser = JSON.parse(user);
+      const instructorId = parsedUser._id;
+      console.log("InstructorId for submission:", instructorId);
+      const response = await api.post("/instructor/courses", { ...courseData, instructorId });
+      console.log("API Response for create:", response.data);
+      if (response.data.success) {
+        setCourses((prev) => [response.data.data, ...prev]);
+        setShowAddModal(false);
+        console.log("Courses updated after creation:", [response.data.data, ...courses]);
+      }
+    } catch (err) {
+      setError("Không thể tạo khóa học.");
+      console.error("Error creating course:", err.response ? err.response.data : err.message);
+      console.log("Catch block error for create:", err.message);
     }
-
-    setCourses((prev) => [newCourse, ...prev])
-    console.log("Khóa học mới được tạo:", newCourse)
-  }
+  };
 
   const handleViewCourse = (courseId) => {
-    navigate(`/instructor/course/${courseId}`)
-    console.log("Xem chi tiết khóa học:", courseId)
-  }
+    console.log("handleViewCourse triggered with courseId:", courseId);
+    navigate(`/instructor/course/${courseId}`);
+  };
 
   const handleEditCourse = (courseId) => {
-    const course = courses.find((c) => c._id === courseId)
+    console.log("handleEditCourse triggered with courseId:", courseId);
+    const course = courses.find((c) => c._id === courseId);
+    console.log("Found course for edit:", course);
     if (course) {
-      setCourseToEdit(course)
-      setShowEditModal(true)
+      setCourseToEdit(course);
+      setShowEditModal(true);
     }
-  }
+  };
 
-  const handleSubmitEditCourse = (updatedCourseData) => {
-    setCourses((prevCourses) =>
-      prevCourses.map((course) =>
-        course._id === courseToEdit._id
-          ? { ...course, ...updatedCourseData, updatedAt: new Date().toISOString() }
-          : course,
-      ),
-    )
-    console.log("Khóa học đã được cập nhật:", updatedCourseData)
-  }
+  const handleSubmitEditCourse = async (updatedCourseData) => {
+    console.log("handleSubmitEditCourse triggered with data:", updatedCourseData);
+    try {
+      const response = await api.put(`/instructor/courses/${courseToEdit._id}`, updatedCourseData);
+      console.log("API Response for update:", response.data);
+      if (response.data.success) {
+        setCourses((prevCourses) =>
+          prevCourses.map((course) => (course._id === courseToEdit._id ? response.data.data : course))
+        );
+        setShowEditModal(false);
+        setCourseToEdit(null);
+        console.log("Courses updated after edit:", courses);
+      }
+    } catch (err) {
+      setError("Không thể cập nhật khóa học.");
+      console.error("Error updating course:", err.response ? err.response.data : err.message);
+      console.log("Catch block error for update:", err.message);
+    }
+  };
 
   const handleDeleteCourse = (course) => {
-    setCourseToDelete(course)
-    setShowDeleteModal(true)
-  }
+    console.log("handleDeleteCourse triggered with course:", course);
+    setCourseToDelete(course);
+    setShowDeleteModal(true);
+  };
 
-  const confirmDelete = () => {
-    if (courseToDelete) {
-      setCourses(courses.filter((course) => course._id !== courseToDelete._id))
-      setShowDeleteModal(false)
-      setCourseToDelete(null)
+  const confirmDelete = async () => {
+    console.log("confirmDelete triggered for course:", courseToDelete);
+    try {
+      await api.delete(`/instructor/courses/${courseToDelete._id}`);
+      setCourses(courses.filter((course) => course._id !== courseToDelete._id));
+      setShowDeleteModal(false);
+      setCourseToDelete(null);
+      console.log("Courses after deletion:", courses);
+    } catch (err) {
+      setError("Không thể xóa khóa học.");
+      console.error("Error deleting course:", err.response ? err.response.data : err.message);
+      console.log("Catch block error for delete:", err.message);
     }
-  }
+  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("vi-VN", {
       year: "numeric",
       month: "short",
       day: "numeric",
-    })
-  }
+    });
+  };
 
   const getStatusBadge = (status) => {
     switch (status) {
       case "active":
-        return <Badge bg="success">Đang hoạt động</Badge>
+        return <Badge bg="success">Đang hoạt động</Badge>;
       case "draft":
-        return <Badge bg="secondary">Bản nháp</Badge>
+        return <Badge bg="secondary">Bản nháp</Badge>;
       case "completed":
-        return <Badge bg="primary">Hoàn thành</Badge>
+        return <Badge bg="primary">Hoàn thành</Badge>;
       default:
         return (
           <Badge bg="light" text="dark">
             Không xác định
           </Badge>
-        )
+        );
     }
-  }
+  };
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch =
       course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.instructorId.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.subjectId.name.toLowerCase().includes(searchTerm.toLowerCase())
+      (course.instructorId?.profile?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (course.subjectId?.name || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesFilter = filterStatus === "all" || course.status === filterStatus
+    const matchesFilter = filterStatus === "all" || course.status === filterStatus;
 
-    return matchesSearch && matchesFilter
-  })
+    return matchesSearch && matchesFilter;
+  });
 
   const totalLessons = (modules) => {
-    return modules.reduce((total, module) => total + module.lessons.length, 0)
-  }
+    return modules ? modules.reduce((total, module) => total + module.lessons.length, 0) : 0;
+  };
 
   const containerStyle = {
     minHeight: "100vh",
     background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #8b5cf6 100%)",
     paddingTop: "0",
-  }
+  };
 
   const headerStyle = {
     background: "rgba(255, 255, 255, 0.1)",
     backdropFilter: "blur(10px)",
     borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
     padding: "1rem 0",
-  }
+  };
 
   const statsBarStyle = {
     background: "#fbbf24",
     color: "#000",
     padding: "1rem 0",
-  }
+  };
 
   const cardStyle = {
     background: "rgba(255, 255, 255, 0.95)",
@@ -254,13 +229,12 @@ const CourseList = () => {
     border: "none",
     boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
     transition: "all 0.3s ease",
-  }
+  };
 
   return (
     <div className="instructor-course">
       <Header />
       <div style={containerStyle}>
-        {/* Header */}
         <div style={headerStyle}>
           <Container>
             <Row className="align-items-center">
@@ -289,7 +263,6 @@ const CourseList = () => {
           </Container>
         </div>
 
-        {/* Stats Bar */}
         <div style={statsBarStyle}>
           <Container>
             <Row className="align-items-center">
@@ -314,9 +287,14 @@ const CourseList = () => {
           </Container>
         </div>
 
-        {/* Main Content */}
         <Container className="py-4">
-          {/* Search and Filter */}
+          {error && (
+            <Alert variant="danger" onClose={() => setError(null)} dismissible>
+              {error}
+            </Alert>
+          )}
+          {loading && <Alert variant="info">Đang tải danh sách khóa học...</Alert>}
+
           <Row className="mb-4">
             <Col md={8}>
               <div className="position-relative">
@@ -362,8 +340,7 @@ const CourseList = () => {
             </Col>
           </Row>
 
-          {/* Course Grid */}
-          {filteredCourses.length === 0 ? (
+          {loading ? null : filteredCourses.length === 0 ? (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <Card style={cardStyle}>
                 <Card.Body className="text-center py-5">
@@ -398,12 +375,12 @@ const CourseList = () => {
                       style={cardStyle}
                       className="h-100"
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-5px)"
-                        e.currentTarget.style.boxShadow = "0 15px 35px rgba(0, 0, 0, 0.15)"
+                        e.currentTarget.style.transform = "translateY(-5px)";
+                        e.currentTarget.style.boxShadow = "0 15px 35px rgba(0, 0, 0, 0.15)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)"
-                        e.currentTarget.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.1)"
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 10px 25px rgba(0, 0, 0, 0.1)";
                       }}
                     >
                       <Card.Header className="border-0 pb-2">
@@ -411,9 +388,9 @@ const CourseList = () => {
                           <div className="flex-grow-1">
                             <Card.Title className="h5 fw-bold text-dark mb-1">{course.title}</Card.Title>
                             <div className="d-flex align-items-center text-muted small">
-                              <span>{course.subjectId.code}</span>
+                              <span>{course.subjectId?.code || "N/A"}</span>
                               <span className="mx-2">•</span>
-                              <span>{course.credits} tín chỉ</span>
+                              <span>{course.credits || 0} tín chỉ</span>
                             </div>
                           </div>
                           {getStatusBadge(course.status)}
@@ -429,13 +406,13 @@ const CourseList = () => {
                             overflow: "hidden",
                           }}
                         >
-                          {course.description}
+                          {course.description || "Không có mô tả"}
                         </p>
 
                         <div className="mb-3">
                           <div className="d-flex align-items-center mb-2 small">
                             <User size={14} className="text-muted me-2" />
-                            <span className="text-muted">{course.instructorId.name}</span>
+                            <span className="text-muted">{course.instructorId?.profile?.fullName || "Không xác định"}</span>
                           </div>
                           <div className="d-flex align-items-center mb-2 small">
                             <Calendar size={14} className="text-muted me-2" />
@@ -446,7 +423,7 @@ const CourseList = () => {
                           <div className="d-flex align-items-center small">
                             <BookOpen size={14} className="text-muted me-2" />
                             <span className="text-muted">
-                              {course.modules.length} chương • {totalLessons(course.modules)} bài học
+                              {course.modules?.length || 0} chương • {totalLessons(course.modules)} bài học
                             </span>
                           </div>
                         </div>
@@ -482,18 +459,13 @@ const CourseList = () => {
           )}
         </Container>
 
-        {/* Add Course Modal */}
         <AddCourseModal show={showAddModal} onHide={() => setShowAddModal(false)} onSubmit={handleSubmitCourse} />
-
-        {/* Edit Course Modal */}
         <EditCourseModal
           show={showEditModal}
           onHide={() => setShowEditModal(false)}
           onSubmit={handleSubmitEditCourse}
           courseData={courseToEdit}
         />
-
-        {/* Delete Confirmation Modal */}
         <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
           <Modal.Header closeButton>
             <Modal.Title>Xác nhận xóa khóa học</Modal.Title>
@@ -503,8 +475,8 @@ const CourseList = () => {
               <strong>Cảnh báo!</strong> Hành động này không thể hoàn tác.
             </Alert>
             <p>
-              Bạn có chắc chắn muốn xóa khóa học <strong>"{courseToDelete?.title}"</strong>? Tất cả dữ liệu liên quan sẽ
-              bị xóa vĩnh viễn.
+              Bạn có chắc chắn muốn xóa khóa học <strong>"{courseToDelete?.title || "Không xác định"}"</strong>? Tất cả dữ
+              liệu liên quan sẽ bị xóa vĩnh viễn.
             </p>
           </Modal.Body>
           <Modal.Footer>
@@ -518,7 +490,7 @@ const CourseList = () => {
         </Modal>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CourseList
+export default CourseList;

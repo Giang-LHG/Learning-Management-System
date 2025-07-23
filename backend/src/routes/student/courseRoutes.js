@@ -12,5 +12,5 @@ router.get('/:courseId', courseController.getCourseDetail);
 // GET /api/student/assignments/search?q=keyword
 
 router.get('/sort', courseController.sortCourses);
-router.get('/subject/:subjectId/student/:studentId',courseController.getCoursesBySubjectForStudent);
+router.get('/subject/:subjectId/student/:studentId', courseController.getCoursesBySubjectForStudent);
 module.exports = router;

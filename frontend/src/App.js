@@ -31,15 +31,10 @@ import ChangePasswordPage from './pages/ChangePasswordPage.jsx';
 import Profile from './pages/Profile.jsx';
 
 // --- Pages/Components for Instructor ---
-import InstructorSubmissionList from './components/Instructor/InstructorSubmissionList';
-import GradeSubmission from './components/Instructor/GradeSubmission';
+
 import InstructorAppealList from './components/Instructor/InstructorAppealList';
 import ReviewAppeal from './components/Instructor/ReviewAppeal';
-import CourseParticipantsList from './components/Instructor/CourseParticipantsList';
-import DeadlineScheduler from './components/Instructor/DeadlineScheduler';
-import CourseEditor from './components/Instructor/CourseEditor';
-import AnalyticsDashboard1 from './components/Instructor/AnalyticsDashboard';
-import AssignmentCreate from './components/Instructor/AssignmentCreate';
+
 import CourseList from './components/Instructor/CourseList1';
 import CourseDetail1 from './components/Instructor/CourseDetail1';
 import InstructorDashboard from './components/Instructor/InstructorDashboard';
@@ -133,11 +128,11 @@ function App() {
               <Profile />
             </ProtectedRoute>
           } />
-<Route path ="/notifications" element ={
-  <ProtectedRoute>
-    <NotificationList/>
-  </ProtectedRoute>
-}/>
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <NotificationList />
+            </ProtectedRoute>
+          } />
           {/* Student Routes - Chỉ cho phép student */}
           <Route path="/student" element={
             <ProtectedRoute allowedRoles={['student']}>
@@ -182,17 +177,8 @@ function App() {
           <Route path="/Learning Analytics" element={< InstructorDashboard />} />
           <Route path="/instructor/course" element={< CourseList />} />
           <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
-          <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />
-          <Route path="/instructor/submission/:submissionId/grade" element={<GradeSubmission />} />
           <Route path="/instructor/appeals" element={<InstructorAppealList />} />
           <Route path="/instructor/appeal/review/:submissionId/:appealId" element={<ReviewAppeal />} />
-          <Route path="/instructor/course/:courseId/participants" element={<CourseParticipantsList />} />
-          <Route path="/instructor/course/:courseId/edit" element={<CourseEditor />} />
-          <Route path="/instructor/course/:courseId/deadlines" element={<DeadlineScheduler />} />
-          <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard1 />} />
-          <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
-
-
           <Route
             path="*"
             element={
