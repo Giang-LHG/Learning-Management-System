@@ -33,7 +33,7 @@ import Profile from './pages/Profile.jsx';
 // --- Pages/Components for Instructor ---
 
 import InstructorAppealList from './components/Instructor/InstructorAppealList';
-import ReviewAppeal from './components/Instructor/ReviewAppeal';
+
 
 import CourseList from './components/Instructor/CourseList1';
 import CourseDetail1 from './components/Instructor/CourseDetail1';
@@ -178,7 +178,7 @@ function App() {
           <Route path="/instructor/course" element={< CourseList />} />
           <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
           <Route path="/instructor/appeals" element={<InstructorAppealList />} />
-          <Route path="/instructor/appeal/review/:submissionId/:appealId" element={<ReviewAppeal />} />
+
           <Route
             path="*"
             element={

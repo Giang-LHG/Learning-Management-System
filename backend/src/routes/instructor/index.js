@@ -1,17 +1,23 @@
-// routes/instructor/index.js
-const express = require('express');
-const router = express.Router();
+const express = require("express")
+const router = express.Router()
 
-const submissionRoutes = require('./submissionRoutes');
-const appealRoutes = require('./appealRoutes');
-const courseRoutes = require('./courseRoutes');
-const assignmentRoutes_Ins = require('./assignmentRoutes');
-const analyticsRoutes = require('./analyticsRoutes');
+const submissionRoutes = require("./submissionRoutes")
+const appealRoutes = require("./appealRoutes")
+const courseRoutes = require("./courseRoutes")
+const assignmentRoutes = require("./assignmentRoutes")
+const analyticsRoutes = require("./analyticsRoutes")
 
-router.use('/submissions', submissionRoutes);
-router.use('/appeals', appealRoutes);
-router.use('/courses', courseRoutes);
-router.use('/assignments', assignmentRoutes_Ins);
-router.use('/analytics', analyticsRoutes);
+// Add authentication middleware
+const { requireAuth, requireRole } = require("../../middlewares/authMiddleware")
 
-module.exports = router;
+// Apply authentication to all instructor routes
+router.use(requireAuth)
+router.use(requireRole(["instructor", "admin"]))
+
+router.use("/submissions", submissionRoutes)
+router.use("/appeals", appealRoutes)
+router.use("/courses", courseRoutes)
+router.use("/assignments", assignmentRoutes)
+router.use("/analytics", analyticsRoutes)
+
+module.exports = router

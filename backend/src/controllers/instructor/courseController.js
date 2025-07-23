@@ -626,7 +626,7 @@ exports.createNewTerm = async (req, res) => {
     if (new Date(startDate) >= new Date(endDate)) {
       return res.status(400).json({
         success: false,
-        message: "Ngày bắt đầu phải trước ngày kết thúc",
+        message: "Ngày bắt đ���u phải trước ngày kết thúc",
       })
     }
 
