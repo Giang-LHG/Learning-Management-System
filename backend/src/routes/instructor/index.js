@@ -13,7 +13,7 @@ const { requireAuth, requireRole } = require("../../middlewares/authMiddleware")
 
 // Apply authentication to all instructor routes
 router.use(requireAuth)
-router.use(requireRole(["instructor", "admin"]))
+
 
 router.use("/submissions", submissionRoutes)
 router.use("/appeals", appealRoutes)

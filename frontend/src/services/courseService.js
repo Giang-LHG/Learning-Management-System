@@ -1,6 +1,6 @@
 import api from "../utils/api"
 
-export const courseService = {
+const courseService = {
     // Lấy danh sách khóa học theo instructor
     getCoursesByInstructor: async (instructorId) => {
         const response = await api.get(`/instructor/courses/instructor/${instructorId}`)

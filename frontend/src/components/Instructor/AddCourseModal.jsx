@@ -6,7 +6,7 @@ import { Calendar, BookOpen, FileText, Plus, Trash2, CheckCircle } from "lucide-
 import AssignmentManager from "./assignment-manager"
 import api from '../../utils/api'
 import { useSelector } from 'react-redux';
-
+import courseService from "../../services/courseService"
 
 const AddCourseModal = ({ show, onHide, onSubmit }) => {
     // Lấy user hiện tại từ redux hoặc localStorage
@@ -262,11 +262,11 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
             }
             const parsedUser = JSON.parse(user);
             const instructorId = parsedUser._id;
-
+console.log(formData);
             const courseData = {
                 ...formData,
 
-                instructorId: user?._id, // Gán instructorId là user hiện tại
+                instructorId: instructorId, // Gán instructorId là user hiện tại
 
                 term: formData.term.filter((term) => term.trim()),
                 modules: formData.modules
