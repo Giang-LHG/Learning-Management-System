@@ -1,16 +1,21 @@
-"use client"
 
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import { Modal, Form, Button, Row, Col, Alert, Nav, Tab } from "react-bootstrap"
 import { Calendar, BookOpen, FileText, Plus, Trash2, CheckCircle } from "lucide-react"
 import AssignmentManager from "./assignment-manager"
-
+import api from '../../utils/api'
+import { useSelector } from 'react-redux';
+import courseService from "../../services/courseService"
+import assignmentService from "../../services/assignmentService"
 const AddCourseModal = ({ show, onHide, onSubmit }) => {
+    // Lấy user hiện tại từ redux hoặc localStorage
+    const user = useSelector(state => state.auth.user) || JSON.parse(localStorage.getItem('user') || '{}');
+
     const [formData, setFormData] = useState({
         title: "",
         description: "",
         subjectId: "",
-        instructorId: "",
         startDate: "",
         endDate: "",
         credits: 0,
@@ -28,89 +33,94 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                 ],
             },
         ],
-        assignments: [], // Thêm assignments vào formData
-    })
+        assignments: [],
+    });
+
 
     const [errors, setErrors] = useState({})
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [activeTab, setActiveTab] = useState("basic") // Tab navigation
+    const [subjects, setSubjects] = useState([])
+    const [instructors, setInstructors] = useState([])
+    const [loadingSubjects, setLoadingSubjects] = useState(false)
+    const [loadingInstructors, setLoadingInstructors] = useState(false)
 
-    // Mock data cho subjects và instructors
-    const mockSubjects = [
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d2", name: "Công Nghệ Thông Tin", code: "CNTT" },
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d7", name: "Khoa Học Máy Tính", code: "KHMT" },
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d8", name: "Hệ Thống Thông Tin", code: "HTTT" },
-    ]
+    useEffect(() => {
+        if (show) {
+            setLoadingSubjects(true)
+            setLoadingInstructors(true)
+            api.get('/subjects')
+                .then(res => setSubjects(res.data.subjects || []))
+                .finally(() => setLoadingSubjects(false))
+            api.get('/instructor/list')
+                .then(res => setInstructors(res.data.instructors || []))
+                .finally(() => setLoadingInstructors(false))
+        }
+    }, [show])
 
-    const mockInstructors = [
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d1", name: "Nguyễn Văn An", email: "nguyenvanan@example.com" },
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d4", name: "Trần Thị Bình", email: "tranthibinh@example.com" },
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d6", name: "Lê Văn Cường", email: "levancuong@example.com" },
-    ]
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({
             ...prev,
             [field]: value,
-        }))
-        // Clear error when user starts typing
+        }));
         if (errors[field]) {
             setErrors((prev) => ({
                 ...prev,
                 [field]: "",
-            }))
+            }));
         }
-    }
+    };
 
     const handleTermChange = (index, value) => {
-        const newTerms = [...formData.term]
-        newTerms[index] = value
+        const newTerms = [...formData.term];
+        newTerms[index] = value;
         setFormData((prev) => ({
             ...prev,
             term: newTerms,
-        }))
-    }
+        }));
+    };
 
     const addTerm = () => {
         setFormData((prev) => ({
             ...prev,
             term: [...prev.term, ""],
-        }))
-    }
+        }));
+    };
 
     const removeTerm = (index) => {
         if (formData.term.length > 1) {
-            const newTerms = formData.term.filter((_, i) => i !== index)
+            const newTerms = formData.term.filter((_, i) => i !== index);
             setFormData((prev) => ({
                 ...prev,
                 term: newTerms,
-            }))
+            }));
         }
-    }
+    };
 
     const handleModuleChange = (moduleIndex, field, value) => {
-        const newModules = [...formData.modules]
+        const newModules = [...formData.modules];
         newModules[moduleIndex] = {
             ...newModules[moduleIndex],
             [field]: value,
-        }
+        };
         setFormData((prev) => ({
             ...prev,
             modules: newModules,
-        }))
-    }
+        }));
+    };
 
     const handleLessonChange = (moduleIndex, lessonIndex, field, value) => {
-        const newModules = [...formData.modules]
+        const newModules = [...formData.modules];
         newModules[moduleIndex].lessons[lessonIndex] = {
             ...newModules[moduleIndex].lessons[lessonIndex],
             [field]: value,
-        }
+        };
         setFormData((prev) => ({
             ...prev,
             modules: newModules,
-        }))
-    }
+        }));
+    };
 
     const addModule = () => {
         setFormData((prev) => ({
@@ -129,137 +139,142 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                     ],
                 },
             ],
-        }))
-    }
+        }));
+    };
 
     const removeModule = (moduleIndex) => {
         if (formData.modules.length > 1) {
-            const newModules = formData.modules.filter((_, i) => i !== moduleIndex)
+            const newModules = formData.modules.filter((_, i) => i !== moduleIndex);
             setFormData((prev) => ({
                 ...prev,
                 modules: newModules,
-            }))
+            }));
         }
-    }
+    };
 
     const addLesson = (moduleIndex) => {
-        const newModules = [...formData.modules]
+        const newModules = [...formData.modules];
         newModules[moduleIndex].lessons.push({
             title: "",
             content: "",
             isVisible: true,
-        })
+        });
         setFormData((prev) => ({
             ...prev,
             modules: newModules,
-        }))
-    }
+        }));
+    };
 
     const removeLesson = (moduleIndex, lessonIndex) => {
-        const newModules = [...formData.modules]
+        const newModules = [...formData.modules];
         if (newModules[moduleIndex].lessons.length > 1) {
-            newModules[moduleIndex].lessons = newModules[moduleIndex].lessons.filter((_, i) => i !== lessonIndex)
+            newModules[moduleIndex].lessons = newModules[moduleIndex].lessons.filter((_, i) => i !== lessonIndex);
             setFormData((prev) => ({
                 ...prev,
                 modules: newModules,
-            }))
+            }));
         }
-    }
+    };
 
-    // Assignment handlers
     const handleAssignmentsChange = (assignments) => {
         setFormData((prev) => ({
             ...prev,
             assignments: assignments,
-        }))
-    }
+        }));
+    };
 
     const validateForm = () => {
-        const newErrors = {}
+        const newErrors = {};
 
         if (!formData.title.trim()) {
-            newErrors.title = "Tên khóa học là bắt buộc"
+            newErrors.title = "Course title is required";
         }
 
         if (!formData.subjectId) {
-            newErrors.subjectId = "Vui lòng chọn môn học"
+            newErrors.subjectId = "Please select a subject";
         }
 
-        if (!formData.instructorId) {
-            newErrors.instructorId = "Vui lòng chọn giảng viên"
-        }
+
 
         if (!formData.startDate) {
-            newErrors.startDate = "Ngày bắt đầu là bắt buộc"
+            newErrors.startDate = "Start date is required";
         }
 
         if (!formData.endDate) {
-            newErrors.endDate = "Ngày kết thúc là bắt buộc"
+            newErrors.endDate = "End date is required";
         }
 
         if (formData.startDate && formData.endDate && new Date(formData.startDate) >= new Date(formData.endDate)) {
-            newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu"
+            newErrors.endDate = "End date must be after start date";
         }
 
         if (formData.credits <= 0) {
-            newErrors.credits = "Số tín chỉ phải lớn hơn 0"
+            newErrors.credits = "Credits must be greater than 0";
         }
 
         if (formData.term.some((term) => !term.trim())) {
-            newErrors.term = "Tất cả học kỳ phải được điền"
+            newErrors.term = "All terms must be filled";
         }
 
-        // Validate modules
         formData.modules.forEach((module, moduleIndex) => {
             if (!module.title.trim()) {
-                newErrors[`module_${moduleIndex}_title`] = "Tên chương là bắt buộc"
+                newErrors[`module_${moduleIndex}_title`] = "Module title is required";
             }
 
             module.lessons.forEach((lesson, lessonIndex) => {
                 if (!lesson.title.trim()) {
-                    newErrors[`lesson_${moduleIndex}_${lessonIndex}_title`] = "Tên bài học là bắt buộc"
+                    newErrors[`lesson_${moduleIndex}_${lessonIndex}_title`] = "Lesson title is required";
                 }
-            })
-        })
+            });
+        });
 
-        // Validate assignments
         formData.assignments.forEach((assignment, assignmentIndex) => {
             if (!assignment.title.trim()) {
-                newErrors[`assignment_${assignmentIndex}_title`] = "Tên bài tập là bắt buộc"
+                newErrors[`assignment_${assignmentIndex}_title`] = "Assignment title is required";
             }
             if (!assignment.dueDate) {
-                newErrors[`assignment_${assignmentIndex}_dueDate`] = "Hạn nộp là bắt buộc"
+                newErrors[`assignment_${assignmentIndex}_dueDate`] = "Due date is required";
             }
             if (assignment.type === "quiz" && (!assignment.questions || assignment.questions.length === 0)) {
-                newErrors[`assignment_${assignmentIndex}_questions`] = "Bài tập trắc nghiệm phải có ít nhất 1 câu hỏi"
+                newErrors[`assignment_${assignmentIndex}_questions`] = "Quiz must have at least 1 question";
             }
-        })
+        });
 
-        setErrors(newErrors)
-        return Object.keys(newErrors).length === 0
-    }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const handleSubmit = async (e) => {
-        e.preventDefault()
+        e.preventDefault();
 
         if (!validateForm()) {
-            return
+            return;
         }
 
-        setIsSubmitting(true)
+        setIsSubmitting(true);
 
         try {
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 1000))
-
-            // Process form data
+            const user = localStorage.getItem("user");
+            if (!user) {
+                setErrors({ api: "Could not find user information. Please log in again." });
+                setIsSubmitting(false);
+                return;
+            }
+            const parsedUser = JSON.parse(user);
+            const instructorId = parsedUser._id;
+console.log(formData);
             const courseData = {
                 ...formData,
+
+                instructorId: instructorId, // Gán instructorId là user hiện tại
+
                 term: formData.term.filter((term) => term.trim()),
-                modules: formData.modules.map((module) => ({
-                    ...module,
-                    lessons: module.lessons.filter((lesson) => lesson.title.trim()),
-                })),
+                modules: formData.modules
+                    .filter((module) => module.title.trim())
+                    .map((module) => ({
+                        ...module,
+                        lessons: module.lessons.filter((lesson) => lesson.title.trim()),
+                    })),
                 assignments: formData.assignments.map((assignment) => ({
                     ...assignment,
                     _id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -267,23 +282,49 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                     submissions: 0,
                     totalStudents: 0,
                 })),
-            }
+            };
 
-            onSubmit(courseData)
-            handleClose()
-        } catch (error) {
-            console.error("Error creating course:", error)
-        } finally {
-            setIsSubmitting(false)
+            const response = await courseService.createCourse(courseData);
+  const courseId = response.data._id;
+
+        // B2: Tạo assignments nếu có
+        if (formData.assignments.length > 0) {
+            for (const assignment of formData.assignments) {
+                const payload = {
+                    courseId,
+                    title: assignment.title,
+                    description: assignment.description || "",
+                    type: assignment.type,
+                    dueDate: assignment.dueDate,
+                };
+
+                // Nếu là quiz thì gửi thêm câu hỏi
+                if (assignment.type === "quiz") {
+                    payload.questions = assignment.questions || [];
+                }
+
+                await assignmentService.createAssignment(payload);
+            }
         }
-    }
+            if (response.success) {
+                onSubmit(response.data);
+                handleClose();
+            } else {
+                setErrors({ api: response.message || "Could not create course." });
+            }
+        } catch (error) {
+            console.error("Error creating course:", error);
+            setErrors({ api: "An error occurred while creating the course. Please try again." });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const handleClose = () => {
         setFormData({
             title: "",
             description: "",
             subjectId: "",
-            instructorId: "",
             startDate: "",
             endDate: "",
             credits: 0,
@@ -302,62 +343,60 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                 },
             ],
             assignments: [],
-        })
-        setErrors({})
-        setActiveTab("basic")
-        onHide()
-    }
+        });
+        setErrors({});
+        setActiveTab("basic");
+        onHide();
+    };
 
     return (
         <Modal show={show} onHide={handleClose} size="xl" centered>
             <Modal.Header closeButton>
                 <Modal.Title>
                     <BookOpen size={24} className="me-2" />
-                    Thêm Khóa Học Mới
+                    Add New Course
                 </Modal.Title>
             </Modal.Header>
 
             <Form onSubmit={handleSubmit}>
                 <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
-                    {/* Tab Navigation */}
                     <Nav variant="tabs" activeKey={activeTab} onSelect={setActiveTab} className="mb-4">
                         <Nav.Item>
                             <Nav.Link eventKey="basic" className="d-flex align-items-center">
                                 <FileText size={16} className="me-2" />
-                                Thông tin cơ bản
+                                Basic Information
                             </Nav.Link>
                         </Nav.Item>
                         <Nav.Item>
                             <Nav.Link eventKey="content" className="d-flex align-items-center">
                                 <BookOpen size={16} className="me-2" />
-                                Nội dung khóa học
+                                Course Content
                             </Nav.Link>
                         </Nav.Item>
                         <Nav.Item>
                             <Nav.Link eventKey="assignments" className="d-flex align-items-center">
                                 <CheckCircle size={16} className="me-2" />
-                                Bài tập ({formData.assignments.length})
+                                Assignments ({formData.assignments.length})
                             </Nav.Link>
                         </Nav.Item>
                     </Nav>
 
                     <Tab.Content>
-                        {/* Basic Information Tab */}
                         <Tab.Pane active={activeTab === "basic"}>
                             <div className="mb-4">
                                 <h5 className="fw-bold text-primary mb-3">
                                     <FileText size={20} className="me-2" />
-                                    Thông tin cơ bản
+                                    Basic Information
                                 </h5>
 
                                 <Row>
                                     <Col md={12} className="mb-3">
                                         <Form.Label>
-                                            Tên khóa học <span className="text-danger">*</span>
+                                            Course Title <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Control
                                             type="text"
-                                            placeholder="Nhập tên khóa học"
+                                            placeholder="Enter course title"
                                             value={formData.title}
                                             onChange={(e) => handleInputChange("title", e.target.value)}
                                             isInvalid={!!errors.title}
@@ -366,11 +405,11 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                     </Col>
 
                                     <Col md={12} className="mb-3">
-                                        <Form.Label>Mô tả khóa học</Form.Label>
+                                        <Form.Label>Course Description</Form.Label>
                                         <Form.Control
                                             as="textarea"
                                             rows={3}
-                                            placeholder="Nhập mô tả chi tiết về khóa học"
+                                            placeholder="Enter detailed course description"
                                             value={formData.description}
                                             onChange={(e) => handleInputChange("description", e.target.value)}
                                         />
@@ -378,15 +417,16 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
 
                                     <Col md={6} className="mb-3">
                                         <Form.Label>
-                                            Môn học <span className="text-danger">*</span>
+                                            Subject <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Select
                                             value={formData.subjectId}
                                             onChange={(e) => handleInputChange("subjectId", e.target.value)}
                                             isInvalid={!!errors.subjectId}
+                                            disabled={loadingSubjects}
                                         >
-                                            <option value="">Chọn môn học</option>
-                                            {mockSubjects.map((subject) => (
+                                            <option value="">{loadingSubjects ? "Loading..." : "Select subject"}</option>
+                                            {subjects.map((subject) => (
                                                 <option key={subject._id} value={subject._id}>
                                                     {subject.code} - {subject.name}
                                                 </option>
@@ -395,28 +435,11 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                         <Form.Control.Feedback type="invalid">{errors.subjectId}</Form.Control.Feedback>
                                     </Col>
 
-                                    <Col md={6} className="mb-3">
-                                        <Form.Label>
-                                            Giảng viên <span className="text-danger">*</span>
-                                        </Form.Label>
-                                        <Form.Select
-                                            value={formData.instructorId}
-                                            onChange={(e) => handleInputChange("instructorId", e.target.value)}
-                                            isInvalid={!!errors.instructorId}
-                                        >
-                                            <option value="">Chọn giảng viên</option>
-                                            {mockInstructors.map((instructor) => (
-                                                <option key={instructor._id} value={instructor._id}>
-                                                    {instructor.name}
-                                                </option>
-                                            ))}
-                                        </Form.Select>
-                                        <Form.Control.Feedback type="invalid">{errors.instructorId}</Form.Control.Feedback>
-                                    </Col>
+                                    {/* BỎ hoàn toàn phần chọn giảng viên ở đây */}
 
                                     <Col md={4} className="mb-3">
                                         <Form.Label>
-                                            Ngày bắt đầu <span className="text-danger">*</span>
+                                            Start Date <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Control
                                             type="date"
@@ -429,7 +452,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
 
                                     <Col md={4} className="mb-3">
                                         <Form.Label>
-                                            Ngày kết thúc <span className="text-danger">*</span>
+                                            End Date <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Control
                                             type="date"
@@ -442,7 +465,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
 
                                     <Col md={4} className="mb-3">
                                         <Form.Label>
-                                            Số tín chỉ <span className="text-danger">*</span>
+                                            Credits <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Control
                                             type="number"
@@ -457,18 +480,17 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                 </Row>
                             </div>
 
-                            {/* Terms */}
                             <div className="mb-4">
                                 <h5 className="fw-bold text-primary mb-3">
                                     <Calendar size={20} className="me-2" />
-                                    Học kỳ
+                                    Term
                                 </h5>
                                 {formData.term.map((term, index) => (
                                     <Row key={index} className="mb-2">
                                         <Col md={10}>
                                             <Form.Control
                                                 type="text"
-                                                placeholder={`Học kỳ ${index + 1} (VD: Học kỳ 1 - 2023-2024)`}
+                                                placeholder={`Term ${index + 1} (e.g., Term 1 - 2023-2024)`}
                                                 value={term}
                                                 onChange={(e) => handleTermChange(index, e.target.value)}
                                             />
@@ -487,23 +509,22 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                 ))}
                                 <Button variant="outline-primary" size="sm" onClick={addTerm}>
                                     <Plus size={16} className="me-1" />
-                                    Thêm học kỳ
+                                    Add Term
                                 </Button>
                                 {errors.term && <div className="text-danger small mt-1">{errors.term}</div>}
                             </div>
                         </Tab.Pane>
 
-                        {/* Content Tab */}
                         <Tab.Pane active={activeTab === "content"}>
                             <div className="mb-4">
                                 <h5 className="fw-bold text-primary mb-3">
                                     <BookOpen size={20} className="me-2" />
-                                    Chương học
+                                    Module
                                 </h5>
                                 {formData.modules.map((module, moduleIndex) => (
                                     <div key={moduleIndex} className="border rounded p-3 mb-3" style={{ backgroundColor: "#f8f9fa" }}>
                                         <div className="d-flex justify-content-between align-items-center mb-3">
-                                            <h6 className="fw-bold mb-0">Chương {moduleIndex + 1}</h6>
+                                            <h6 className="fw-bold mb-0">Module {moduleIndex + 1}</h6>
                                             <Button
                                                 variant="outline-danger"
                                                 size="sm"
@@ -517,11 +538,11 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                         <Row className="mb-3">
                                             <Col md={10}>
                                                 <Form.Label>
-                                                    Tên chương <span className="text-danger">*</span>
+                                                    Module Title <span className="text-danger">*</span>
                                                 </Form.Label>
                                                 <Form.Control
                                                     type="text"
-                                                    placeholder="Nhập tên chương"
+                                                    placeholder="Enter module title"
                                                     value={module.title}
                                                     onChange={(e) => handleModuleChange(moduleIndex, "title", e.target.value)}
                                                     isInvalid={!!errors[`module_${moduleIndex}_title`]}
@@ -531,7 +552,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                                 </Form.Control.Feedback>
                                             </Col>
                                             <Col md={2}>
-                                                <Form.Label>Hiển thị</Form.Label>
+                                                <Form.Label>Visible</Form.Label>
                                                 <Form.Check
                                                     type="switch"
                                                     checked={module.isVisible}
@@ -540,9 +561,8 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                             </Col>
                                         </Row>
 
-                                        {/* Lessons */}
                                         <div className="ms-3">
-                                            <h6 className="fw-semibold mb-2">Bài học</h6>
+                                            <h6 className="fw-semibold mb-2">Lesson</h6>
                                             {module.lessons.map((lesson, lessonIndex) => (
                                                 <div
                                                     key={lessonIndex}
@@ -550,7 +570,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                                     style={{ backgroundColor: "#ffffff" }}
                                                 >
                                                     <div className="d-flex justify-content-between align-items-center mb-2">
-                                                        <small className="fw-semibold">Bài học {lessonIndex + 1}</small>
+                                                        <small className="fw-semibold">Lesson {lessonIndex + 1}</small>
                                                         <Button
                                                             variant="outline-danger"
                                                             size="sm"
@@ -565,7 +585,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                                         <Col md={8} className="mb-2">
                                                             <Form.Control
                                                                 type="text"
-                                                                placeholder="Tên bài học"
+                                                                placeholder="Enter lesson title"
                                                                 value={lesson.title}
                                                                 onChange={(e) => handleLessonChange(moduleIndex, lessonIndex, "title", e.target.value)}
                                                                 isInvalid={!!errors[`lesson_${moduleIndex}_${lessonIndex}_title`]}
@@ -577,7 +597,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                                         <Col md={2}>
                                                             <Form.Check
                                                                 type="switch"
-                                                                label="Hiển thị"
+                                                                label="Visible"
                                                                 checked={lesson.isVisible}
                                                                 onChange={(e) =>
                                                                     handleLessonChange(moduleIndex, lessonIndex, "isVisible", e.target.checked)
@@ -588,7 +608,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                                             <Form.Control
                                                                 as="textarea"
                                                                 rows={2}
-                                                                placeholder="Nội dung bài học (tùy chọn)"
+                                                                placeholder="Lesson content (optional)"
                                                                 value={lesson.content}
                                                                 onChange={(e) =>
                                                                     handleLessonChange(moduleIndex, lessonIndex, "content", e.target.value)
@@ -605,19 +625,18 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                                 className="mt-2"
                                             >
                                                 <Plus size={14} className="me-1" />
-                                                Thêm bài học
+                                                Add Lesson
                                             </Button>
                                         </div>
                                     </div>
                                 ))}
                                 <Button variant="outline-primary" onClick={addModule}>
                                     <Plus size={16} className="me-1" />
-                                    Thêm chương
+                                    Add Module
                                 </Button>
                             </div>
                         </Tab.Pane>
 
-                        {/* Assignments Tab */}
                         <Tab.Pane active={activeTab === "assignments"}>
                             <AssignmentManager
                                 assignments={formData.assignments}
@@ -632,7 +651,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
 
                     {Object.keys(errors).length > 0 && (
                         <Alert variant="danger" className="mt-3">
-                            <strong>Vui lòng kiểm tra lại:</strong>
+                            <strong>Please check again:</strong>
                             <ul className="mb-0 mt-2">
                                 {Object.values(errors).map((error, index) => (
                                     <li key={index}>{error}</li>
@@ -645,24 +664,24 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                 <Modal.Footer>
                     <div className="d-flex justify-content-between w-100 align-items-center">
                         <div className="text-muted small">
-                            {formData.modules.length} chương •{" "}
-                            {formData.modules.reduce((total, module) => total + module.lessons.length, 0)} bài học •{" "}
-                            {formData.assignments.length} bài tập
+                            {formData.modules.length} modules •{" "}
+                            {formData.modules.reduce((total, module) => total + module.lessons.length, 0)} lessons •{" "}
+                            {formData.assignments.length} assignments
                         </div>
                         <div className="d-flex gap-2">
                             <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
-                                Hủy
+                                Cancel
                             </Button>
                             <Button type="submit" variant="primary" disabled={isSubmitting}>
                                 {isSubmitting ? (
                                     <>
                                         <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Đang tạo...
+                                        Creating...
                                     </>
                                 ) : (
                                     <>
                                         <Plus size={16} className="me-1" />
-                                        Tạo khóa học
+                                        Create Course
                                     </>
                                 )}
                             </Button>
@@ -671,7 +690,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                 </Modal.Footer>
             </Form>
         </Modal>
-    )
-}
+    );
+};
 
-export default AddCourseModal
+export default AddCourseModal;

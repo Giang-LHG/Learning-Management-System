@@ -32,12 +32,12 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
         } else {
             const gradeNum = Number.parseFloat(grade)
             if (isNaN(gradeNum) || gradeNum < 0 || gradeNum > 10) {
-                newErrors.grade = "Điểm số phải từ 0 đến 10"
+                newErrors.grade = "grade between 0 and 10"
             }
         }
 
         if (!feedback.trim()) {
-            newErrors.feedback = "Nhận xét là bắt buộc"
+            newErrors.feedback = "feedback is required"
         }
 
         setErrors(newErrors)
@@ -56,7 +56,7 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
     }
 
     const formatDateTime = (dateString) => {
-        if (!dateString) return "Chưa xác định"
+        if (!dateString) return "No specified"
         try {
             return new Date(dateString).toLocaleDateString("vi-VN", {
                 year: "numeric",
@@ -85,7 +85,7 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
             <Modal.Header closeButton>
                 <Modal.Title className="d-flex align-items-center">
                     <FileText size={24} className="me-2" />
-                    Chi tiết bài nộp - {submission.studentName}
+                    Detail submission - {submission.studentName}
                 </Modal.Title>
             </Modal.Header>
 
@@ -95,7 +95,7 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                     <Card.Header>
                         <h5 className="mb-0 d-flex align-items-center">
                             <User size={20} className="me-2" />
-                            Thông tin học sinh
+                          Student information
                         </h5>
                     </Card.Header>
                     <Card.Body>
@@ -117,11 +117,11 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                             <Col md={6}>
                                 <div className="d-grid gap-2">
                                     <div className="d-flex justify-content-between">
-                                        <span className="text-muted">Thời gian nộp:</span>
+                                        <span className="text-muted">Date submission:</span>
                                         <span className="fw-medium">{formatDateTime(submission.submittedAt)}</span>
                                     </div>
                                     <div className="d-flex justify-content-between">
-                                        <span className="text-muted">Trạng thái:</span>
+                                        <span className="text-muted">Graded:</span>
                                         <Badge bg={submission.grade !== null ? "success" : "warning"}>
                                             {submission.grade !== null ? "Đã chấm" : "Chờ chấm"}
                                         </Badge>
@@ -129,15 +129,15 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                                     {submission.grade !== null && (
                                         <>
                                             <div className="d-flex justify-content-between">
-                                                <span className="text-muted">Điểm:</span>
+                                                <span className="text-muted">Score:</span>
                                                 <span className="fw-bold text-primary">{submission.grade}/10</span>
                                             </div>
                                             <div className="d-flex justify-content-between">
-                                                <span className="text-muted">Chấm bởi:</span>
+                                                <span className="text-muted">Graded by:</span>
                                                 <span className="fw-medium">{submission.gradedBy}</span>
                                             </div>
                                             <div className="d-flex justify-content-between">
-                                                <span className="text-muted">Thời gian chấm:</span>
+                                                <span className="text-muted">Date graded:</span>
                                                 <span className="fw-medium">{formatDateTime(submission.gradedAt)}</span>
                                             </div>
                                         </>

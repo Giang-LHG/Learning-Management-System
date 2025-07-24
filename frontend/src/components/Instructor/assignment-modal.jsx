@@ -147,15 +147,16 @@ const AssignmentModal = ({
         const newErrors = {}
 
         if (!formData.title.trim()) {
-            newErrors.title = "Tên bài tập là bắt buộc"
+            newErrors.title = "Assignment title is required"
         }
 
-        if (!formData.description.trim()) {
-            newErrors.description = "Mô tả bài tập là bắt buộc"
+        // Chỉ bắt buộc mô tả nếu là quiz
+        if (formData.type === "quiz" && !formData.description.trim()) {
+            newErrors.description = "Assignment description is required for quiz type"
         }
 
         if (!formData.dueDate) {
-            newErrors.dueDate = "Hạn nộp là bắt buộc"
+            newErrors.dueDate = "Due date is required"
         }
 
         // Validate due date is within course period
@@ -165,29 +166,29 @@ const AssignmentModal = ({
             const endDate = new Date(courseEndDate)
 
             if (dueDate < startDate) {
-                newErrors.dueDate = "Hạn nộp không thể trước ngày bắt đầu khóa học"
+                newErrors.dueDate = "Due date cannot be before the course start date"
             } else if (dueDate > endDate) {
-                newErrors.dueDate = "Hạn nộp không thể sau ngày kết thúc khóa học"
+                newErrors.dueDate = "Due date cannot be after the course end date"
             }
         }
 
         // Validate quiz questions
         if (formData.type === "quiz") {
             if (formData.questions.length === 0) {
-                newErrors.questions = "Bài tập trắc nghiệm phải có ít nhất 1 câu hỏi"
+                newErrors.questions = "Quiz must have at least 1 question"
             } else {
                 formData.questions.forEach((question, index) => {
                     if (!question.text.trim()) {
-                        newErrors[`question_${index}_text`] = "Câu hỏi không được để trống"
+                        newErrors[`question_${index}_text`] = "Question cannot be empty"
                     }
 
                     const hasEmptyOptions = question.options.some((opt) => !opt.text.trim())
                     if (hasEmptyOptions) {
-                        newErrors[`question_${index}_options`] = "Tất cả các lựa chọn phải được điền"
+                        newErrors[`question_${index}_options`] = "All options must be filled"
                     }
 
                     if (question.points <= 0) {
-                        newErrors[`question_${index}_points`] = "Điểm số phải lớn hơn 0"
+                        newErrors[`question_${index}_points`] = "Points must be greater than 0"
                     }
                 })
             }
@@ -236,7 +237,7 @@ const AssignmentModal = ({
             term: [],
             questions: [],
         })
-        setErrors({})
+        setErrors({}) // Clear errors khi đóng modal
         onHide()
     }
 
@@ -249,7 +250,7 @@ const AssignmentModal = ({
                     ) : (
                         <FileText size={24} className="me-2" />
                     )}
-                    {isEditing ? "Chỉnh sửa bài tập" : "Thêm bài tập mới"}
+                    {isEditing ? "Edit Assignment" : "Add New Assignment"}
                 </Modal.Title>
             </Modal.Header>
 
@@ -258,17 +259,17 @@ const AssignmentModal = ({
                     {/* Basic Information */}
                     <Card className="mb-4">
                         <Card.Header>
-                            <h5 className="mb-0">Thông tin cơ bản</h5>
+                            <h5 className="mb-0">Basic Information</h5>
                         </Card.Header>
                         <Card.Body>
                             <Row>
                                 <Col md={12} className="mb-3">
                                     <Form.Label>
-                                        Tên bài tập <span className="text-danger">*</span>
+                                        Assignment Title <span className="text-danger">*</span>
                                     </Form.Label>
                                     <Form.Control
                                         type="text"
-                                        placeholder="Nhập tên bài tập"
+                                        placeholder="Enter assignment title"
                                         value={formData.title}
                                         onChange={(e) => handleInputChange("title", e.target.value)}
                                         isInvalid={!!errors.title}
@@ -278,12 +279,12 @@ const AssignmentModal = ({
 
                                 <Col md={12} className="mb-3">
                                     <Form.Label>
-                                        Mô tả bài tập <span className="text-danger">*</span>
+                                        Assignment Description <span className="text-danger">*</span>
                                     </Form.Label>
                                     <Form.Control
                                         as="textarea"
                                         rows={3}
-                                        placeholder="Nhập mô tả chi tiết về bài tập"
+                                        placeholder="Enter detailed assignment description"
                                         value={formData.description}
                                         onChange={(e) => handleInputChange("description", e.target.value)}
                                         isInvalid={!!errors.description}
@@ -293,14 +294,14 @@ const AssignmentModal = ({
 
                                 <Col md={6} className="mb-3">
                                     <Form.Label>
-                                        Loại bài tập <span className="text-danger">*</span>
+                                        Assignment Type <span className="text-danger">*</span>
                                     </Form.Label>
                                     <div className="d-flex gap-3">
                                         <Form.Check
                                             type="radio"
                                             id="type-essay"
                                             name="assignmentType"
-                                            label="Tự luận"
+                                            label="Essay"
                                             checked={formData.type === "essay"}
                                             onChange={() => handleTypeChange("essay")}
                                         />
@@ -308,7 +309,7 @@ const AssignmentModal = ({
                                             type="radio"
                                             id="type-quiz"
                                             name="assignmentType"
-                                            label="Trắc nghiệm"
+                                            label="Quiz"
                                             checked={formData.type === "quiz"}
                                             onChange={() => handleTypeChange("quiz")}
                                         />
@@ -317,7 +318,7 @@ const AssignmentModal = ({
 
                                 <Col md={6} className="mb-3">
                                     <Form.Label>
-                                        Hạn nộp <span className="text-danger">*</span>
+                                        Due Date <span className="text-danger">*</span>
                                     </Form.Label>
                                     <Form.Control
                                         type="datetime-local"
@@ -331,7 +332,7 @@ const AssignmentModal = ({
                                     <Form.Text className="text-muted">
                                         {courseStartDate && courseEndDate && (
                                             <>
-                                                Hạn nộp phải trong khoảng thời gian khóa học (
+                                                Due date must be within the course period (
                                                 {new Date(courseStartDate).toLocaleDateString("vi-VN")} -{" "}
                                                 {new Date(courseEndDate).toLocaleDateString("vi-VN")})
                                             </>
@@ -343,12 +344,12 @@ const AssignmentModal = ({
                                     <Form.Check
                                         type="switch"
                                         id="assignment-visible"
-                                        label="Hiển thị bài tập cho học sinh"
+                                        label="Show assignment to students"
                                         checked={formData.isVisible}
                                         onChange={(e) => handleInputChange("isVisible", e.target.checked)}
                                     />
                                     <Form.Text className="text-muted">
-                                        Bạn có thể tạo bài tập ở chế độ ẩn và hiển thị sau khi hoàn thiện
+                                        You can create the assignment as hidden and show it after completion.
                                     </Form.Text>
                                 </Col>
                             </Row>
@@ -359,10 +360,10 @@ const AssignmentModal = ({
                     {formData.type === "quiz" && (
                         <Card>
                             <Card.Header className="d-flex justify-content-between align-items-center">
-                                <h5 className="mb-0">Câu hỏi trắc nghiệm</h5>
+                                <h5 className="mb-0">Quiz Questions</h5>
                                 <Button variant="success" size="sm" onClick={addQuestion}>
                                     <Plus size={16} className="me-1" />
-                                    Thêm câu hỏi
+                                    Add Question
                                 </Button>
                             </Card.Header>
                             <Card.Body>
@@ -375,11 +376,11 @@ const AssignmentModal = ({
                                 {formData.questions.length === 0 ? (
                                     <div className="text-center py-4">
                                         <CheckCircle size={48} className="text-muted mb-3" />
-                                        <h6 className="text-muted">Chưa có câu hỏi nào</h6>
-                                        <p className="text-muted small">Thêm câu hỏi đầu tiên cho bài tập trắc nghiệm</p>
+                                        <h6 className="text-muted">No questions yet</h6>
+                                        <p className="text-muted small">Add the first question for the quiz</p>
                                         <Button variant="success" onClick={addQuestion}>
                                             <Plus size={16} className="me-2" />
-                                            Thêm câu hỏi đầu tiên
+                                            Add the first question
                                         </Button>
                                     </div>
                                 ) : (
@@ -387,7 +388,7 @@ const AssignmentModal = ({
                                         {formData.questions.map((question, questionIndex) => (
                                             <Card key={question.questionId} className="border">
                                                 <Card.Header className="d-flex justify-content-between align-items-center">
-                                                    <h6 className="mb-0">Câu hỏi {questionIndex + 1}</h6>
+                                                    <h6 className="mb-0">Question {questionIndex + 1}</h6>
                                                     <Button
                                                         variant="outline-danger"
                                                         size="sm"
@@ -401,12 +402,12 @@ const AssignmentModal = ({
                                                     <Row>
                                                         <Col md={8} className="mb-3">
                                                             <Form.Label>
-                                                                Nội dung câu hỏi <span className="text-danger">*</span>
+                                                                Question Content <span className="text-danger">*</span>
                                                             </Form.Label>
                                                             <Form.Control
                                                                 as="textarea"
                                                                 rows={2}
-                                                                placeholder="Nhập nội dung câu hỏi"
+                                                                placeholder="Enter question content"
                                                                 value={question.text}
                                                                 onChange={(e) => updateQuestion(questionIndex, "text", e.target.value)}
                                                                 isInvalid={!!errors[`question_${questionIndex}_text`]}
@@ -417,7 +418,7 @@ const AssignmentModal = ({
                                                         </Col>
                                                         <Col md={4} className="mb-3">
                                                             <Form.Label>
-                                                                Điểm số <span className="text-danger">*</span>
+                                                                Points <span className="text-danger">*</span>
                                                             </Form.Label>
                                                             <Form.Control
                                                                 type="number"
@@ -438,7 +439,7 @@ const AssignmentModal = ({
 
                                                     <div className="mb-3">
                                                         <Form.Label>
-                                                            Các lựa chọn <span className="text-danger">*</span>
+                                                            Options <span className="text-danger">*</span>
                                                         </Form.Label>
                                                         {errors[`question_${questionIndex}_options`] && (
                                                             <div className="text-danger small mb-2">
@@ -453,14 +454,14 @@ const AssignmentModal = ({
                                                                         name={`correct-${questionIndex}`}
                                                                         checked={question.correctOption === option.key}
                                                                         onChange={() => updateQuestion(questionIndex, "correctOption", option.key)}
-                                                                        title="Đáp án đúng"
+                                                                        title="Correct Answer"
                                                                     />
                                                                     <Badge bg="secondary" className="px-2">
                                                                         {option.key}
                                                                     </Badge>
                                                                     <Form.Control
                                                                         type="text"
-                                                                        placeholder={`Nhập lựa chọn ${option.key}`}
+                                                                        placeholder={`Enter option ${option.key}`}
                                                                         value={option.text}
                                                                         onChange={(e) => updateQuestionOption(questionIndex, option.key, e.target.value)}
                                                                     />
@@ -468,7 +469,7 @@ const AssignmentModal = ({
                                                             ))}
                                                         </div>
                                                         <Form.Text className="text-muted">
-                                                            Chọn radio button bên trái để đánh dấu đáp án đúng
+                                                            Select the radio button on the left to mark the correct answer
                                                         </Form.Text>
                                                     </div>
                                                 </Card.Body>
@@ -482,7 +483,7 @@ const AssignmentModal = ({
 
                     {Object.keys(errors).length > 0 && (
                         <Alert variant="danger" className="mt-3">
-                            <strong>Vui lòng kiểm tra lại:</strong>
+                            <strong>Please check again:</strong>
                             <ul className="mb-0 mt-2">
                                 {Object.values(errors).map((error, index) => (
                                     <li key={index}>{error}</li>
@@ -497,27 +498,27 @@ const AssignmentModal = ({
                         <div className="text-muted small">
                             {formData.type === "quiz" ? (
                                 <>
-                                    Trắc nghiệm • {formData.questions.length} câu hỏi • Tổng điểm:{" "}
+                                    Quiz • {formData.questions.length} questions • Total Points:{" "}
                                     {formData.questions.reduce((total, q) => total + q.points, 0)}
                                 </>
                             ) : (
-                                "Bài tập tự luận"
+                                "Essay Assignment"
                             )}
                         </div>
                         <div className="d-flex gap-2">
                             <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
-                                Hủy
+                                Cancel
                             </Button>
                             <Button type="submit" variant="primary" disabled={isSubmitting}>
                                 {isSubmitting ? (
                                     <>
                                         <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Đang lưu...
+                                        Saving...
                                     </>
                                 ) : (
                                     <>
                                         <Save size={16} className="me-1" />
-                                        {isEditing ? "Cập nhật bài tập" : "Tạo bài tập"}
+                                        {isEditing ? "Update Assignment" : "Create Assignment"}
                                     </>
                                 )}
                             </Button>

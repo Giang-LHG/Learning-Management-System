@@ -98,3 +98,91 @@ exports.getCourseAnalytics = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+/**
+ * GET /analytics/dashboard
+ * Lấy dữ liệu dashboard tổng hợp cho instructor hiện tại
+ */
+exports.getDashboardAnalytics = async (req, res) => {
+  try {
+    const instructorId = req.user._id;
+    // Tổng số khóa học instructor đang dạy
+    const courses = await Course.find({ instructorId }).lean();
+    const courseIds = courses.map(c => c._id);
+
+    // Tổng số học viên (unique, chỉ active, có studentId)
+    const enrollments = await Enrollment.find({ courseId: { $in: courseIds }, status: 'active', studentId: { $ne: null } }).lean();
+    const studentIds = Array.from(new Set(enrollments.map(e => e.studentId && e.studentId.toString()).filter(Boolean)));
+
+    // Tổng số bài tập
+    const assignments = await Assignment.find({ courseId: { $in: courseIds } }).lean();
+
+    // Điểm trung bình tất cả khóa học
+    const assignmentIds = assignments.map(a => a._id);
+    const submissions = await Submission.find({ assignmentId: { $in: assignmentIds }, 'grade.score': { $ne: null } }).lean();
+    let avgScore = 0;
+    if (submissions.length > 0) {
+      avgScore = submissions.reduce((sum, s) => sum + (s.grade.score || 0), 0) / submissions.length;
+      avgScore = parseFloat(avgScore.toFixed(2));
+    }
+
+    // Danh sách khóa học instructor dạy (tên, số học viên, số chương, số bài tập)
+    const courseList = await Promise.all(courses.map(async (course) => {
+      const numStudents = Array.from(new Set(enrollments.filter(e => e.courseId.toString() === course._id.toString() && e.studentId).map(e => e.studentId.toString()))).length;
+      const numAssignments = assignments.filter(a => a.courseId.toString() === course._id.toString()).length;
+      return {
+        _id: course._id,
+        title: course.title,
+        term: Array.isArray(course.term) ? course.term[course.term.length-1] : course.term,
+        numStudents,
+        numChapters: Array.isArray(course.modules) ? course.modules.length : 0,
+        numAssignments
+      };
+    }));
+
+    // Thống kê đăng ký theo tháng (6 tháng gần nhất)
+    const now = new Date();
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        label: `Tháng ${d.getMonth() + 1}`,
+        year: d.getFullYear(),
+        month: d.getMonth() + 1
+      });
+    }
+    const monthlyStats = months.map(m => {
+      const count = enrollments.filter(e => {
+        const date = new Date(e.createdAt);
+        return date.getFullYear() === m.year && date.getMonth() + 1 === m.month;
+      }).length;
+      return { label: m.label, count };
+    });
+
+    // Phân bố điểm số
+    const gradeDist = { A: 0, B: 0, C: 0, D: 0 };
+    submissions.forEach(s => {
+      const score = s.grade.score;
+      if (score >= 8) gradeDist.A++;
+      else if (score >= 6.5) gradeDist.B++;
+      else if (score >= 5) gradeDist.C++;
+      else gradeDist.D++;
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalCourses: courses.length,
+        totalStudents: studentIds.length,
+        totalAssignments: assignments.length,
+        averageScore: avgScore,
+        courseList,
+        monthlyStats,
+        gradeDistribution: gradeDist
+      }
+    });
+  } catch (err) {
+    console.error('Error getting instructor dashboard analytics:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};

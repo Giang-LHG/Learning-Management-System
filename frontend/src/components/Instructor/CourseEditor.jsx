@@ -14,11 +14,15 @@ export default function CourseEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [error, setError] = useState('');
-
+const token = localStorage.getItem('token');
   const fetchCourse = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`/api/student/courses/${courseId}`);
+      const res = await axios.get(`/api/student/courses/${courseId}`, {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+});
       if (res.data.success) setCourse(res.data.data);
     } catch (err) {
       console.error("Error fetching course:", err);
@@ -34,7 +38,11 @@ export default function CourseEditor() {
 
   const handleDeleteCourse = async () => {
     try {
-      await axios.delete(`/api/instructor/courses/${courseId}`);
+      await axios.delete(`/api/instructor/courses/${courseId}`, {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+});
       alert("🎉 Khóa học đã được xóa thành công!");
       setShowDeleteModal(false);
       navigate('/instructor/dashboard');
@@ -48,14 +56,17 @@ export default function CourseEditor() {
     try {
       const res = await axios.put(
         `/api/instructor/courses/${courseId}/materials/toggle-visibility`,
-        { materialType, materialId, isVisible: !currentVisibility }
-      );
+        { materialType, materialId, isVisible: !currentVisibility , 
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+});
       if (res.data.success) {
         setCourse(res.data.data);
       }
     } catch (err) {
       console.error("Error toggling visibility:", err);
-      alert("❌ Cập nhật trạng thái thất bại.");
+      alert("❌ Update fail.");
     }
   };
 
@@ -66,7 +77,7 @@ export default function CourseEditor() {
     }}>
       <div className="text-center">
         <div className="spinner-border text-light mb-3" style={{ width: '4rem', height: '4rem' }}></div>
-        <h4 className="text-white">Đang tải chi tiết khóa học...</h4>
+        <h4 className="text-white">Load course...</h4>
       </div>
     </div>
   );
@@ -76,7 +87,7 @@ export default function CourseEditor() {
       <Container className="py-5">
         <Alert variant="danger" className="border-0 shadow-lg">
           <FiShield className="me-2" />
-          <strong>Lỗi:</strong> {error}
+          <strong>Error:</strong> {error}
         </Alert>
       </Container>
     </div>
@@ -125,9 +136,9 @@ export default function CourseEditor() {
                 <FiZap size={48} className="text-white" />
               </div>
               <h1 className="text-white fw-bold mb-2 display-5">
-                Trình Chỉnh Sửa Khóa Học
+               Edit
               </h1>
-              <p className="text-white-50 fs-5">Quản lý nội dung khóa học của bạn</p>
+              <p className="text-white-50 fs-5">Manage your course</p>
             </div>
 
             {/* Danger Zone Card */}
@@ -143,14 +154,11 @@ export default function CourseEditor() {
                 className="text-white py-4"
                 style={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' }}
               >
-                <h5 className="mb-0 fw-bold">
-                  <FiTrash2 className="me-2" />
-                  ⚠️ Khu Vực Nguy Hiểm
-                </h5>
+                
               </Card.Header>
               <Card.Body className="text-center p-4">
                 <p className="text-muted mb-3 fs-5">
-                  🚨 Xóa khóa học sẽ không thể hoàn tác. Hãy chắc chắn trước khi thực hiện!
+                  🚨 Delete course !
                 </p>
                 <Button
                   variant="outline-danger"
@@ -173,7 +181,7 @@ export default function CourseEditor() {
                   }}
                 >
                   <FiTrash2 className="me-2" />
-                  🗑️ Xóa Khóa Học
+                  🗑️ Delete course
                 </Button>
               </Card.Body>
             </Card>
@@ -193,7 +201,7 @@ export default function CourseEditor() {
               >
                 <h5 className="mb-0 fw-bold">
                   <FiBook className="me-2" />
-                  📚 Nội Dung Khóa Học
+                  📚 Course Detail
                 </h5>
               </Card.Header>
               <Card.Body className="p-0">
@@ -260,7 +268,7 @@ export default function CourseEditor() {
                               bg={lesson.isVisible ? 'success' : 'secondary'} 
                               className="ms-3"
                             >
-                              {lesson.isVisible ? '👁️ Hiển thị' : '🙈 Ẩn'}
+                              {lesson.isVisible ? '👁️ Show' : '🙈 Hidden'}
                             </Badge>
                           </div>
                           <Button

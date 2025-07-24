@@ -112,11 +112,11 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                 <Card.Header className="d-flex justify-content-between align-items-center">
                     <h5 className="mb-0 d-flex align-items-center">
                         <FileText size={20} className="me-2" />
-                        Quản lý bài tập
+                        Assignment Management
                     </h5>
                     <Button variant="success" size="sm" onClick={handleAddAssignment}>
                         <Plus size={16} className="me-1" />
-                        Thêm bài tập
+                        Add Assignment
                     </Button>
                 </Card.Header>
                 <Card.Body>
@@ -125,11 +125,11 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                             <div className="p-4 rounded-circle d-inline-flex mb-3" style={{ background: "#f8f9fa" }}>
                                 <FileText size={32} className="text-muted" />
                             </div>
-                            <h6 className="text-muted mb-2">Chưa có bài tập nào</h6>
-                            <p className="text-muted mb-3">Tạo bài tập đầu tiên để học sinh có thể luyện tập</p>
+                            <h6 className="text-muted mb-2">No assignments yet</h6>
+                            <p className="text-muted mb-3">Create the first assignment so students can practice</p>
                             <Button variant="success" onClick={handleAddAssignment}>
                                 <Plus size={16} className="me-2" />
-                                Tạo bài tập đầu tiên
+                                Create First Assignment
                             </Button>
                         </div>
                     ) : (
@@ -165,16 +165,16 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                             <div className="d-flex align-items-center">
                                                                 <Clock size={14} className="me-1" />
                                                                 <span>
-                                                                    Hạn nộp: {formatDateTime(assignment.dueDate)}
+                                                                    Due Date: {formatDateTime(assignment.dueDate)}
                                                                     {!isOverdue(assignment.dueDate) && (
-                                                                        <span className="ms-1">({getDaysUntilDue(assignment.dueDate)} ngày)</span>
+                                                                        <span className="ms-1">({getDaysUntilDue(assignment.dueDate)} days)</span>
                                                                     )}
                                                                 </span>
                                                             </div>
                                                             {assignment.type === "quiz" && assignment.questions && (
                                                                 <div className="d-flex align-items-center">
                                                                     <FileText size={14} className="me-1" />
-                                                                    <span>{assignment.questions.length} câu hỏi</span>
+                                                                    <span>{assignment.questions.length} questions</span>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -198,7 +198,7 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                             variant="outline-secondary"
                                                             size="sm"
                                                             onClick={() => toggleAssignmentVisibility(index)}
-                                                            title={assignment.isVisible ? "Ẩn bài tập" : "Hiển thị bài tập"}
+                                                            title={assignment.isVisible ? "Hide assignment" : "Show assignment"}
                                                         >
                                                             {assignment.isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
                                                         </Button>
@@ -206,7 +206,7 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                             variant="outline-primary"
                                                             size="sm"
                                                             onClick={() => handleEditAssignment(assignment, index)}
-                                                            title="Chỉnh sửa"
+                                                            title="Edit"
                                                         >
                                                             <Edit size={14} />
                                                         </Button>
@@ -214,7 +214,7 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                             variant="outline-danger"
                                                             size="sm"
                                                             onClick={() => handleDeleteAssignment(index)}
-                                                            title="Xóa"
+                                                            title="Delete"
                                                         >
                                                             <Trash2 size={14} />
                                                         </Button>

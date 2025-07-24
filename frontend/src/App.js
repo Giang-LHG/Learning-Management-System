@@ -31,7 +31,9 @@ import ChangePasswordPage from './pages/auth/ChangePasswordPage.jsx';
 import Profile from './pages/Profile.jsx';
 
 // --- Pages/Components for Instructor ---
-import InstructorCommunication from './components/Instructor/instructor-communication.jsx'
+
+import InstructorAppealList from './components/Instructor/InstructorAppealList';
+
 
 import CourseList from './components/Instructor/CourseList1';
 import CourseDetail1 from './components/Instructor/CourseDetail1';
@@ -187,6 +189,10 @@ function App() {
 
 
 
+          <Route path="/Learning Analytics" element={< InstructorDashboard />} />
+          <Route path="/instructor/course" element={< CourseList />} />
+          <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
+          <Route path="/instructor/appeals" element={<InstructorAppealList />} />
 
           <Route
             path="*"

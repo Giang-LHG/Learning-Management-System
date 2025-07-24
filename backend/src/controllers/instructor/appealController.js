@@ -1,4 +1,3 @@
-
 // controllers/instructor/appealController.js
 const mongoose = require('mongoose');
 const Submission = require('../../models/Submission');
@@ -16,40 +15,85 @@ exports.listOpenAppeals = async (req, res) => {
       return res.json({ success: true, data: [] });
     }
     
+    // Tạo map courseId -> latest term
     const courseTermMap = {};
     courses.forEach(c => {
         if (c.term && c.term.length > 0) {
             courseTermMap[c._id.toString()] = c.term[c.term.length - 1];
         }
     });
-    const courseIds = Object.keys(courseTermMap).map(id => mongoose.Types.ObjectId(id));
 
     const appeals = await Submission.aggregate([
       { $unwind: '$appeals' },
       { $match: { 'appeals.status': 'open' } },
-      { $lookup: { from: 'assignments', localField: 'assignmentId', foreignField: '_id', as: 'assignment' } },
-      { $unwind: '$assignment' },
-      { $match: { 'assignment.courseId': { $in: courseIds } } },
       
-      // Custom logic to filter by term
-      {
-          $addFields: {
-              courseIdStr: { $toString: "$assignment.courseId" }
-          }
+      // Lookup assignment
+      { 
+        $lookup: { 
+          from: 'assignments', 
+          localField: 'assignmentId', 
+          foreignField: '_id', 
+          as: 'assignment' 
+        } 
       },
+      { $unwind: '$assignment' },
+      
+      // Filter by courses that belong to instructor
+      { 
+        $match: { 
+          'assignment.courseId': { 
+            $in: courses.map(c => c._id) 
+          } 
+        } 
+      },
+      
+      // Lookup course to get term information
       {
-          $match: {
-              $expr: {
-                  $eq: [ "$term", { $arrayElemAt: [ { $ifNull: [ { $let: {
-                      vars: { courseTerms: { $getField: { field: { $toString: "$assignment.courseId" }, input: courseTermMap } } },
-                      in: "$$courseTerms"
-                  } }, [] ] }, -1 ] } ]
-              }
+        $lookup: {
+          from: 'courses',
+          localField: 'assignment.courseId',
+          foreignField: '_id',
+          as: 'course'
+        }
+      },
+      { $unwind: '$course' },
+      
+      // Add field for latest term of the course
+      {
+        $addFields: {
+          latestCourseTerm: {
+            $cond: {
+              if: { $and: [{ $isArray: '$course.term' }, { $gt: [{ $size: '$course.term' }, 0] }] },
+              then: { $arrayElemAt: ['$course.term', -1] },
+              else: null
+            }
           }
+        }
+      },
+      
+      // Filter by matching term (only if both submission.term and course latest term exist)
+      {
+        $match: {
+          $or: [
+            { term: { $exists: false } }, // No term filtering if submission doesn't have term
+            { latestCourseTerm: null }, // No term filtering if course doesn't have term
+            { $expr: { $eq: ['$term', '$latestCourseTerm'] } } // Match terms
+          ]
+        }
       },
 
-      { $lookup: { from: 'users', localField: 'studentId', foreignField: '_id', as: 'student' } },
+      // Lookup student information
+      { 
+        $lookup: { 
+          from: 'users', 
+          localField: 'studentId', 
+          foreignField: '_id', 
+          as: 'student' 
+        } 
+      },
       { $unwind: '$student' },
+      
+      // Project final result
       {
         $project: {
           _id: 0,
@@ -59,32 +103,88 @@ exports.listOpenAppeals = async (req, res) => {
           studentName: '$student.profile.fullName',
           assignmentTitle: '$assignment.title',
           originalScore: '$grade.score',
-          studentComment: { $arrayElemAt: ['$appeals.comments.text', 0] }
+          studentComment: { 
+            $cond: {
+              if: { $and: [{ $isArray: '$appeals.comments' }, { $gt: [{ $size: '$appeals.comments' }, 0] }] },
+              then: { $arrayElemAt: ['$appeals.comments.text', 0] },
+              else: null
+            }
+          },
+          term: '$term',
+          courseTerm: '$latestCourseTerm'
         }
       },
       { $sort: { appealCreatedAt: -1 } }
-    ]).allowDiskUse(true); // Added allowDiskUse for potentially large aggregations
+    ]).allowDiskUse(true);
 
     return res.status(200).json({ success: true, data: appeals });
+    
   } catch (err) {
-    // A more robust way to handle the aggregation error if the JS function is not supported
-    if (err.codeName === 'QueryNotSupported') {
-         console.error('Aggregation with JS function is not supported on this MongoDB version/tier. Falling back to less strict logic.');
-         // Fallback logic (less strict, might show appeals from previous terms)
-         const fallbackAppeals = await Submission.find({ 'appeals.status': 'open' })
-            .populate({ path: 'assignmentId', match: { courseId: { $in: courses.map(c => c._id) } } })
-            .populate('studentId', 'profile.fullName')
-            .lean();
-        const filteredFallback = fallbackAppeals.filter(s => s.assignmentId) // ensure assignment exists
-            .map(s => s.appeals.map(a => ({
-                submissionId: s._id,
-                appealId: a.appealId,
-                //... other fields
-            }))).flat();
-        return res.json({ success: true, data: filteredFallback, note: 'Fell back to simplified logic' });
-    }
     console.error('Error in listOpenAppeals:', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    
+    // Fallback to simpler approach if aggregation fails
+    try {
+      const courseIds = courses.map(c => c._id);
+      
+      const submissions = await Submission.find({
+        'appeals.status': 'open'
+      })
+      .populate({
+        path: 'assignmentId',
+        match: { courseId: { $in: courseIds } },
+        populate: {
+          path: 'courseId',
+          select: 'term'
+        }
+      })
+      .populate('studentId', 'profile.fullName')
+      .lean();
+
+      const appeals = [];
+      
+      submissions.forEach(submission => {
+        if (!submission.assignmentId) return; // Skip if assignment not found
+        
+        const course = submission.assignmentId.courseId;
+        const latestCourseTerm = course && course.term && course.term.length > 0 
+          ? course.term[course.term.length - 1] 
+          : null;
+        
+        // Filter by term if both exist
+        if (submission.term && latestCourseTerm && submission.term !== latestCourseTerm) {
+          return;
+        }
+        
+        submission.appeals.forEach(appeal => {
+          if (appeal.status === 'open') {
+            appeals.push({
+              submissionId: submission._id,
+              appealId: appeal.appealId,
+              appealCreatedAt: appeal.createdAt,
+              studentName: submission.studentId?.profile?.fullName,
+              assignmentTitle: submission.assignmentId?.title,
+              originalScore: submission.grade?.score,
+              studentComment: appeal.comments && appeal.comments.length > 0 
+                ? appeal.comments[0].text 
+                : null
+            });
+          }
+        });
+      });
+      
+      // Sort by creation date
+      appeals.sort((a, b) => new Date(b.appealCreatedAt) - new Date(a.appealCreatedAt));
+      
+      return res.status(200).json({ 
+        success: true, 
+        data: appeals,
+        note: 'Used fallback query due to aggregation error'
+      });
+      
+    } catch (fallbackErr) {
+      console.error('Fallback query also failed:', fallbackErr);
+      return res.status(500).json({ success: false, message: 'Server error' });
+    }
   }
 };
 
