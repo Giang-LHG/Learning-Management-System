@@ -14,15 +14,16 @@ export default function CourseEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [error, setError] = useState('');
-const token = localStorage.getItem('token');
+
   const fetchCourse = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await axios.get(`/api/student/courses/${courseId}`, {
-  headers: {
-    'Authorization': `Bearer ${localStorage.getItem('token')}`
-  }
-});
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
       if (res.data.success) setCourse(res.data.data);
     } catch (err) {
       console.error("Error fetching course:", err);
@@ -39,10 +40,10 @@ const token = localStorage.getItem('token');
   const handleDeleteCourse = async () => {
     try {
       await axios.delete(`/api/instructor/courses/${courseId}`, {
-  headers: {
-    'Authorization': `Bearer ${localStorage.getItem('token')}`
-  }
-});
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
       alert("🎉 Khóa học đã được xóa thành công!");
       setShowDeleteModal(false);
       navigate('/instructor/dashboard');
@@ -56,17 +57,17 @@ const token = localStorage.getItem('token');
     try {
       const res = await axios.put(
         `/api/instructor/courses/${courseId}/materials/toggle-visibility`,
-        { materialType, materialId, isVisible: !currentVisibility , 
-  headers: {
-    'Authorization': `Bearer ${localStorage.getItem('token')}`
-  }
-});
+        { materialType, materialId, isVisible: !currentVisibility,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
       if (res.data.success) {
         setCourse(res.data.data);
       }
     } catch (err) {
       console.error("Error toggling visibility:", err);
-      alert("❌ Update fail.");
+      alert("❌ Cập nhật trạng thái thất bại.");
     }
   };
 
@@ -77,7 +78,7 @@ const token = localStorage.getItem('token');
     }}>
       <div className="text-center">
         <div className="spinner-border text-light mb-3" style={{ width: '4rem', height: '4rem' }}></div>
-        <h4 className="text-white">Load course...</h4>
+        <h4 className="text-white">Đang tải chi tiết khóa học...</h4>
       </div>
     </div>
   );
@@ -87,7 +88,7 @@ const token = localStorage.getItem('token');
       <Container className="py-5">
         <Alert variant="danger" className="border-0 shadow-lg">
           <FiShield className="me-2" />
-          <strong>Error:</strong> {error}
+          <strong>Lỗi:</strong> {error}
         </Alert>
       </Container>
     </div>
@@ -136,9 +137,9 @@ const token = localStorage.getItem('token');
                 <FiZap size={48} className="text-white" />
               </div>
               <h1 className="text-white fw-bold mb-2 display-5">
-               Edit
+                Trình Chỉnh Sửa Khóa Học
               </h1>
-              <p className="text-white-50 fs-5">Manage your course</p>
+              <p className="text-white-50 fs-5">Quản lý nội dung khóa học của bạn</p>
             </div>
 
             {/* Danger Zone Card */}
@@ -154,11 +155,14 @@ const token = localStorage.getItem('token');
                 className="text-white py-4"
                 style={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' }}
               >
-                
+                <h5 className="mb-0 fw-bold">
+                  <FiTrash2 className="me-2" />
+                  ⚠️ Khu Vực Nguy Hiểm
+                </h5>
               </Card.Header>
               <Card.Body className="text-center p-4">
                 <p className="text-muted mb-3 fs-5">
-                  🚨 Delete course !
+                  🚨 Xóa khóa học sẽ không thể hoàn tác. Hãy chắc chắn trước khi thực hiện!
                 </p>
                 <Button
                   variant="outline-danger"
@@ -181,7 +185,7 @@ const token = localStorage.getItem('token');
                   }}
                 >
                   <FiTrash2 className="me-2" />
-                  🗑️ Delete course
+                  🗑️ Xóa Khóa Học
                 </Button>
               </Card.Body>
             </Card>
@@ -201,7 +205,7 @@ const token = localStorage.getItem('token');
               >
                 <h5 className="mb-0 fw-bold">
                   <FiBook className="me-2" />
-                  📚 Course Detail
+                  📚 Nội Dung Khóa Học
                 </h5>
               </Card.Header>
               <Card.Body className="p-0">
@@ -268,7 +272,7 @@ const token = localStorage.getItem('token');
                               bg={lesson.isVisible ? 'success' : 'secondary'} 
                               className="ms-3"
                             >
-                              {lesson.isVisible ? '👁️ Show' : '🙈 Hidden'}
+                              {lesson.isVisible ? '👁️ Hiển thị' : '🙈 Ẩn'}
                             </Badge>
                           </div>
                           <Button

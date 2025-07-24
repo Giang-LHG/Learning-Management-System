@@ -29,15 +29,18 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
             // Edit existing assignment
             newAssignments[editingIndex] = {
                 ...assignmentData,
+                // ✅ Giữ lại các field cũ nếu đang edit
                 _id: assignments[editingIndex]._id,
                 createdAt: assignments[editingIndex].createdAt,
                 updatedAt: new Date().toISOString(),
+                submissions: assignments[editingIndex].submissions || 0,
+                totalStudents: assignments[editingIndex].totalStudents || 0,
             }
         } else {
-            // Add new assignment
+            // ✅ FIXED: Không tạo ID ở đây nữa, để API tạo
             newAssignments.push({
                 ...assignmentData,
-                _id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                // Không tạo _id ở đây nữa - ID sẽ được tạo bởi database
                 createdAt: new Date().toISOString(),
                 submissions: 0,
                 totalStudents: 0,
@@ -135,7 +138,7 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                     ) : (
                         <div className="d-grid gap-3">
                             {assignments.map((assignment, index) => (
-                                <Card key={assignment._id || index} className="border">
+                                <Card key={assignment._id || `temp_${index}`} className="border">
                                     <Card.Body>
                                         <Row className="align-items-center">
                                             <Col md={8}>

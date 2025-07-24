@@ -109,7 +109,8 @@ const token = localStorage.getItem("token");
             console.error("Error fetching enrolled students:", err);
         }
     };
-
+console.log("assignments", assignments);
+console.log("students", students);
     const handleEdit = () => {
         setShowEditModal(true);
     };

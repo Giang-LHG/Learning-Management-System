@@ -505,7 +505,7 @@ const AssignmentModal = ({
                                 "Essay Assignment"
                             )}
                         </div>
-                        <div className="d-flex gap-2">
+                        <div className="d-flex gap-2 w-100 justify-content-start">
                             <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
                                 Cancel
                             </Button>

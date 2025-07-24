@@ -1,4 +1,4 @@
-
+// AddCourseModal.js - Fixed version
 
 import { useState, useEffect } from "react"
 import { Modal, Form, Button, Row, Col, Alert, Nav, Tab } from "react-bootstrap"
@@ -8,6 +8,7 @@ import api from '../../utils/api'
 import { useSelector } from 'react-redux';
 import courseService from "../../services/courseService"
 import assignmentService from "../../services/assignmentService"
+
 const AddCourseModal = ({ show, onHide, onSubmit }) => {
     // Lấy user hiện tại từ redux hoặc localStorage
     const user = useSelector(state => state.auth.user) || JSON.parse(localStorage.getItem('user') || '{}');
@@ -36,10 +37,9 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
         assignments: [],
     });
 
-
     const [errors, setErrors] = useState({})
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [activeTab, setActiveTab] = useState("basic") // Tab navigation
+    const [activeTab, setActiveTab] = useState("basic")
     const [subjects, setSubjects] = useState([])
     const [instructors, setInstructors] = useState([])
     const [loadingSubjects, setLoadingSubjects] = useState(false)
@@ -57,7 +57,6 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                 .finally(() => setLoadingInstructors(false))
         }
     }, [show])
-
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({
@@ -194,8 +193,6 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
             newErrors.subjectId = "Please select a subject";
         }
 
-
-
         if (!formData.startDate) {
             newErrors.startDate = "Start date is required";
         }
@@ -262,12 +259,16 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
             }
             const parsedUser = JSON.parse(user);
             const instructorId = parsedUser._id;
-console.log(formData);
+
+            // ✅ FIXED: Không gửi assignments trong courseData
             const courseData = {
-                ...formData,
-
-                instructorId: instructorId, // Gán instructorId là user hiện tại
-
+                title: formData.title,
+                description: formData.description,
+                subjectId: formData.subjectId,
+                startDate: formData.startDate,
+                endDate: formData.endDate,
+                credits: formData.credits,
+                instructorId: instructorId,
                 term: formData.term.filter((term) => term.trim()),
                 modules: formData.modules
                     .filter((module) => module.title.trim())
@@ -275,43 +276,52 @@ console.log(formData);
                         ...module,
                         lessons: module.lessons.filter((lesson) => lesson.title.trim()),
                     })),
-                assignments: formData.assignments.map((assignment) => ({
-                    ...assignment,
-                    _id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-                    createdAt: new Date().toISOString(),
-                    submissions: 0,
-                    totalStudents: 0,
-                })),
+                // ✅ Không gửi assignments ở đây nữa
             };
 
+            console.log('Creating course with data:', courseData);
+
+            // B1: Tạo course trước (không có assignments)
             const response = await courseService.createCourse(courseData);
-  const courseId = response.data._id;
-
-        // B2: Tạo assignments nếu có
-        if (formData.assignments.length > 0) {
-            for (const assignment of formData.assignments) {
-                const payload = {
-                    courseId,
-                    title: assignment.title,
-                    description: assignment.description || "",
-                    type: assignment.type,
-                    dueDate: assignment.dueDate,
-                };
-
-                // Nếu là quiz thì gửi thêm câu hỏi
-                if (assignment.type === "quiz") {
-                    payload.questions = assignment.questions || [];
-                }
-
-                await assignmentService.createAssignment(payload);
-            }
-        }
-            if (response.success) {
-                onSubmit(response.data);
-                handleClose();
-            } else {
+            
+            if (!response.success) {
                 setErrors({ api: response.message || "Could not create course." });
+                setIsSubmitting(false);
+                return;
             }
+
+            const courseId = response.data._id;
+            console.log('Course created with ID:', courseId);
+
+            // B2: Tạo assignments riêng biệt nếu có
+            if (formData.assignments.length > 0) {
+                console.log('Creating assignments:', formData.assignments);
+                
+                for (const assignment of formData.assignments) {
+                    const assignmentPayload = {
+                        courseId,
+                        title: assignment.title,
+                        description: assignment.description || "",
+                        type: assignment.type,
+                        dueDate: assignment.dueDate,
+                        isVisible: assignment.isVisible,
+                        term: assignment.term || formData.term,
+                    };
+
+                    // Nếu là quiz thì gửi thêm câu hỏi
+                    if (assignment.type === "quiz" && assignment.questions) {
+                        assignmentPayload.questions = assignment.questions;
+                    }
+
+                    console.log('Creating assignment:', assignmentPayload);
+                    await assignmentService.createAssignment(assignmentPayload);
+                }
+            }
+
+            // Thành công
+            onSubmit(response.data);
+            handleClose();
+
         } catch (error) {
             console.error("Error creating course:", error);
             setErrors({ api: "An error occurred while creating the course. Please try again." });
@@ -434,8 +444,6 @@ console.log(formData);
                                         </Form.Select>
                                         <Form.Control.Feedback type="invalid">{errors.subjectId}</Form.Control.Feedback>
                                     </Col>
-
-                                    {/* BỎ hoàn toàn phần chọn giảng viên ở đây */}
 
                                     <Col md={4} className="mb-3">
                                         <Form.Label>
