@@ -187,56 +187,56 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
         const newErrors = {};
 
         if (!formData.title.trim()) {
-            newErrors.title = "Tên khóa học là bắt buộc";
+            newErrors.title = "Course title is required";
         }
 
         if (!formData.subjectId) {
-            newErrors.subjectId = "Vui lòng chọn môn học";
+            newErrors.subjectId = "Please select a subject";
         }
 
 
 
         if (!formData.startDate) {
-            newErrors.startDate = "Ngày bắt đầu là bắt buộc";
+            newErrors.startDate = "Start date is required";
         }
 
         if (!formData.endDate) {
-            newErrors.endDate = "Ngày kết thúc là bắt buộc";
+            newErrors.endDate = "End date is required";
         }
 
         if (formData.startDate && formData.endDate && new Date(formData.startDate) >= new Date(formData.endDate)) {
-            newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
+            newErrors.endDate = "End date must be after start date";
         }
 
         if (formData.credits <= 0) {
-            newErrors.credits = "Số tín chỉ phải lớn hơn 0";
+            newErrors.credits = "Credits must be greater than 0";
         }
 
         if (formData.term.some((term) => !term.trim())) {
-            newErrors.term = "Tất cả học kỳ phải được điền";
+            newErrors.term = "All terms must be filled";
         }
 
         formData.modules.forEach((module, moduleIndex) => {
             if (!module.title.trim()) {
-                newErrors[`module_${moduleIndex}_title`] = "Tên chương là bắt buộc";
+                newErrors[`module_${moduleIndex}_title`] = "Module title is required";
             }
 
             module.lessons.forEach((lesson, lessonIndex) => {
                 if (!lesson.title.trim()) {
-                    newErrors[`lesson_${moduleIndex}_${lessonIndex}_title`] = "Tên bài học là bắt buộc";
+                    newErrors[`lesson_${moduleIndex}_${lessonIndex}_title`] = "Lesson title is required";
                 }
             });
         });
 
         formData.assignments.forEach((assignment, assignmentIndex) => {
             if (!assignment.title.trim()) {
-                newErrors[`assignment_${assignmentIndex}_title`] = "Tên bài tập là bắt buộc";
+                newErrors[`assignment_${assignmentIndex}_title`] = "Assignment title is required";
             }
             if (!assignment.dueDate) {
-                newErrors[`assignment_${assignmentIndex}_dueDate`] = "Hạn nộp là bắt buộc";
+                newErrors[`assignment_${assignmentIndex}_dueDate`] = "Due date is required";
             }
             if (assignment.type === "quiz" && (!assignment.questions || assignment.questions.length === 0)) {
-                newErrors[`assignment_${assignmentIndex}_questions`] = "Bài tập trắc nghiệm phải có ít nhất 1 câu hỏi";
+                newErrors[`assignment_${assignmentIndex}_questions`] = "Quiz must have at least 1 question";
             }
         });
 
@@ -256,7 +256,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
         try {
             const user = localStorage.getItem("user");
             if (!user) {
-                setErrors({ api: "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại." });
+                setErrors({ api: "Could not find user information. Please log in again." });
                 setIsSubmitting(false);
                 return;
             }
@@ -290,11 +290,11 @@ console.log(formData);
                 onSubmit(response.data);
                 handleClose();
             } else {
-                setErrors({ api: response.message || "Không thể tạo khóa học." });
+                setErrors({ api: response.message || "Could not create course." });
             }
         } catch (error) {
             console.error("Error creating course:", error);
-            setErrors({ api: "Có lỗi xảy ra khi tạo khóa học. Vui lòng thử lại." });
+            setErrors({ api: "An error occurred while creating the course. Please try again." });
         } finally {
             setIsSubmitting(false);
         }
@@ -334,7 +334,7 @@ console.log(formData);
             <Modal.Header closeButton>
                 <Modal.Title>
                     <BookOpen size={24} className="me-2" />
-                    Thêm Khóa Học Mới
+                    Add New Course
                 </Modal.Title>
             </Modal.Header>
 
@@ -344,19 +344,19 @@ console.log(formData);
                         <Nav.Item>
                             <Nav.Link eventKey="basic" className="d-flex align-items-center">
                                 <FileText size={16} className="me-2" />
-                                Thông tin cơ bản
+                                Basic Information
                             </Nav.Link>
                         </Nav.Item>
                         <Nav.Item>
                             <Nav.Link eventKey="content" className="d-flex align-items-center">
                                 <BookOpen size={16} className="me-2" />
-                                Nội dung khóa học
+                                Course Content
                             </Nav.Link>
                         </Nav.Item>
                         <Nav.Item>
                             <Nav.Link eventKey="assignments" className="d-flex align-items-center">
                                 <CheckCircle size={16} className="me-2" />
-                                Bài tập ({formData.assignments.length})
+                                Assignments ({formData.assignments.length})
                             </Nav.Link>
                         </Nav.Item>
                     </Nav>
@@ -366,17 +366,17 @@ console.log(formData);
                             <div className="mb-4">
                                 <h5 className="fw-bold text-primary mb-3">
                                     <FileText size={20} className="me-2" />
-                                    Thông tin cơ bản
+                                    Basic Information
                                 </h5>
 
                                 <Row>
                                     <Col md={12} className="mb-3">
                                         <Form.Label>
-                                            Tên khóa học <span className="text-danger">*</span>
+                                            Course Title <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Control
                                             type="text"
-                                            placeholder="Nhập tên khóa học"
+                                            placeholder="Enter course title"
                                             value={formData.title}
                                             onChange={(e) => handleInputChange("title", e.target.value)}
                                             isInvalid={!!errors.title}
@@ -385,11 +385,11 @@ console.log(formData);
                                     </Col>
 
                                     <Col md={12} className="mb-3">
-                                        <Form.Label>Mô tả khóa học</Form.Label>
+                                        <Form.Label>Course Description</Form.Label>
                                         <Form.Control
                                             as="textarea"
                                             rows={3}
-                                            placeholder="Nhập mô tả chi tiết về khóa học"
+                                            placeholder="Enter detailed course description"
                                             value={formData.description}
                                             onChange={(e) => handleInputChange("description", e.target.value)}
                                         />
@@ -397,7 +397,7 @@ console.log(formData);
 
                                     <Col md={6} className="mb-3">
                                         <Form.Label>
-                                            Môn học <span className="text-danger">*</span>
+                                            Subject <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Select
                                             value={formData.subjectId}
@@ -405,7 +405,7 @@ console.log(formData);
                                             isInvalid={!!errors.subjectId}
                                             disabled={loadingSubjects}
                                         >
-                                            <option value="">{loadingSubjects ? "Đang tải..." : "Chọn môn học"}</option>
+                                            <option value="">{loadingSubjects ? "Loading..." : "Select subject"}</option>
                                             {subjects.map((subject) => (
                                                 <option key={subject._id} value={subject._id}>
                                                     {subject.code} - {subject.name}
@@ -419,7 +419,7 @@ console.log(formData);
 
                                     <Col md={4} className="mb-3">
                                         <Form.Label>
-                                            Ngày bắt đầu <span className="text-danger">*</span>
+                                            Start Date <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Control
                                             type="date"
@@ -432,7 +432,7 @@ console.log(formData);
 
                                     <Col md={4} className="mb-3">
                                         <Form.Label>
-                                            Ngày kết thúc <span className="text-danger">*</span>
+                                            End Date <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Control
                                             type="date"
@@ -445,7 +445,7 @@ console.log(formData);
 
                                     <Col md={4} className="mb-3">
                                         <Form.Label>
-                                            Số tín chỉ <span className="text-danger">*</span>
+                                            Credits <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Control
                                             type="number"
@@ -463,14 +463,14 @@ console.log(formData);
                             <div className="mb-4">
                                 <h5 className="fw-bold text-primary mb-3">
                                     <Calendar size={20} className="me-2" />
-                                    Học kỳ
+                                    Term
                                 </h5>
                                 {formData.term.map((term, index) => (
                                     <Row key={index} className="mb-2">
                                         <Col md={10}>
                                             <Form.Control
                                                 type="text"
-                                                placeholder={`Học kỳ ${index + 1} (VD: Học kỳ 1 - 2023-2024)`}
+                                                placeholder={`Term ${index + 1} (e.g., Term 1 - 2023-2024)`}
                                                 value={term}
                                                 onChange={(e) => handleTermChange(index, e.target.value)}
                                             />
@@ -489,7 +489,7 @@ console.log(formData);
                                 ))}
                                 <Button variant="outline-primary" size="sm" onClick={addTerm}>
                                     <Plus size={16} className="me-1" />
-                                    Thêm học kỳ
+                                    Add Term
                                 </Button>
                                 {errors.term && <div className="text-danger small mt-1">{errors.term}</div>}
                             </div>
@@ -499,12 +499,12 @@ console.log(formData);
                             <div className="mb-4">
                                 <h5 className="fw-bold text-primary mb-3">
                                     <BookOpen size={20} className="me-2" />
-                                    Chương học
+                                    Module
                                 </h5>
                                 {formData.modules.map((module, moduleIndex) => (
                                     <div key={moduleIndex} className="border rounded p-3 mb-3" style={{ backgroundColor: "#f8f9fa" }}>
                                         <div className="d-flex justify-content-between align-items-center mb-3">
-                                            <h6 className="fw-bold mb-0">Chương {moduleIndex + 1}</h6>
+                                            <h6 className="fw-bold mb-0">Module {moduleIndex + 1}</h6>
                                             <Button
                                                 variant="outline-danger"
                                                 size="sm"
@@ -518,11 +518,11 @@ console.log(formData);
                                         <Row className="mb-3">
                                             <Col md={10}>
                                                 <Form.Label>
-                                                    Tên chương <span className="text-danger">*</span>
+                                                    Module Title <span className="text-danger">*</span>
                                                 </Form.Label>
                                                 <Form.Control
                                                     type="text"
-                                                    placeholder="Nhập tên chương"
+                                                    placeholder="Enter module title"
                                                     value={module.title}
                                                     onChange={(e) => handleModuleChange(moduleIndex, "title", e.target.value)}
                                                     isInvalid={!!errors[`module_${moduleIndex}_title`]}
@@ -532,7 +532,7 @@ console.log(formData);
                                                 </Form.Control.Feedback>
                                             </Col>
                                             <Col md={2}>
-                                                <Form.Label>Hiển thị</Form.Label>
+                                                <Form.Label>Visible</Form.Label>
                                                 <Form.Check
                                                     type="switch"
                                                     checked={module.isVisible}
@@ -542,7 +542,7 @@ console.log(formData);
                                         </Row>
 
                                         <div className="ms-3">
-                                            <h6 className="fw-semibold mb-2">Bài học</h6>
+                                            <h6 className="fw-semibold mb-2">Lesson</h6>
                                             {module.lessons.map((lesson, lessonIndex) => (
                                                 <div
                                                     key={lessonIndex}
@@ -550,7 +550,7 @@ console.log(formData);
                                                     style={{ backgroundColor: "#ffffff" }}
                                                 >
                                                     <div className="d-flex justify-content-between align-items-center mb-2">
-                                                        <small className="fw-semibold">Bài học {lessonIndex + 1}</small>
+                                                        <small className="fw-semibold">Lesson {lessonIndex + 1}</small>
                                                         <Button
                                                             variant="outline-danger"
                                                             size="sm"
@@ -565,7 +565,7 @@ console.log(formData);
                                                         <Col md={8} className="mb-2">
                                                             <Form.Control
                                                                 type="text"
-                                                                placeholder="Tên bài học"
+                                                                placeholder="Enter lesson title"
                                                                 value={lesson.title}
                                                                 onChange={(e) => handleLessonChange(moduleIndex, lessonIndex, "title", e.target.value)}
                                                                 isInvalid={!!errors[`lesson_${moduleIndex}_${lessonIndex}_title`]}
@@ -577,7 +577,7 @@ console.log(formData);
                                                         <Col md={2}>
                                                             <Form.Check
                                                                 type="switch"
-                                                                label="Hiển thị"
+                                                                label="Visible"
                                                                 checked={lesson.isVisible}
                                                                 onChange={(e) =>
                                                                     handleLessonChange(moduleIndex, lessonIndex, "isVisible", e.target.checked)
@@ -588,7 +588,7 @@ console.log(formData);
                                                             <Form.Control
                                                                 as="textarea"
                                                                 rows={2}
-                                                                placeholder="Nội dung bài học (tùy chọn)"
+                                                                placeholder="Lesson content (optional)"
                                                                 value={lesson.content}
                                                                 onChange={(e) =>
                                                                     handleLessonChange(moduleIndex, lessonIndex, "content", e.target.value)
@@ -605,14 +605,14 @@ console.log(formData);
                                                 className="mt-2"
                                             >
                                                 <Plus size={14} className="me-1" />
-                                                Thêm bài học
+                                                Add Lesson
                                             </Button>
                                         </div>
                                     </div>
                                 ))}
                                 <Button variant="outline-primary" onClick={addModule}>
                                     <Plus size={16} className="me-1" />
-                                    Thêm chương
+                                    Add Module
                                 </Button>
                             </div>
                         </Tab.Pane>
@@ -631,7 +631,7 @@ console.log(formData);
 
                     {Object.keys(errors).length > 0 && (
                         <Alert variant="danger" className="mt-3">
-                            <strong>Vui lòng kiểm tra lại:</strong>
+                            <strong>Please check again:</strong>
                             <ul className="mb-0 mt-2">
                                 {Object.values(errors).map((error, index) => (
                                     <li key={index}>{error}</li>
@@ -644,24 +644,24 @@ console.log(formData);
                 <Modal.Footer>
                     <div className="d-flex justify-content-between w-100 align-items-center">
                         <div className="text-muted small">
-                            {formData.modules.length} chương •{" "}
-                            {formData.modules.reduce((total, module) => total + module.lessons.length, 0)} bài học •{" "}
-                            {formData.assignments.length} bài tập
+                            {formData.modules.length} modules •{" "}
+                            {formData.modules.reduce((total, module) => total + module.lessons.length, 0)} lessons •{" "}
+                            {formData.assignments.length} assignments
                         </div>
                         <div className="d-flex gap-2">
                             <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
-                                Hủy
+                                Cancel
                             </Button>
                             <Button type="submit" variant="primary" disabled={isSubmitting}>
                                 {isSubmitting ? (
                                     <>
                                         <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Đang tạo...
+                                        Creating...
                                     </>
                                 ) : (
                                     <>
                                         <Plus size={16} className="me-1" />
-                                        Tạo khóa học
+                                        Create Course
                                     </>
                                 )}
                             </Button>
