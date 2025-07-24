@@ -260,7 +260,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
             const parsedUser = JSON.parse(user);
             const instructorId = parsedUser._id;
 
-            // ✅ FIXED: Không gửi assignments trong courseData
+           
             const courseData = {
                 title: formData.title,
                 description: formData.description,
@@ -276,7 +276,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                         ...module,
                         lessons: module.lessons.filter((lesson) => lesson.title.trim()),
                     })),
-                // ✅ Không gửi assignments ở đây nữa
+    
             };
 
             console.log('Creating course with data:', courseData);
@@ -291,6 +291,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
             }
 
             const courseId = response.data._id;
+        
             console.log('Course created with ID:', courseId);
 
             // B2: Tạo assignments riêng biệt nếu có

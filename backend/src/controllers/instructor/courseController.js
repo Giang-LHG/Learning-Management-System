@@ -8,8 +8,8 @@ const Subject = require("../../models/Subject");
 // ✅ Create new course with full support for modules and lessons
 exports.createCourse = async (req, res) => {
   try {
-    const { title, description, instructorId, subjectIdRaw, startDate, endDate, credits, term, modules } = req.body;
-const subjectId = new mongoose.Types.ObjectId(subjectIdRaw);
+    const { title, description, instructorId, subjectId, startDate, endDate, credits, term, modules } = req.body;
+const sId = new mongoose.Types.ObjectId(subjectId);
     // Check permission
     if (req.user.role !== "instructor" && req.user._id !== instructorId) {
       return res.status(403).json({
@@ -74,7 +74,7 @@ const subjectId = new mongoose.Types.ObjectId(subjectIdRaw);
       title,
       description: description || "",
       instructorId,
-      subjectId,
+      subjectId: sId,
       startDate,
       endDate,
       credits: credits || 0,
