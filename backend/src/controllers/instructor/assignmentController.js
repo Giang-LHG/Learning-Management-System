@@ -24,7 +24,7 @@ const getAssignmentsByCourse = async (req, res) => {
     }
 
     // Check permission - instructor can only view assignments of their own courses
-    if (req.user.role === "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
+    if (req.user.role !== "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Bạn chỉ có thể xem assignments của khóa học mình dạy",
@@ -67,7 +67,7 @@ const createAssignment = async (req, res) => {
     }
 
     // Check permission
-    if (req.user.role === "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
+    if (req.user.role !== "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Bạn chỉ có thể tạo assignments cho khóa học của mình",

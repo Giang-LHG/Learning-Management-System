@@ -170,8 +170,8 @@ function Header() {
               </li>
               <li>
                 <Link
-                  to="/instructor/Learning Analytics"
-                  className={`nav-link ${location.pathname === '/instructor/Learning Analytics' ? 'active' : ''}`}
+                  to="/instructor/LearningAnalytics"
+                  className={`nav-link ${location.pathname === '/instructor/LearningAnalytics' ? 'active' : ''}`}
                 >
                   Learning Analytics
                 </Link>
@@ -188,14 +188,7 @@ function Header() {
                   Appeals
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/instructor/chat"
-                  className={`nav-link ${location.pathname === '/instructor/chat' ? 'active' : ''}`}
-                >
-                  Chat
-                </Link>
-              </li>
+             
             </>)}
           </ul>
         </nav>

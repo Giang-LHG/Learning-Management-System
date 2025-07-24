@@ -1,17 +1,4 @@
-const express = require("express")
-const cors = require("cors")
-const mongoose = require("mongoose")
-const dotenv = require("dotenv")
-const studentRoute = require("./routes/student/index.js")
-const parentRoute = require("./routes/parent/index.js")
-const userRoutes = require("./routes/admin/userRoutes.js")
-const subjectRoutes = require("./routes/admin/subjectRoutes.js")
-const dashboardRoutes = require("./routes/admin/dashboardRoutes.js")
-const authRoutes = require("./routes/auth/authRoutes.js")
-const instructorRoute = require("./routes/instructor/index.js")
-const notificationRoute = require("./routes/notification/index.js")
 
-dotenv.config()
 
 // server.js
 const express = require('express');
@@ -59,7 +46,7 @@ app.use("/api/dashboard", dashboardRoutes)
 app.use("/api/student/", studentRoute)
 app.use("/api/parent/", parentRoute)
 app.use("/api/instructor/", instructorRoute)
-app.use("/api/notifications", notificationRoute)
+app.use("/api/notifications", notificationRoutes)
 
 // ✅ Thêm route health check
 app.get("/health", (req, res) => {

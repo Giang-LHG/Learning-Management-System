@@ -22,7 +22,7 @@ const CourseList = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
+const token = localStorage.getItem("token");
   useEffect(() => {
     const fetchCourses = async () => {
       console.log("Starting fetchCourses...");
@@ -94,7 +94,12 @@ const CourseList = () => {
       const parsedUser = JSON.parse(user);
       const instructorId = parsedUser._id;
       console.log("InstructorId for submission:", instructorId);
-      const response = await api.post("/instructor/courses", { ...courseData, instructorId });
+      const response = await api.post("/instructor/courses", { ...courseData, instructorId , 
+ 
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
       console.log("API Response for create:", response.data);
       if (response.data.success) {
         setCourses((prev) => [response.data.data, ...prev]);
@@ -152,7 +157,12 @@ const CourseList = () => {
   const confirmDelete = async () => {
     console.log("confirmDelete triggered for course:", courseToDelete);
     try {
-      await api.delete(`/instructor/courses/${courseToDelete._id}`);
+      await api.delete(`/instructor/courses/${courseToDelete._id}`,{ 
+ 
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
       setCourses(courses.filter((course) => course._id !== courseToDelete._id));
       setShowDeleteModal(false);
       setCourseToDelete(null);

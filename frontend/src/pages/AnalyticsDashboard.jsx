@@ -12,8 +12,6 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { useQuery } from '@tanstack/react-query';
-import dashboardService from '../services/dashboardService';
 
 ChartJS.register(BarElement, ArcElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -55,9 +53,6 @@ const AnalyticsDashboard = () => {
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
       },
     ],
-  } : {
-    labels: [],
-    datasets: []
   };
 
   // Doughnut chart: Phân bố điểm số
@@ -69,9 +64,6 @@ const AnalyticsDashboard = () => {
         backgroundColor: ['#36A2EB', '#FFCE56', '#4BC0C0', '#FF6384'],
       },
     ],
-  } : {
-    labels: [],
-    datasets: []
   };
 
   return (

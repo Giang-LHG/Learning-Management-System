@@ -175,21 +175,14 @@ function App() {
           </Route>
 
           {/* --- INSTRUCTOR ROUTES --- */}
-          <Route path="/instructor" element={<ProtectedRoute allowedRoles={['instructor']}>
-            <Header />
-          </ProtectedRoute>} >
-            <Route path="Learning Analytics" element={< InstructorDashboard />} />
-            <Route path="chat" element={< InstructorCommunication />} />
-            <Route path="course" element={< CourseList />} />
-            <Route path="course/:id" element={< CourseDetail1 />} />
-          </Route>
+       
 
 
 
 
 
 
-          <Route path="/Learning Analytics" element={< InstructorDashboard />} />
+          <Route path="/instructor/LearningAnalytics" element={< InstructorDashboard />} />
           <Route path="/instructor/course" element={< CourseList />} />
           <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
           <Route path="/instructor/appeals" element={<InstructorAppealList />} />
