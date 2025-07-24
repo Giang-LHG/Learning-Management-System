@@ -91,7 +91,6 @@ const AssignmentModal = ({
     }
 
     const createNewQuestion = () => ({
-    
         text: "",
         options: [
             { key: "A", text: "" },
@@ -198,9 +197,39 @@ const AssignmentModal = ({
         return Object.keys(newErrors).length === 0
     }
 
-    const handleSubmit = async (e) => {
+    // ✅ FIX: Prevent event bubbling và đổi tên function
+    const handleAssignmentSubmit = async (e) => {
         e.preventDefault()
+        e.stopPropagation() // ✅ Ngăn event bubble lên form cha
 
+        if (!validateForm()) {
+            return
+        }
+
+        setIsSubmitting(true)
+
+        try {
+            // Simulate API call
+            await new Promise((resolve) => setTimeout(resolve, 500))
+
+            // Process form data
+            const assignmentData = {
+                ...formData,
+                dueDate: new Date(formData.dueDate).toISOString(),
+                questions: formData.type === "quiz" ? formData.questions.filter((q) => q.text.trim()) : undefined,
+            }
+
+            onSubmit(assignmentData)
+            handleClose()
+        } catch (error) {
+            console.error("Error saving assignment:", error)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    // ✅ FIX: Tách riêng hàm xử lý button click (không dùng form submit)
+    const handleSaveButtonClick = async () => {
         if (!validateForm()) {
             return
         }
@@ -254,7 +283,8 @@ const AssignmentModal = ({
                 </Modal.Title>
             </Modal.Header>
 
-            <Form onSubmit={handleSubmit}>
+            {/* ✅ FIX: Loại bỏ form wrapper hoặc prevent submit */}
+            <div onSubmit={handleAssignmentSubmit}>
                 <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
                     {/* Basic Information */}
                     <Card className="mb-4">
@@ -509,7 +539,12 @@ const AssignmentModal = ({
                             <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
                                 Cancel
                             </Button>
-                            <Button type="submit" variant="primary" disabled={isSubmitting}>
+                            {/* ✅ FIX: Dùng onClick thay vì type="submit" */}
+                            <Button 
+                                variant="primary" 
+                                disabled={isSubmitting}
+                                onClick={handleSaveButtonClick}
+                            >
                                 {isSubmitting ? (
                                     <>
                                         <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -525,7 +560,7 @@ const AssignmentModal = ({
                         </div>
                     </div>
                 </Modal.Footer>
-            </Form>
+            </div>
         </Modal>
     )
 }

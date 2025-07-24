@@ -248,7 +248,9 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
             return;
         }
 
-        setIsSubmitting(true);
+          if (isSubmitting) return; 
+
+    setIsSubmitting(true);
 
         try {
             const user = localStorage.getItem("user");
@@ -320,7 +322,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
             }
 
             // Thành công
-            onSubmit(response.data);
+           
             handleClose();
 
         } catch (error) {
