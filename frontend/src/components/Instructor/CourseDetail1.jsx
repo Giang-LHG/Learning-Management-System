@@ -116,19 +116,31 @@ console.log("students", students);
     };
 
     const handleSaveEdit = async (updatedCourseData) => {
-        try {
-            const response = await api.put(`/instructor/courses/${courseId}`, {
-  headers: {
-    'Authorization': `Bearer ${localStorage.getItem('token')}`
-  }, updatedCourseData
-});
+       try {
+            // Fix API call - đưa headers vào config object riêng
+            const response = await api.put(`/instructor/courses/${courseId}`, updatedCourseData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
             if (response.data.success) {
-                setCourse({
-                    ...course,
-                    ...updatedCourseData,
-                    updatedAt: new Date().toISOString(),
-                });
-                console.log("Course updated:", response.data);
+                // Update course state với data mới từ server
+                setCourse(response.data.data);
+                
+                // Cập nhật lại assignments nếu có thay đổi
+                if (updatedCourseData.assignments) {
+                    setAssignments(updatedCourseData.assignments);
+                    setAssignmentsState(updatedCourseData.assignments);
+                }
+                
+                console.log("Course updated successfully:", response.data);
+                
+                // Đóng modal
+                setShowEditModal(false);
+                
+                await fetchCourseDetail();
+                await fetchAssignments();
             }
         } catch (err) {
             console.error("Error updating course:", err);
@@ -438,7 +450,7 @@ console.log("students", students);
                                                 </div>
                                             </div>
                                             <Badge bg="warning" text="dark" className="fs-6">
-                                                {Array.isArray(course.term) ? course.term.join(" - ") : course.term}
+                                                {Array.isArray(course.term) ? course.term[course.term.length - 1] : course.term}
                                             </Badge>
                                         </div>
                                     </Card.Header>

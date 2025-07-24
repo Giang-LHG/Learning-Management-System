@@ -384,7 +384,7 @@ exports.getCoursesByInstructor = async (req, res) => {
 exports.updateCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { title, description, startDate, endDate, credits, term } = req.body;
+    const { title, description, startDate, endDate, credits, term, modules,lessons,assignments } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(courseId)) {
       return res.status(400).json({
@@ -421,7 +421,15 @@ exports.updateCourse = async (req, res) => {
     if (endDate) course.endDate = endDate;
     if (credits !== undefined) course.credits = credits;
     if (term) course.term = Array.isArray(term) ? term : [term];
+  if (modules) {
+      course.modules = modules;
+      course.markModified('modules');
+    }
 
+    if (assignments) {
+      course.assignments = assignments;
+      course.markModified('assignments');
+    }
     await course.save();
 
     const populatedCourse = await Course.findById(course._id)

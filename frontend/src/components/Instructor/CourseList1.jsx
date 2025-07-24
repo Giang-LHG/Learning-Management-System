@@ -55,7 +55,11 @@ const token = localStorage.getItem("token");
           console.log("Error set: No instructorId in user");
           return;
         }
-        const response = await api.get(`/instructor/courses/instructor/${instructorId}`);
+        const response = await api.get(`/instructor/courses/instructor/${instructorId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         console.log("API Response received:", response.data);
         if (response.data.success) {
           setCourses(response.data.data || []);
@@ -131,7 +135,11 @@ const token = localStorage.getItem("token");
   const handleSubmitEditCourse = async (updatedCourseData) => {
     console.log("handleSubmitEditCourse triggered with data:", updatedCourseData);
     try {
-      const response = await api.put(`/instructor/courses/${courseToEdit._id}`, updatedCourseData);
+      const response = await api.put(`/instructor/courses/${courseToEdit._id}`,updatedCourseData,  {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        } );
       console.log("API Response for update:", response.data);
       if (response.data.success) {
         setCourses((prevCourses) =>
