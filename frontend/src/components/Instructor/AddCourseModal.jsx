@@ -1,9 +1,11 @@
-"use client"
 
-import { useState } from "react"
-import { Modal, Form, Button, Row, Col, Alert, Nav, Tab } from "react-bootstrap"
-import { Calendar, BookOpen, FileText, Plus, Trash2, CheckCircle } from "lucide-react"
-import AssignmentManager from "./assignment-manager"
+"use client";
+
+import { useState } from "react";
+import { Modal, Form, Button, Row, Col, Alert, Nav, Tab } from "react-bootstrap";
+import { Calendar, BookOpen, FileText, Plus, Trash2, CheckCircle } from "lucide-react";
+import courseService from "../../services/courseService"; // Import courseService
+import AssignmentManager from "./assignment-manager";
 
 const AddCourseModal = ({ show, onHide, onSubmit }) => {
     const [formData, setFormData] = useState({
@@ -28,89 +30,87 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                 ],
             },
         ],
-        assignments: [], // Thêm assignments vào formData
-    })
+        assignments: [],
+    });
 
-    const [errors, setErrors] = useState({})
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [activeTab, setActiveTab] = useState("basic") // Tab navigation
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [activeTab, setActiveTab] = useState("basic");
 
-    // Mock data cho subjects và instructors
     const mockSubjects = [
         { _id: "64f8a1b2c3d4e5f6a7b8c9d2", name: "Công Nghệ Thông Tin", code: "CNTT" },
         { _id: "64f8a1b2c3d4e5f6a7b8c9d7", name: "Khoa Học Máy Tính", code: "KHMT" },
         { _id: "64f8a1b2c3d4e5f6a7b8c9d8", name: "Hệ Thống Thông Tin", code: "HTTT" },
-    ]
+    ];
 
     const mockInstructors = [
         { _id: "64f8a1b2c3d4e5f6a7b8c9d1", name: "Nguyễn Văn An", email: "nguyenvanan@example.com" },
         { _id: "64f8a1b2c3d4e5f6a7b8c9d4", name: "Trần Thị Bình", email: "tranthibinh@example.com" },
         { _id: "64f8a1b2c3d4e5f6a7b8c9d6", name: "Lê Văn Cường", email: "levancuong@example.com" },
-    ]
+    ];
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({
             ...prev,
             [field]: value,
-        }))
-        // Clear error when user starts typing
+        }));
         if (errors[field]) {
             setErrors((prev) => ({
                 ...prev,
                 [field]: "",
-            }))
+            }));
         }
-    }
+    };
 
     const handleTermChange = (index, value) => {
-        const newTerms = [...formData.term]
-        newTerms[index] = value
+        const newTerms = [...formData.term];
+        newTerms[index] = value;
         setFormData((prev) => ({
             ...prev,
             term: newTerms,
-        }))
-    }
+        }));
+    };
 
     const addTerm = () => {
         setFormData((prev) => ({
             ...prev,
             term: [...prev.term, ""],
-        }))
-    }
+        }));
+    };
 
     const removeTerm = (index) => {
         if (formData.term.length > 1) {
-            const newTerms = formData.term.filter((_, i) => i !== index)
+            const newTerms = formData.term.filter((_, i) => i !== index);
             setFormData((prev) => ({
                 ...prev,
                 term: newTerms,
-            }))
+            }));
         }
-    }
+    };
 
     const handleModuleChange = (moduleIndex, field, value) => {
-        const newModules = [...formData.modules]
+        const newModules = [...formData.modules];
         newModules[moduleIndex] = {
             ...newModules[moduleIndex],
             [field]: value,
-        }
+        };
         setFormData((prev) => ({
             ...prev,
             modules: newModules,
-        }))
-    }
+        }));
+    };
 
     const handleLessonChange = (moduleIndex, lessonIndex, field, value) => {
-        const newModules = [...formData.modules]
+        const newModules = [...formData.modules];
         newModules[moduleIndex].lessons[lessonIndex] = {
             ...newModules[moduleIndex].lessons[lessonIndex],
             [field]: value,
-        }
+        };
         setFormData((prev) => ({
             ...prev,
             modules: newModules,
-        }))
-    }
+        }));
+    };
 
     const addModule = () => {
         setFormData((prev) => ({
@@ -129,137 +129,142 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                     ],
                 },
             ],
-        }))
-    }
+        }));
+    };
 
     const removeModule = (moduleIndex) => {
         if (formData.modules.length > 1) {
-            const newModules = formData.modules.filter((_, i) => i !== moduleIndex)
+            const newModules = formData.modules.filter((_, i) => i !== moduleIndex);
             setFormData((prev) => ({
                 ...prev,
                 modules: newModules,
-            }))
+            }));
         }
-    }
+    };
 
     const addLesson = (moduleIndex) => {
-        const newModules = [...formData.modules]
+        const newModules = [...formData.modules];
         newModules[moduleIndex].lessons.push({
             title: "",
             content: "",
             isVisible: true,
-        })
+        });
         setFormData((prev) => ({
             ...prev,
             modules: newModules,
-        }))
-    }
+        }));
+    };
 
     const removeLesson = (moduleIndex, lessonIndex) => {
-        const newModules = [...formData.modules]
+        const newModules = [...formData.modules];
         if (newModules[moduleIndex].lessons.length > 1) {
-            newModules[moduleIndex].lessons = newModules[moduleIndex].lessons.filter((_, i) => i !== lessonIndex)
+            newModules[moduleIndex].lessons = newModules[moduleIndex].lessons.filter((_, i) => i !== lessonIndex);
             setFormData((prev) => ({
                 ...prev,
                 modules: newModules,
-            }))
+            }));
         }
-    }
+    };
 
-    // Assignment handlers
     const handleAssignmentsChange = (assignments) => {
         setFormData((prev) => ({
             ...prev,
             assignments: assignments,
-        }))
-    }
+        }));
+    };
 
     const validateForm = () => {
-        const newErrors = {}
+        const newErrors = {};
 
         if (!formData.title.trim()) {
-            newErrors.title = "Tên khóa học là bắt buộc"
+            newErrors.title = "Tên khóa học là bắt buộc";
         }
 
         if (!formData.subjectId) {
-            newErrors.subjectId = "Vui lòng chọn môn học"
+            newErrors.subjectId = "Vui lòng chọn môn học";
         }
 
         if (!formData.instructorId) {
-            newErrors.instructorId = "Vui lòng chọn giảng viên"
+            newErrors.instructorId = "Vui lòng chọn giảng viên";
         }
 
         if (!formData.startDate) {
-            newErrors.startDate = "Ngày bắt đầu là bắt buộc"
+            newErrors.startDate = "Ngày bắt đầu là bắt buộc";
         }
 
         if (!formData.endDate) {
-            newErrors.endDate = "Ngày kết thúc là bắt buộc"
+            newErrors.endDate = "Ngày kết thúc là bắt buộc";
         }
 
         if (formData.startDate && formData.endDate && new Date(formData.startDate) >= new Date(formData.endDate)) {
-            newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu"
+            newErrors.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
         }
 
         if (formData.credits <= 0) {
-            newErrors.credits = "Số tín chỉ phải lớn hơn 0"
+            newErrors.credits = "Số tín chỉ phải lớn hơn 0";
         }
 
         if (formData.term.some((term) => !term.trim())) {
-            newErrors.term = "Tất cả học kỳ phải được điền"
+            newErrors.term = "Tất cả học kỳ phải được điền";
         }
 
-        // Validate modules
         formData.modules.forEach((module, moduleIndex) => {
             if (!module.title.trim()) {
-                newErrors[`module_${moduleIndex}_title`] = "Tên chương là bắt buộc"
+                newErrors[`module_${moduleIndex}_title`] = "Tên chương là bắt buộc";
             }
 
             module.lessons.forEach((lesson, lessonIndex) => {
                 if (!lesson.title.trim()) {
-                    newErrors[`lesson_${moduleIndex}_${lessonIndex}_title`] = "Tên bài học là bắt buộc"
+                    newErrors[`lesson_${moduleIndex}_${lessonIndex}_title`] = "Tên bài học là bắt buộc";
                 }
-            })
-        })
+            });
+        });
 
-        // Validate assignments
         formData.assignments.forEach((assignment, assignmentIndex) => {
             if (!assignment.title.trim()) {
-                newErrors[`assignment_${assignmentIndex}_title`] = "Tên bài tập là bắt buộc"
+                newErrors[`assignment_${assignmentIndex}_title`] = "Tên bài tập là bắt buộc";
             }
             if (!assignment.dueDate) {
-                newErrors[`assignment_${assignmentIndex}_dueDate`] = "Hạn nộp là bắt buộc"
+                newErrors[`assignment_${assignmentIndex}_dueDate`] = "Hạn nộp là bắt buộc";
             }
             if (assignment.type === "quiz" && (!assignment.questions || assignment.questions.length === 0)) {
-                newErrors[`assignment_${assignmentIndex}_questions`] = "Bài tập trắc nghiệm phải có ít nhất 1 câu hỏi"
+                newErrors[`assignment_${assignmentIndex}_questions`] = "Bài tập trắc nghiệm phải có ít nhất 1 câu hỏi";
             }
-        })
+        });
 
-        setErrors(newErrors)
-        return Object.keys(newErrors).length === 0
-    }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const handleSubmit = async (e) => {
-        e.preventDefault()
+        e.preventDefault();
 
         if (!validateForm()) {
-            return
+            return;
         }
 
-        setIsSubmitting(true)
+        setIsSubmitting(true);
 
         try {
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 1000))
+            const user = localStorage.getItem("user");
+            if (!user) {
+                setErrors({ api: "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại." });
+                setIsSubmitting(false);
+                return;
+            }
+            const parsedUser = JSON.parse(user);
+            const instructorId = parsedUser._id;
 
-            // Process form data
             const courseData = {
                 ...formData,
+                instructorId,
                 term: formData.term.filter((term) => term.trim()),
-                modules: formData.modules.map((module) => ({
-                    ...module,
-                    lessons: module.lessons.filter((lesson) => lesson.title.trim()),
-                })),
+                modules: formData.modules
+                    .filter((module) => module.title.trim())
+                    .map((module) => ({
+                        ...module,
+                        lessons: module.lessons.filter((lesson) => lesson.title.trim()),
+                    })),
                 assignments: formData.assignments.map((assignment) => ({
                     ...assignment,
                     _id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -267,16 +272,23 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                     submissions: 0,
                     totalStudents: 0,
                 })),
-            }
+            };
 
-            onSubmit(courseData)
-            handleClose()
+            const response = await courseService.createCourse(courseData);
+
+            if (response.success) {
+                onSubmit(response.data);
+                handleClose();
+            } else {
+                setErrors({ api: response.message || "Không thể tạo khóa học." });
+            }
         } catch (error) {
-            console.error("Error creating course:", error)
+            console.error("Error creating course:", error);
+            setErrors({ api: "Có lỗi xảy ra khi tạo khóa học. Vui lòng thử lại." });
         } finally {
-            setIsSubmitting(false)
+            setIsSubmitting(false);
         }
-    }
+    };
 
     const handleClose = () => {
         setFormData({
@@ -302,11 +314,11 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                 },
             ],
             assignments: [],
-        })
-        setErrors({})
-        setActiveTab("basic")
-        onHide()
-    }
+        });
+        setErrors({});
+        setActiveTab("basic");
+        onHide();
+    };
 
     return (
         <Modal show={show} onHide={handleClose} size="xl" centered>
@@ -319,7 +331,6 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
 
             <Form onSubmit={handleSubmit}>
                 <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
-                    {/* Tab Navigation */}
                     <Nav variant="tabs" activeKey={activeTab} onSelect={setActiveTab} className="mb-4">
                         <Nav.Item>
                             <Nav.Link eventKey="basic" className="d-flex align-items-center">
@@ -342,7 +353,6 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                     </Nav>
 
                     <Tab.Content>
-                        {/* Basic Information Tab */}
                         <Tab.Pane active={activeTab === "basic"}>
                             <div className="mb-4">
                                 <h5 className="fw-bold text-primary mb-3">
@@ -457,7 +467,6 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                 </Row>
                             </div>
 
-                            {/* Terms */}
                             <div className="mb-4">
                                 <h5 className="fw-bold text-primary mb-3">
                                     <Calendar size={20} className="me-2" />
@@ -493,7 +502,6 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                             </div>
                         </Tab.Pane>
 
-                        {/* Content Tab */}
                         <Tab.Pane active={activeTab === "content"}>
                             <div className="mb-4">
                                 <h5 className="fw-bold text-primary mb-3">
@@ -540,7 +548,6 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                             </Col>
                                         </Row>
 
-                                        {/* Lessons */}
                                         <div className="ms-3">
                                             <h6 className="fw-semibold mb-2">Bài học</h6>
                                             {module.lessons.map((lesson, lessonIndex) => (
@@ -617,7 +624,6 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                             </div>
                         </Tab.Pane>
 
-                        {/* Assignments Tab */}
                         <Tab.Pane active={activeTab === "assignments"}>
                             <AssignmentManager
                                 assignments={formData.assignments}
@@ -671,7 +677,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                 </Modal.Footer>
             </Form>
         </Modal>
-    )
-}
+    );
+};
 
-export default AddCourseModal
+export default AddCourseModal;

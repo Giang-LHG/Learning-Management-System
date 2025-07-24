@@ -32,7 +32,7 @@ const CourseList = () => {
         const user = localStorage.getItem("user");
         console.log("User from localStorage:", user);
         if (!user) {
-          setError("Không tìm thấy user trong localStorage. Vui lòng đăng nhập lại.");
+          setError("No user found in localStorage. Please log in again.");
           setLoading(false);
           console.log("Error set: No user in localStorage");
           return;
@@ -42,7 +42,7 @@ const CourseList = () => {
           parsedUser = JSON.parse(user);
           console.log("Parsed User:", parsedUser);
         } catch (e) {
-          setError("Dữ liệu user trong localStorage không hợp lệ.");
+          setError("Invalid user data in localStorage.");
           setLoading(false);
           console.log("Error parsing user:", e.message);
           return;
@@ -50,7 +50,7 @@ const CourseList = () => {
         const instructorId = parsedUser._id;
         console.log("Extracted instructorId:", instructorId);
         if (!instructorId) {
-          setError("Không tìm thấy instructorId trong user. Vui lòng kiểm tra dữ liệu.");
+          setError("No instructorId found in user data. Please check the data.");
           setLoading(false);
           console.log("Error set: No instructorId in user");
           return;
@@ -61,12 +61,12 @@ const CourseList = () => {
           setCourses(response.data.data || []);
           console.log("Courses set:", response.data.data);
         } else {
-          setError(response.data.message || "Không tải được danh sách khóa học.");
+          setError(response.data.message || "Unable to load course list.");
           console.log("Error set from API:", response.data.message);
         }
       } catch (err) {
         console.error("Error fetching courses:", err.response ? err.response.data : err.message);
-        setError("Có lỗi xảy ra khi tải danh sách khóa học. Vui lòng thử lại.");
+        setError("An error occurred while loading the course list. Please try again.");
         console.log("Catch block error:", err.message);
       } finally {
         setLoading(false);
@@ -87,7 +87,7 @@ const CourseList = () => {
       const user = localStorage.getItem("user");
       console.log("User from localStorage for submission:", user);
       if (!user) {
-        setError("Không tìm thấy user để tạo khóa học.");
+        setError("No user found to create the course.");
         console.log("Error set: No user for submission");
         return;
       }
@@ -102,7 +102,7 @@ const CourseList = () => {
         console.log("Courses updated after creation:", [response.data.data, ...courses]);
       }
     } catch (err) {
-      setError("Không thể tạo khóa học.");
+      setError("Unable to create course.");
       console.error("Error creating course:", err.response ? err.response.data : err.message);
       console.log("Catch block error for create:", err.message);
     }
@@ -137,7 +137,7 @@ const CourseList = () => {
         console.log("Courses updated after edit:", courses);
       }
     } catch (err) {
-      setError("Không thể cập nhật khóa học.");
+      setError("Unable to update course.");
       console.error("Error updating course:", err.response ? err.response.data : err.message);
       console.log("Catch block error for update:", err.message);
     }
@@ -158,14 +158,14 @@ const CourseList = () => {
       setCourseToDelete(null);
       console.log("Courses after deletion:", courses);
     } catch (err) {
-      setError("Không thể xóa khóa học.");
+      setError("Unable to delete course.");
       console.error("Error deleting course:", err.response ? err.response.data : err.message);
       console.log("Catch block error for delete:", err.message);
     }
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -175,15 +175,15 @@ const CourseList = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case "active":
-        return <Badge bg="success">Đang hoạt động</Badge>;
+        return <Badge bg="success">Active</Badge>;
       case "draft":
-        return <Badge bg="secondary">Bản nháp</Badge>;
+        return <Badge bg="secondary">Draft</Badge>;
       case "completed":
-        return <Badge bg="primary">Hoàn thành</Badge>;
+        return <Badge bg="primary">Completed</Badge>;
       default:
         return (
           <Badge bg="light" text="dark">
-            Không xác định
+            Unknown
           </Badge>
         );
     }
@@ -244,8 +244,8 @@ const CourseList = () => {
                     <BookOpen className="text-white" size={24} />
                   </div>
                   <div>
-                    <h1 className="text-white mb-0 h2 fw-bold">Quản Lý Khóa Học</h1>
-                    <p className="text-white-50 mb-0 small">Danh sách tất cả khóa học trong hệ thống</p>
+                    <h1 className="text-white mb-0 h2 fw-bold">Course Management</h1>
+                    <p className="text-white-50 mb-0 small">List of all courses in the system</p>
                   </div>
                 </div>
               </Col>
@@ -256,7 +256,7 @@ const CourseList = () => {
                   onClick={handleAddCourse}
                 >
                   <Plus size={16} className="me-2" />
-                  Thêm khóa học
+                  Add Course
                 </Button>
               </Col>
             </Row>
@@ -270,18 +270,18 @@ const CourseList = () => {
                 <div className="d-flex align-items-center">
                   <div className="d-flex align-items-center me-4">
                     <BookOpen size={20} className="me-2" />
-                    <span className="fw-semibold">Tổng số khóa học: {courses.length}</span>
+                    <span className="fw-semibold">Total Courses: {courses.length}</span>
                   </div>
                   <div className="d-flex align-items-center">
                     <GraduationCap size={20} className="me-2" />
                     <span className="fw-semibold">
-                      Đang hoạt động: {courses.filter((c) => c.status === "active").length}
+                      Active: {courses.filter((c) => c.status === "active").length}
                     </span>
                   </div>
                 </div>
               </Col>
               <Col xs="auto">
-                <small>Cập nhật lần cuối: {new Date().toLocaleDateString("vi-VN")}</small>
+                <small>Last Updated: {new Date().toLocaleDateString("en-US")}</small>
               </Col>
             </Row>
           </Container>
@@ -293,7 +293,7 @@ const CourseList = () => {
               {error}
             </Alert>
           )}
-          {loading && <Alert variant="info">Đang tải danh sách khóa học...</Alert>}
+          {loading && <Alert variant="info">Loading course list...</Alert>}
 
           <Row className="mb-4">
             <Col md={8}>
@@ -305,7 +305,7 @@ const CourseList = () => {
                 />
                 <Form.Control
                   type="text"
-                  placeholder="Tìm kiếm khóa học, giảng viên, môn học..."
+                  placeholder="Search courses, instructors, or subjects..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{
@@ -328,13 +328,13 @@ const CourseList = () => {
                   className="w-100"
                 >
                   <Filter size={16} className="me-2" />
-                  Lọc theo trạng thái
+                  Filter by Status
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
-                  <Dropdown.Item onClick={() => setFilterStatus("all")}>Tất cả</Dropdown.Item>
-                  <Dropdown.Item onClick={() => setFilterStatus("active")}>Đang hoạt động</Dropdown.Item>
-                  <Dropdown.Item onClick={() => setFilterStatus("draft")}>Bản nháp</Dropdown.Item>
-                  <Dropdown.Item onClick={() => setFilterStatus("completed")}>Hoàn thành</Dropdown.Item>
+                  <Dropdown.Item onClick={() => setFilterStatus("all")}>All</Dropdown.Item>
+                  <Dropdown.Item onClick={() => setFilterStatus("active")}>Active</Dropdown.Item>
+                  <Dropdown.Item onClick={() => setFilterStatus("draft")}>Draft</Dropdown.Item>
+                  <Dropdown.Item onClick={() => setFilterStatus("completed")}>Completed</Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
             </Col>
@@ -347,16 +347,16 @@ const CourseList = () => {
                   <div className="p-4 rounded-circle d-inline-flex mb-3" style={{ background: "#f8f9fa" }}>
                     <BookOpen size={32} className="text-muted" />
                   </div>
-                  <h3 className="h5 fw-semibold text-dark mb-2">Không tìm thấy khóa học</h3>
+                  <h3 className="h5 fw-semibold text-dark mb-2">No Courses Found</h3>
                   <p className="text-muted mb-3">
                     {searchTerm
-                      ? "Không có khóa học nào phù hợp với từ khóa tìm kiếm."
-                      : "Chưa có khóa học nào được tạo."}
+                      ? "No courses match the search criteria."
+                      : "No courses have been created yet."}
                   </p>
                   {!searchTerm && (
                     <Button style={{ background: "#fbbf24", border: "none", color: "#000" }} onClick={handleAddCourse}>
                       <Plus size={16} className="me-2" />
-                      Tạo khóa học đầu tiên
+                      Create Your First Course
                     </Button>
                   )}
                 </Card.Body>
@@ -390,7 +390,7 @@ const CourseList = () => {
                             <div className="d-flex align-items-center text-muted small">
                               <span>{course.subjectId?.code || "N/A"}</span>
                               <span className="mx-2">•</span>
-                              <span>{course.credits || 0} tín chỉ</span>
+                              <span>{course.credits || 0} credits</span>
                             </div>
                           </div>
                           {getStatusBadge(course.status)}
@@ -406,13 +406,13 @@ const CourseList = () => {
                             overflow: "hidden",
                           }}
                         >
-                          {course.description || "Không có mô tả"}
+                          {course.description || "No description available"}
                         </p>
 
                         <div className="mb-3">
                           <div className="d-flex align-items-center mb-2 small">
                             <User size={14} className="text-muted me-2" />
-                            <span className="text-muted">{course.instructorId?.profile?.fullName || "Không xác định"}</span>
+                            <span className="text-muted">{course.instructorId?.profile?.fullName || "Unknown"}</span>
                           </div>
                           <div className="d-flex align-items-center mb-2 small">
                             <Calendar size={14} className="text-muted me-2" />
@@ -423,7 +423,7 @@ const CourseList = () => {
                           <div className="d-flex align-items-center small">
                             <BookOpen size={14} className="text-muted me-2" />
                             <span className="text-muted">
-                              {course.modules?.length || 0} chương • {totalLessons(course.modules)} bài học
+                              {course.modules?.length || 0} modules • {totalLessons(course.modules)} lessons
                             </span>
                           </div>
                         </div>
@@ -437,7 +437,7 @@ const CourseList = () => {
                             onClick={() => handleViewCourse(course._id)}
                           >
                             <Eye size={14} className="me-1" />
-                            Chi tiết
+                            Details
                           </Button>
                           <Button
                             size="sm"
@@ -468,23 +468,23 @@ const CourseList = () => {
         />
         <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
           <Modal.Header closeButton>
-            <Modal.Title>Xác nhận xóa khóa học</Modal.Title>
+            <Modal.Title>Confirm Course Deletion</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Alert variant="warning" className="mb-3">
-              <strong>Cảnh báo!</strong> Hành động này không thể hoàn tác.
+              <strong>Warning!</strong> This action cannot be undone.
             </Alert>
             <p>
-              Bạn có chắc chắn muốn xóa khóa học <strong>"{courseToDelete?.title || "Không xác định"}"</strong>? Tất cả dữ
-              liệu liên quan sẽ bị xóa vĩnh viễn.
+              Are you sure you want to delete the course <strong>"{courseToDelete?.title || "Unknown"}"</strong>? All related
+              data will be permanently deleted.
             </p>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-              Hủy
+              Cancel
             </Button>
             <Button variant="danger" onClick={confirmDelete}>
-              Xóa khóa học
+              Delete Course
             </Button>
           </Modal.Footer>
         </Modal>
