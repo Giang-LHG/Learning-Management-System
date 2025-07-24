@@ -136,7 +136,7 @@ const token = localStorage.getItem('token');
                 <FiZap size={48} className="text-white" />
               </div>
               <h1 className="text-white fw-bold mb-2 display-5">
-                Trình Chỉnh Sửa Khóa Học
+               Edit
               </h1>
               <p className="text-white-50 fs-5">Manage your course</p>
             </div>

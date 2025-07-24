@@ -6,16 +6,21 @@ import { FiEye, FiMessageSquare, FiClock, FiUser, FiZap, FiAlertCircle } from 'r
 
 export default function InstructorAppealList() {
   const navigate = useNavigate();
-  const INSTRUCTOR_ID = "60a000000000000000000003";
+  const user = JSON.parse(localStorage.getItem('user'));
+const INSTRUCTOR_ID = user._id;
   const [appeals, setAppeals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-
+const token = localStorage.getItem('token');
   const fetchAppeals = useCallback(async () => {
     setIsLoading(true);
     setError('');
     try {
-      const res = await axios.get(`/api/instructor/appeals?instructorId=${INSTRUCTOR_ID}`);
+      const res = await axios.get(`/api/instructor/appeals?instructorId=${INSTRUCTOR_ID}`, {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
       if (res.data.success) {
         setAppeals(res.data.data);
       }
