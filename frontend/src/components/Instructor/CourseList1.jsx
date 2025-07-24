@@ -98,7 +98,7 @@ const token = localStorage.getItem("token");
       const parsedUser = JSON.parse(user);
       const instructorId = parsedUser._id;
       console.log("InstructorId for submission:", instructorId);
-      const response = await api.post("/instructor/courses", { ...courseData, instructorId , 
+      const response = await api.post("/instructor/courses", { ...courseData,
  
   headers: {
     'Authorization': `Bearer ${token}`

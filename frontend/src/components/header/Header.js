@@ -194,33 +194,7 @@ function Header() {
         </nav>
 
         <div className="header-actions">
-          {/* Search Button */}
-          <button
-            className="search-button"
-            onClick={() => setSearchOpen(!searchOpen)}
-            aria-label="Search"
-          >
-            <FiSearch size={20} />
-          </button>
-
-          {/* Search Input */}
-          <form
-            ref={searchRef}
-            className={`search-container ${searchOpen ? 'open' : ''}`}
-            onSubmit={handleSearch}
-          >
-            <input
-              type="text"
-              placeholder="Search courses, instructors..."
-              className="search-input"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit" className="search-submit" aria-label="Submit search">
-              <FiSearch size={18} />
-            </button>
-          </form>
-
+       
           {/* User Actions */}
           <div className="user-actions" ref={userDropdownRef}>
             {isAuthenticated ? (

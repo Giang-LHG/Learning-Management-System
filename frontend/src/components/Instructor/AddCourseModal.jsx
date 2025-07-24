@@ -510,16 +510,14 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                                 size="sm"
                                                 onClick={() => removeTerm(index)}
                                                 disabled={formData.term.length === 1}
+                                                hidden = "true"
                                             >
                                                 <Trash2 size={16} />
                                             </Button>
                                         </Col>
                                     </Row>
                                 ))}
-                                <Button variant="outline-primary" size="sm" onClick={addTerm}>
-                                    <Plus size={16} className="me-1" />
-                                    Add Term
-                                </Button>
+                              
                                 {errors.term && <div className="text-danger small mt-1">{errors.term}</div>}
                             </div>
                         </Tab.Pane>

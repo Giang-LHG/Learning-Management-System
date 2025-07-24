@@ -9,9 +9,19 @@ const Subject = require("../../models/Subject");
 exports.createCourse = async (req, res) => {
   try {
     const { title, description, instructorId, subjectId, startDate, endDate, credits, term, modules } = req.body;
-const sId = new mongoose.Types.ObjectId(subjectId);
+console.log(subjectId);
+console.log("typeof subjectId:", typeof subjectId, "value:", subjectId);
+console.log(instructorId);
+console.log("typeof instructorId:", typeof instructorId, "value:", instructorId);
+const sId =
+  typeof subjectId === "object" && subjectId !== null
+    ? new mongoose.Types.ObjectId(subjectId._id)
+    : new mongoose.Types.ObjectId(subjectId);
+    const iId =  typeof instructorId === "object" && instructorId !== null
+    ? new mongoose.Types.ObjectId(instructorId._id)
+    : new mongoose.Types.ObjectId(instructorId);
     // Check permission
-    if (req.user.role !== "instructor" && req.user._id !== instructorId) {
+    if (req.user.role !== "instructor" && req.user._id !== iId) {
       return res.status(403).json({
         success: false,
         message: "Bạn chỉ có thể tạo khóa học cho chính mình.",
@@ -26,13 +36,7 @@ const sId = new mongoose.Types.ObjectId(subjectId);
       });
     }
 
-    // Validate ObjectIds
-    if (!mongoose.Types.ObjectId.isValid(instructorId) || !mongoose.Types.ObjectId.isValid(subjectId)) {
-      return res.status(400).json({
-        success: false,
-        message: "ID không hợp lệ",
-      });
-    }
+
 
     // Validate dates
     if (new Date(startDate) >= new Date(endDate)) {
@@ -73,7 +77,7 @@ const sId = new mongoose.Types.ObjectId(subjectId);
     const course = new Course({
       title,
       description: description || "",
-      instructorId,
+      instructorId:iId,
       subjectId: sId,
       startDate,
       endDate,

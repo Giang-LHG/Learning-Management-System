@@ -200,6 +200,7 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                         <Button
                                                             variant="outline-secondary"
                                                             size="sm"
+                                                            hidden ="true"
                                                             onClick={() => toggleAssignmentVisibility(index)}
                                                             title={assignment.isVisible ? "Hide assignment" : "Show assignment"}
                                                         >
