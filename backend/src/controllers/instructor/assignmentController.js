@@ -118,7 +118,7 @@ const createNewTerm = async (req, res) => {
 
     // Check permission
     const course = await Course.findById(assignment.courseId)
-    if (req.user.role === "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
+    if (req.user.role !== "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Bạn chỉ có thể chỉnh sửa assignments của khóa học mình dạy",
@@ -173,7 +173,7 @@ const getAssignmentsForCalendar = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found" })
     }
 
-    if (req.user.role === "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
+    if (req.user.role !== "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Bạn chỉ có thể xem assignments của khóa học mình dạy",
@@ -211,7 +211,7 @@ const toggleAssignmentVisibility = async (req, res) => {
 
     // Check permission
     const course = await Course.findById(assignment.courseId)
-    if (req.user.role === "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
+    if (req.user.role !== "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Bạn chỉ có thể chỉnh sửa assignments của khóa học mình dạy",

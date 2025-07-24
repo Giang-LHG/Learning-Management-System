@@ -462,7 +462,7 @@ exports.getCourseParticipants = async (req, res) => {
       });
     }
 
-    if (req.user.role === "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
+    if (req.user.role !== "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Bạn chỉ có thể xem danh sách học viên của khóa học mình dạy",
@@ -516,7 +516,7 @@ exports.deleteCourse = async (req, res) => {
       });
     }
 
-    if (req.user.role === "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
+    if (req.user.role !== "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Bạn chỉ có thể xóa khóa học của mình",
@@ -638,7 +638,7 @@ exports.createNewTerm = async (req, res) => {
       });
     }
 
-    if (req.user.role === "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
+    if (req.user.role !== "instructor" && course.instructorId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Bạn chỉ có thể tạo kỳ học mới cho khóa học của mình",
