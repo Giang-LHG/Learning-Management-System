@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { Container, Row, Col, Card, Button, Badge, Modal, Alert, Table, Form, Nav, Tab, Spinner } from "react-bootstrap"
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Container, Row, Col, Card, Button, Badge, Modal, Alert, Table, Form, Nav, Tab, Spinner } from "react-bootstrap";
 import {
     ArrowLeft,
     Edit,
@@ -27,18 +27,17 @@ import EditCourseModal from "./EditCourseModal"
 import AssignmentDetailModal from "./assignment-detail-modal"
 import api from "../../utils/api"
 import assignmentService from "../../services/assignmentService"
-import AssignmentManager from './assignment-manager';
 
 const CourseDetail = () => {
-    const { id: courseId } = useParams()
-    const navigate = useNavigate()
+    const { id: courseId } = useParams();
+    const navigate = useNavigate();
 
     // State for course data
-    const [course, setCourse] = useState(null)
-    const [assignments, setAssignments] = useState([])
-    const [students, setStudents] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
+    const [course, setCourse] = useState(null);
+    const [assignments, setAssignments] = useState([]);
+    const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Modal states
     const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -46,227 +45,225 @@ const CourseDetail = () => {
     const [showEditModal, setShowEditModal] = useState(false)
     const [showRemoveStudentModal, setShowRemoveStudentModal] = useState(false)
     const [showAssignmentDetail, setShowAssignmentDetail] = useState(false)
-    const [showAssignmentModal, setShowAssignmentModal] = useState(false);
 
     // Other states
     const [searchStudent, setSearchStudent] = useState("")
     const [studentToRemove, setStudentToRemove] = useState(null)
     const [activeTab, setActiveTab] = useState("overview")
     const [selectedAssignment, setSelectedAssignment] = useState(null)
-    const [assignmentsState, setAssignmentsState] = useState(assignments || []);
 
     useEffect(() => {
         if (courseId) {
-            fetchCourseDetail()
-            fetchAssignments()
-            fetchEnrolledStudents()
+            fetchCourseDetail();
+            fetchAssignments();
+            fetchEnrolledStudents();
         }
-    }, [courseId])
+    }, [courseId]);
 
     const fetchCourseDetail = async () => {
         try {
-            setLoading(true)
-            const response = await api.get(`/instructor/courses/${courseId}`)
+            setLoading(true);
+            const response = await api.get(`/instructor/courses/${courseId}`);
             if (response.data.success) {
-                setCourse(response.data.data)
+                setCourse(response.data.data);
             } else {
-                setError(response.data.message || "Không thể tải chi tiết khóa học")
+                setError(response.data.message || "Unable to load course details");
             }
         } catch (err) {
-            console.error("Error fetching course detail:", err)
-            setError("Có lỗi xảy ra khi tải chi tiết khóa học")
+            console.error("Error fetching course detail:", err);
+            setError("An error occurred while loading course details");
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }
+    };
 
     const fetchAssignments = async () => {
         try {
-            const response = await assignmentService.getAssignmentsByCourse(courseId)
+            const response = await assignmentService.getAssignmentsByCourse(courseId);
             if (response.success) {
-                setAssignments(response.data || [])
+                setAssignments(response.data || []);
             }
         } catch (err) {
-            console.error("Error fetching assignments:", err)
+            console.error("Error fetching assignments:", err);
         }
-    }
+    };
 
     const fetchEnrolledStudents = async () => {
         try {
-            const response = await api.get(`/instructor/courses/${courseId}/students`)
+            const response = await api.get(`/instructor/courses/${courseId}/students`);
             if (response.data.success) {
-                setStudents(response.data.data || [])
+                setStudents(response.data.data || []);
             }
         } catch (err) {
-            console.error("Error fetching enrolled students:", err)
+            console.error("Error fetching enrolled students:", err);
         }
-    }
+    };
 
     const handleEdit = () => {
-        setShowEditModal(true)
-    }
+        setShowEditModal(true);
+    };
 
     const handleSaveEdit = async (updatedCourseData) => {
         try {
-            const response = await api.put(`/instructor/courses/${courseId}`, updatedCourseData)
+            const response = await api.put(`/instructor/courses/${courseId}`, updatedCourseData);
             if (response.data.success) {
                 setCourse({
                     ...course,
                     ...updatedCourseData,
                     updatedAt: new Date().toISOString(),
-                })
-                console.log("Khóa học đã được cập nhật:", updatedCourseData)
+                });
+                console.log("Course updated:", updatedCourseData);
             }
         } catch (err) {
-            console.error("Error updating course:", err)
-            setError("Không thể cập nhật khóa học")
+            console.error("Error updating course:", err);
+            setError("Unable to update course");
         }
-    }
+    };
 
     const handleDelete = async () => {
         try {
-            const response = await api.delete(`/instructor/courses/${courseId}`)
+            const response = await api.delete(`/instructor/courses/${courseId}`);
             if (response.data.success) {
-                console.log("Xóa khóa học:", courseId)
-                navigate("/instructor/course")
+                console.log("Course deleted:", courseId);
+                navigate("/instructor/course");
             }
         } catch (err) {
-            console.error("Error deleting course:", err)
-            setError("Không thể xóa khóa học")
+            console.error("Error deleting course:", err);
+            setError("Unable to delete course");
         }
-        setShowDeleteModal(false)
-    }
+        setShowDeleteModal(false);
+    };
 
     const handleBack = () => {
-        navigate(`/instructor/course`)
-    }
+        navigate(`/instructor/course`);
+    };
 
     const handleViewAssignmentDetail = (assignment) => {
-        setSelectedAssignment(assignment)
-        setShowAssignmentDetail(true)
-    }
+        setSelectedAssignment(assignment);
+        setShowAssignmentDetail(true);
+    };
 
     const handleToggleAssignmentVisibility = async (assignmentId, currentVisibility) => {
         try {
-            await assignmentService.toggleAssignmentVisibility(assignmentId, !currentVisibility)
-            fetchAssignments() // Refresh assignments
+            await assignmentService.toggleAssignmentVisibility(assignmentId, !currentVisibility);
+            fetchAssignments(); // Refresh assignments
         } catch (err) {
-            console.error("Error toggling assignment visibility:", err)
-            setError("Không thể cập nhật trạng thái hiển thị assignment")
+            console.error("Error toggling assignment visibility:", err);
+            setError("Unable to update assignment visibility");
         }
-    }
+    };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "Chưa xác định"
+        if (!dateString) return "Not specified";
         try {
-            return new Date(dateString).toLocaleDateString("vi-VN", {
+            return new Date(dateString).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
-            })
+            });
         } catch (error) {
-            console.error("Error formatting date:", error)
-            return "Ngày không hợp lệ"
+            console.error("Error formatting date:", error);
+            return "Invalid date";
         }
-    }
+    };
 
     const formatDateTime = (dateString) => {
-        if (!dateString) return "Chưa xác định"
+        if (!dateString) return "Not specified";
         try {
-            return new Date(dateString).toLocaleDateString("vi-VN", {
+            return new Date(dateString).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "short",
                 day: "numeric",
                 hour: "2-digit",
                 minute: "2-digit",
-            })
+            });
         } catch (error) {
-            console.error("Error formatting datetime:", error)
-            return "Thời gian không hợp lệ"
+            console.error("Error formatting datetime:", error);
+            return "Invalid datetime";
         }
-    }
+    };
 
     const isOverdue = (dueDate) => {
-        return new Date(dueDate) < new Date()
-    }
+        return new Date(dueDate) < new Date();
+    };
 
     const getDaysUntilDue = (dueDate) => {
-        const now = new Date()
-        const due = new Date(dueDate)
-        const diffTime = due - now
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-        return diffDays
-    }
+        const now = new Date();
+        const due = new Date(dueDate);
+        const diffTime = due - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    };
 
     const getAssignmentStatusBadge = (assignment) => {
         if (!assignment.isVisible) {
-            return <Badge bg="secondary">Ẩn</Badge>
+            return <Badge bg="secondary">Hidden</Badge>;
         }
 
         if (isOverdue(assignment.dueDate)) {
-            return <Badge bg="danger">Quá hạn</Badge>
+            return <Badge bg="danger">Overdue</Badge>;
         }
 
-        const daysLeft = getDaysUntilDue(assignment.dueDate)
+        const daysLeft = getDaysUntilDue(assignment.dueDate);
         if (daysLeft <= 3) {
-            return <Badge bg="warning">Sắp hết hạn</Badge>
+            return <Badge bg="warning">Due Soon</Badge>;
         }
 
-        return <Badge bg="success">Đang mở</Badge>
-    }
+        return <Badge bg="success">Open</Badge>;
+    };
 
     const getSubmissionRate = (assignment) => {
-        if (!assignment.totalStudents || assignment.totalStudents === 0) return 0
-        return Math.round((assignment.submissions / assignment.totalStudents) * 100)
-    }
+        if (!assignment.totalStudents || assignment.totalStudents === 0) return 0;
+        return Math.round((assignment.submissions / assignment.totalStudents) * 100);
+    };
 
     const handleShowStudents = () => {
-        setShowStudentsModal(true)
-    }
+        setShowStudentsModal(true);
+    };
 
     const handleRemoveStudent = (student) => {
-        setStudentToRemove(student)
-        setShowRemoveStudentModal(true)
-    }
+        setStudentToRemove(student);
+        setShowRemoveStudentModal(true);
+    };
 
     const confirmRemoveStudent = async () => {
         if (studentToRemove) {
             try {
-                const response = await api.delete(`/instructor/courses/${courseId}/students/${studentToRemove._id}`)
+                const response = await api.delete(`/instructor/courses/${courseId}/students/${studentToRemove._id}`);
                 if (response.data.success) {
-                    setStudents(students.filter((student) => student._id !== studentToRemove._id))
-                    setShowRemoveStudentModal(false)
-                    setStudentToRemove(null)
+                    setStudents(students.filter((student) => student._id !== studentToRemove._id));
+                    setShowRemoveStudentModal(false);
+                    setStudentToRemove(null);
                 }
             } catch (err) {
-                console.error("Error removing student:", err)
-                setError("Không thể xóa học sinh khỏi khóa học")
+                console.error("Error removing student:", err);
+                setError("Unable to remove student from the course");
             }
         }
-    }
+    };
 
     const filteredStudents = students.filter(
         (student) =>
             student.profile?.fullName?.toLowerCase().includes(searchStudent.toLowerCase()) ||
             student.email?.toLowerCase().includes(searchStudent.toLowerCase()) ||
             student.username?.toLowerCase().includes(searchStudent.toLowerCase()),
-    )
+    );
 
     const handleDeleteAssignment = async (assignmentId) => {
         try {
-            const response = await assignmentService.deleteAssignment(assignmentId)
+            const response = await assignmentService.deleteAssignment(assignmentId);
             if (response.success) {
-                setAssignments(assignments.filter((assignment) => assignment._id !== assignmentId))
-                console.log("Assignment deleted successfully")
+                setAssignments(assignments.filter((assignment) => assignment._id !== assignmentId));
+                console.log("Assignment deleted successfully");
             } else {
-                console.error("Failed to delete assignment:", response.message)
-                setError(response.message || "Failed to delete assignment")
+                console.error("Failed to delete assignment:", response.message);
+                setError(response.message || "Failed to delete assignment");
             }
         } catch (error) {
-            console.error("Error deleting assignment:", error)
-            setError("Error deleting assignment")
+            console.error("Error deleting assignment:", error);
+            setError("Error deleting assignment");
         }
-    }
+    };
 
     // Loading state
     if (loading) {
@@ -276,11 +273,11 @@ const CourseDetail = () => {
                 <Container className="py-5">
                     <div className="text-center">
                         <Spinner animation="border" variant="primary" size="lg" />
-                        <p className="mt-3 h5">Đang tải chi tiết khóa học...</p>
+                        <p className="mt-3 h5">Loading course details...</p>
                     </div>
                 </Container>
             </div>
-        )
+        );
     }
 
     // Error state
@@ -290,16 +287,16 @@ const CourseDetail = () => {
                 <Header />
                 <Container className="py-5">
                     <Alert variant="danger" className="text-center">
-                        <h5>Có lỗi xảy ra</h5>
+                        <h5>An Error Occurred</h5>
                         <p>{error}</p>
                         <Button variant="outline-danger" onClick={handleBack}>
                             <ArrowLeft size={16} className="me-2" />
-                            Quay lại danh sách khóa học
+                            Back to Course List
                         </Button>
                     </Alert>
                 </Container>
             </div>
-        )
+        );
     }
 
     // No course found
@@ -309,47 +306,47 @@ const CourseDetail = () => {
                 <Header />
                 <Container className="py-5">
                     <Alert variant="warning" className="text-center">
-                        <h5>Không tìm thấy khóa học</h5>
+                        <h5>Course Not Found</h5>
                         <Button variant="outline-warning" onClick={handleBack}>
                             <ArrowLeft size={16} className="me-2" />
-                            Quay lại danh sách khóa học
+                            Back to Course List
                         </Button>
                     </Alert>
                 </Container>
             </div>
-        )
+        );
     }
 
-    const totalLessons = course.modules?.reduce((total, module) => total + (module.lessons?.length || 0), 0) || 0
-    const totalAssignments = assignments.length
-    const activeAssignments = assignments.filter((a) => a.isVisible && !isOverdue(a.dueDate)).length
+    const totalLessons = course.modules?.reduce((total, module) => total + (module.lessons?.length || 0), 0) || 0;
+    const totalAssignments = assignments.length;
+    const activeAssignments = assignments.filter((a) => a.isVisible && !isOverdue(a.dueDate)).length;
 
     const containerStyle = {
         minHeight: "100vh",
         background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #8b5cf6 100%)",
         paddingTop: "0",
-    }
+    };
 
     const headerStyle = {
         background: "rgba(255, 255, 255, 0.1)",
         backdropFilter: "blur(10px)",
         borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
         padding: "1rem 0",
-    }
+    };
 
     const cardStyle = {
         background: "rgba(255, 255, 255, 0.95)",
         backdropFilter: "blur(10px)",
         border: "none",
         boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
-    }
+    };
 
     const statsCardStyle = {
         background: "#fbbf24",
         color: "#000",
         border: "none",
         boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
-    }
+    };
 
     return (
         <div>
@@ -363,20 +360,20 @@ const CourseDetail = () => {
                                 <div className="d-flex align-items-center">
                                     <Button variant="link" className="text-white p-0 me-3 text-decoration-none" onClick={handleBack}>
                                         <ArrowLeft size={20} className="me-2" />
-                                        Quay lại
+                                        Back
                                     </Button>
                                     <div
                                         style={{ width: "1px", height: "24px", background: "rgba(255,255,255,0.3)" }}
                                         className="me-3"
                                     ></div>
-                                    <h1 className="text-white mb-0 h4 fw-semibold">Chi Tiết Khóa Học</h1>
+                                    <h1 className="text-white mb-0 h4 fw-semibold">Course Details</h1>
                                 </div>
                             </Col>
                             <Col xs="auto">
                                 <div className="d-flex gap-2">
                                     <Button variant="info" onClick={handleShowStudents} className="text-white">
                                         <Users size={16} className="me-2" />
-                                        Học sinh ({students.length})
+                                        Students ({students.length})
                                     </Button>
                                     <Button
                                         style={{ background: "#fbbf24", border: "none", color: "#000" }}
@@ -384,11 +381,11 @@ const CourseDetail = () => {
                                         onClick={handleEdit}
                                     >
                                         <Edit size={16} className="me-2" />
-                                        Chỉnh sửa
+                                        Edit
                                     </Button>
                                     <Button variant="danger" onClick={() => setShowDeleteModal(true)}>
                                         <Trash2 size={16} className="me-2" />
-                                        Xóa
+                                        Delete
                                     </Button>
                                 </div>
                             </Col>
@@ -415,7 +412,7 @@ const CourseDetail = () => {
                                                     </div>
                                                     <div className="d-flex align-items-center">
                                                         <GraduationCap size={16} className="me-1" />
-                                                        {course.credits} tín chỉ
+                                                        {course.credits} credits
                                                     </div>
                                                 </div>
                                             </div>
@@ -426,7 +423,7 @@ const CourseDetail = () => {
                                     </Card.Header>
                                     <Card.Body>
                                         <div className="mb-4">
-                                            <h5 className="fw-semibold text-dark mb-2">Mô tả khóa học</h5>
+                                            <h5 className="fw-semibold text-dark mb-2">Course Description</h5>
                                             <p className="text-muted lh-lg">{course.description}</p>
                                         </div>
 
@@ -439,7 +436,7 @@ const CourseDetail = () => {
                                                         <User size={16} style={{ color: "#6366f1" }} />
                                                     </div>
                                                     <div>
-                                                        <small className="text-muted d-block">Giảng viên</small>
+                                                        <small className="text-muted d-block">Instructor</small>
                                                         <span className="fw-medium text-dark">{course.instructorId?.name}</span>
                                                     </div>
                                                 </div>
@@ -450,7 +447,7 @@ const CourseDetail = () => {
                                                         <Calendar size={16} style={{ color: "#16a34a" }} />
                                                     </div>
                                                     <div>
-                                                        <small className="text-muted d-block">Thời gian</small>
+                                                        <small className="text-muted d-block">Duration</small>
                                                         <span className="fw-medium text-dark">
                                                             {formatDate(course.startDate)} - {formatDate(course.endDate)}
                                                         </span>
@@ -474,13 +471,13 @@ const CourseDetail = () => {
                                             <Nav.Item>
                                                 <Nav.Link eventKey="overview" className="d-flex align-items-center">
                                                     <BookOpen size={16} className="me-2" />
-                                                    Nội dung khóa học
+                                                    Course Content
                                                 </Nav.Link>
                                             </Nav.Item>
                                             <Nav.Item>
                                                 <Nav.Link eventKey="assignments" className="d-flex align-items-center">
                                                     <FileText size={16} className="me-2" />
-                                                    Bài tập ({totalAssignments})
+                                                    Assignments ({totalAssignments})
                                                 </Nav.Link>
                                             </Nav.Item>
                                         </Nav>
@@ -492,9 +489,9 @@ const CourseDetail = () => {
                                                 <div className="d-flex align-items-center justify-content-between mb-3">
                                                     <div className="d-flex align-items-center">
                                                         <BookOpen size={20} className="me-2" />
-                                                        <h5 className="mb-0">Chương trình học</h5>
+                                                        <h5 className="mb-0">Course Curriculum</h5>
                                                     </div>
-                                                    <Badge bg="secondary">{course.modules?.length || 0} chương</Badge>
+                                                    <Badge bg="secondary">{course.modules?.length || 0} modules</Badge>
                                                 </div>
                                                 <div className="d-grid gap-3">
                                                     {course.modules && course.modules.length > 0 ? (
@@ -502,10 +499,10 @@ const CourseDetail = () => {
                                                             <div key={module.moduleId} className="p-3 rounded" style={{ background: "#f8f9fa" }}>
                                                                 <div className="d-flex justify-content-between align-items-center mb-3">
                                                                     <h6 className="fw-semibold text-dark mb-0">
-                                                                        Chương {index + 1}: {module.title}
+                                                                        Module {index + 1}: {module.title}
                                                                     </h6>
                                                                     <Badge bg={module.isVisible ? "success" : "secondary"}>
-                                                                        {module.isVisible ? "Hiển thị" : "Ẩn"}
+                                                                        {module.isVisible ? "Visible" : "Hidden"}
                                                                     </Badge>
                                                                 </div>
                                                                 <div className="d-grid gap-2">
@@ -526,13 +523,13 @@ const CourseDetail = () => {
                                                                                 <span className="text-muted small">{lesson.title}</span>
                                                                                 {!lesson.isVisible && (
                                                                                     <Badge bg="light" text="dark" className="ms-2 small">
-                                                                                        Ẩn
+                                                                                        Hidden
                                                                                     </Badge>
                                                                                 )}
                                                                             </div>
                                                                         ))
                                                                     ) : (
-                                                                        <div className="text-muted small">Chưa có bài học nào</div>
+                                                                        <div className="text-muted small">No lessons available</div>
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -540,8 +537,8 @@ const CourseDetail = () => {
                                                     ) : (
                                                         <div className="text-center py-5">
                                                             <BookOpen size={48} className="text-muted mb-3" />
-                                                            <h5 className="text-muted mb-2">Chưa có chương học nào</h5>
-                                                            <p className="text-muted mb-3">Bắt đầu tạo nội dung cho khóa học của bạn</p>
+                                                            <h5 className="text-muted mb-2">No Modules Available</h5>
+                                                            <p className="text-muted mb-3">Start creating content for your course</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -552,20 +549,156 @@ const CourseDetail = () => {
                                                 <div className="mb-4">
                                                     <h5 className="mb-0 d-flex align-items-center">
                                                         <FileText size={20} className="me-2" />
-                                                        Danh sách bài tập
-                                                    </h5>
+                                                        <h5 className="mb-0">Danh sách bài tập</h5>
+                                                    </div>
+                                                    <Button
+                                                        style={{ background: "#fbbf24", border: "none", color: "#000" }}
+                                                        size="sm"
+                                                        onClick={() => navigate(`/instructor/assignments/create/${courseId}`)}
+                                                    >
+                                                        <Plus size={16} className="me-2" />
+                                                        Thêm bài tập
+                                                    </Button>
                                                 </div>
-                                                {/* AssignmentManager tích hợp trực tiếp, không còn UI dư thừa */}
-                                                <div id="assignment-manager-section">
-                                                    <AssignmentManager
-                                                        assignments={assignmentsState}
-                                                        onChange={setAssignmentsState}
-                                                        errors={{}}
-                                                        courseStartDate={course.startDate}
-                                                        courseEndDate={course.endDate}
-                                                        courseTerm={course.term}
-                                                    />
-                                                </div>
+
+                                                {assignments.length === 0 ? (
+                                                    <div className="text-center py-5">
+                                                        <div className="p-4 rounded-circle d-inline-flex mb-3" style={{ background: "#f8f9fa" }}>
+                                                            <FileText size={32} className="text-muted" />
+                                                        </div>
+                                                        <h5 className="text-muted mb-2">Chưa có bài tập nào</h5>
+                                                        <p className="text-muted mb-3">Tạo bài tập đầu tiên để học sinh có thể luyện tập</p>
+                                                        <Button
+                                                            style={{ background: "#fbbf24", border: "none", color: "#000" }}
+                                                            onClick={() => navigate(`/instructor/assignments/create/${courseId}`)}
+                                                        >
+                                                            <Plus size={16} className="me-2" />
+                                                            Tạo bài tập đầu tiên
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="d-grid gap-3">
+                                                        {assignments.map((assignment, index) => (
+                                                            <motion.div
+                                                                key={assignment._id}
+                                                                initial={{ opacity: 0, x: -20 }}
+                                                                animate={{ opacity: 1, x: 0 }}
+                                                                transition={{ duration: 0.3, delay: index * 0.1 }}
+                                                            >
+                                                                <Card className="border">
+                                                                    <Card.Body>
+                                                                        <Row className="align-items-center">
+                                                                            <Col md={8}>
+                                                                                <div className="d-flex align-items-start">
+                                                                                    <div
+                                                                                        className="p-2 rounded me-3 flex-shrink-0"
+                                                                                        style={{
+                                                                                            background: assignment.type === "quiz" ? "#e0f2fe" : "#f3e8ff",
+                                                                                        }}
+                                                                                    >
+                                                                                        {assignment.type === "quiz" ? (
+                                                                                            <CheckCircle size={20} style={{ color: "#0891b2" }} />
+                                                                                        ) : (
+                                                                                            <FileText size={20} style={{ color: "#7c3aed" }} />
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <div className="flex-grow-1">
+                                                                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                                                                            <h6 className="fw-semibold mb-0">{assignment.title}</h6>
+                                                                                            {getAssignmentStatusBadge(assignment)}
+                                                                                            <Badge
+                                                                                                bg={assignment.type === "quiz" ? "info" : "primary"}
+                                                                                                className="small"
+                                                                                            >
+                                                                                                {assignment.type === "quiz" ? "Trắc nghiệm" : "Tự luận"}
+                                                                                            </Badge>
+                                                                                        </div>
+                                                                                        <p className="text-muted small mb-2 lh-sm">{assignment.description}</p>
+                                                                                        <div className="d-flex align-items-center gap-3 small text-muted">
+                                                                                            <div className="d-flex align-items-center">
+                                                                                                <Clock size={14} className="me-1" />
+                                                                                                <span>
+                                                                                                    Hạn nộp: {formatDateTime(assignment.dueDate)}
+                                                                                                    {!isOverdue(assignment.dueDate) && (
+                                                                                                        <span className="ms-1">
+                                                                                                            ({getDaysUntilDue(assignment.dueDate)} ngày)
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            {assignment.type === "quiz" && assignment.questions && (
+                                                                                                <div className="d-flex align-items-center">
+                                                                                                    <FileText size={14} className="me-1" />
+                                                                                                    <span>{assignment.questions.length} câu hỏi</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </Col>
+                                                                            <Col md={4}>
+                                                                                <div className="text-end">
+                                                                                    <div className="mb-2">
+                                                                                        <div className="d-flex align-items-center justify-content-end gap-2 mb-1">
+                                                                                            <BarChart3 size={14} className="text-muted" />
+                                                                                            <span className="small text-muted">Tỷ lệ nộp bài</span>
+                                                                                        </div>
+                                                                                        <div className="d-flex align-items-center justify-content-end">
+                                                                                            <div className="progress me-2" style={{ width: "60px", height: "6px" }}>
+                                                                                                <div
+                                                                                                    className="progress-bar"
+                                                                                                    style={{
+                                                                                                        width: `${getSubmissionRate(assignment)}%`,
+                                                                                                        backgroundColor:
+                                                                                                            getSubmissionRate(assignment) >= 80
+                                                                                                                ? "#16a34a"
+                                                                                                                : getSubmissionRate(assignment) >= 50
+                                                                                                                    ? "#eab308"
+                                                                                                                    : "#dc2626",
+                                                                                                    }}
+                                                                                                />
+                                                                                            </div>
+                                                                                            <span className="small fw-medium">
+                                                                                                {assignment.submissions || 0}/{students.length}(
+                                                                                                {getSubmissionRate(assignment)}%)
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="d-flex gap-1 justify-content-end">
+                                                                                        <Button
+                                                                                            variant="outline-primary"
+                                                                                            size="sm"
+                                                                                            title="Xem chi tiết"
+                                                                                            onClick={() => handleViewAssignmentDetail(assignment)}
+                                                                                        >
+                                                                                            <Eye size={14} />
+                                                                                        </Button>
+                                                                                        <Button
+                                                                                            variant="outline-secondary"
+                                                                                            size="sm"
+                                                                                            title="Chỉnh sửa"
+                                                                                            onClick={() => navigate(`/instructor/assignments/edit/${assignment._id}`)}
+                                                                                        >
+                                                                                            <Edit size={14} />
+                                                                                        </Button>
+                                                                                        <Button
+                                                                                            variant="outline-danger"
+                                                                                            size="sm"
+                                                                                            title="Xóa"
+                                                                                            onClick={() => handleDeleteAssignment(assignment._id)}
+                                                                                        >
+                                                                                            <Trash2 size={14} />
+                                                                                        </Button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </Col>
+                                                                        </Row>
+                                                                    </Card.Body>
+                                                                </Card>
+                                                            </motion.div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </Tab.Pane>
                                         </Tab.Content>
                                     </Card.Body>
@@ -583,24 +716,24 @@ const CourseDetail = () => {
                             >
                                 <Card style={statsCardStyle} className="mb-4">
                                     <Card.Header className="border-0">
-                                        <Card.Title className="h5 fw-bold mb-0">Thống kê khóa học</Card.Title>
+                                        <Card.Title className="h5 fw-bold mb-0">Course Statistics</Card.Title>
                                     </Card.Header>
                                     <Card.Body>
                                         <div className="d-grid gap-3">
                                             <div className="d-flex justify-content-between align-items-center">
-                                                <span className="fw-medium">Tổng số chương:</span>
+                                                <span className="fw-medium">Total Modules:</span>
                                                 <span className="h4 fw-bold mb-0">{course.modules?.length || 0}</span>
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center">
-                                                <span className="fw-medium">Tổng số bài học:</span>
+                                                <span className="fw-medium">Total Lessons:</span>
                                                 <span className="h4 fw-bold mb-0">{totalLessons}</span>
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center">
-                                                <span className="fw-medium">Số bài tập:</span>
+                                                <span className="fw-medium">Total Assignments:</span>
                                                 <span className="h4 fw-bold mb-0">{totalAssignments}</span>
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center">
-                                                <span className="fw-medium">Số tín chỉ:</span>
+                                                <span className="fw-medium">Credits:</span>
                                                 <span className="h4 fw-bold mb-0">{course.credits}</span>
                                             </div>
                                         </div>
@@ -618,32 +751,32 @@ const CourseDetail = () => {
                                     <Card.Header className="border-0">
                                         <Card.Title className="h5 mb-0 d-flex align-items-center">
                                             <FileText size={18} className="me-2" />
-                                            Thống kê bài tập
+                                            Assignment Statistics
                                         </Card.Title>
                                     </Card.Header>
                                     <Card.Body>
                                         <div className="d-grid gap-3">
                                             <div className="d-flex justify-content-between align-items-center">
-                                                <span className="fw-medium">Đang mở:</span>
+                                                <span className="fw-medium">Open:</span>
                                                 <Badge bg="success" className="fs-6">
                                                     {activeAssignments}
                                                 </Badge>
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center">
-                                                <span className="fw-medium">Quá hạn:</span>
+                                                <span className="fw-medium">Overdue:</span>
                                                 <Badge bg="danger" className="fs-6">
                                                     {assignments.filter((a) => isOverdue(a.dueDate)).length}
                                                 </Badge>
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center">
-                                                <span className="fw-medium">Bản nháp:</span>
+                                                <span className="fw-medium">Draft:</span>
                                                 <Badge bg="secondary" className="fs-6">
                                                     {assignments.filter((a) => !a.isVisible).length}
                                                 </Badge>
                                             </div>
                                             <hr className="my-2" />
                                             <div className="d-flex justify-content-between align-items-center">
-                                                <span className="fw-medium">Tỷ lệ nộp bài trung bình:</span>
+                                                <span className="fw-medium">Average Submission Rate:</span>
                                                 <span className="fw-bold text-primary">
                                                     {assignments.length > 0
                                                         ? Math.round(
@@ -666,24 +799,24 @@ const CourseDetail = () => {
                             >
                                 <Card style={cardStyle}>
                                     <Card.Header className="border-0">
-                                        <Card.Title className="h5 mb-0">Thông tin bổ sung</Card.Title>
+                                        <Card.Title className="h5 mb-0">Additional Information</Card.Title>
                                     </Card.Header>
                                     <Card.Body>
                                         <div className="d-grid gap-3">
                                             <div>
-                                                <small className="text-muted d-block mb-1">Mã môn học</small>
+                                                <small className="text-muted d-block mb-1">Subject Code</small>
                                                 <span className="fw-medium">{course.subjectId?.code}</span>
                                             </div>
                                             <div>
-                                                <small className="text-muted d-block mb-1">Email giảng viên</small>
+                                                <small className="text-muted d-block mb-1">Instructor Email</small>
                                                 <span className="fw-medium text-primary">{course.instructorId?.email}</span>
                                             </div>
                                             <div>
-                                                <small className="text-muted d-block mb-1">Ngày tạo</small>
+                                                <small className="text-muted d-block mb-1">Created At</small>
                                                 <span className="fw-medium">{formatDate(course.createdAt)}</span>
                                             </div>
                                             <div>
-                                                <small className="text-muted d-block mb-1">Cập nhật lần cuối</small>
+                                                <small className="text-muted d-block mb-1">Last Updated</small>
                                                 <span className="fw-medium">{formatDate(course.updatedAt)}</span>
                                             </div>
                                         </div>
@@ -715,7 +848,7 @@ const CourseDetail = () => {
                     <Modal.Header closeButton>
                         <Modal.Title className="d-flex align-items-center">
                             <Users size={20} className="me-2" />
-                            Danh sách học sinh - {course.title}
+                            Student List - {course.title}
                         </Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
@@ -729,7 +862,7 @@ const CourseDetail = () => {
                                 />
                                 <Form.Control
                                     type="text"
-                                    placeholder="Tìm kiếm học sinh theo tên, email, username..."
+                                    placeholder="Search students by name, email, or username..."
                                     value={searchStudent}
                                     onChange={(e) => setSearchStudent(e.target.value)}
                                     style={{ paddingLeft: "40px" }}
@@ -743,9 +876,9 @@ const CourseDetail = () => {
                             style={{ background: "#f8f9fa" }}
                         >
                             <div>
-                                <strong>Tổng số học sinh: {students.length}</strong>
+                                <strong>Total Students: {students.length}</strong>
                             </div>
-                            <div className="text-muted small">Kết quả tìm kiếm: {filteredStudents.length}</div>
+                            <div className="text-muted small">Search Results: {filteredStudents.length}</div>
                         </div>
 
                         {/* Students Table */}
@@ -753,12 +886,12 @@ const CourseDetail = () => {
                             <div className="text-center py-4">
                                 <Users size={48} className="text-muted mb-3" />
                                 <h5 className="text-muted">
-                                    {searchStudent ? "Không tìm thấy học sinh" : "Chưa có học sinh nào tham gia"}
+                                    {searchStudent ? "No Students Found" : "No Students Enrolled"}
                                 </h5>
                                 <p className="text-muted">
                                     {searchStudent
-                                        ? "Thử thay đổi từ khóa tìm kiếm"
-                                        : "Học sinh sẽ xuất hiện ở đây khi họ đăng ký khóa học"}
+                                        ? "Try changing the search keyword"
+                                        : "Students will appear here once they enroll in the course"}
                                 </p>
                             </div>
                         ) : (
@@ -766,10 +899,10 @@ const CourseDetail = () => {
                                 <Table hover responsive>
                                     <thead style={{ background: "#f8f9fa", position: "sticky", top: 0 }}>
                                         <tr>
-                                            <th>Học sinh</th>
-                                            <th>Thông tin liên hệ</th>
-                                            <th>Ngày tham gia</th>
-                                            <th className="text-center">Hành động</th>
+                                            <th>Student</th>
+                                            <th>Contact Information</th>
+                                            <th>Enrollment Date</th>
+                                            <th className="text-center">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -796,7 +929,7 @@ const CourseDetail = () => {
                                                     <div>
                                                         <div className="small">{student.email}</div>
                                                         <Badge bg={student.profile?.parentIds?.length > 0 ? "info" : "secondary"} className="small">
-                                                            {student.profile?.parentIds?.length > 0 ? "Có phụ huynh" : "Độc lập"}
+                                                            {student.profile?.parentIds?.length > 0 ? "Has Parent" : "Independent"}
                                                         </Badge>
                                                     </div>
                                                 </td>
@@ -804,8 +937,8 @@ const CourseDetail = () => {
                                                     <div className="small">
                                                         <div>{formatDateTime(student.enrolledAt)}</div>
                                                         <div className="text-muted">
-                                                            Tham gia {Math.ceil((new Date() - new Date(student.enrolledAt)) / (1000 * 60 * 60 * 24))}{" "}
-                                                            ngày
+                                                            Enrolled for {Math.ceil((new Date() - new Date(student.enrolledAt)) / (1000 * 60 * 60 * 24))}{" "}
+                                                            days
                                                         </div>
                                                     </div>
                                                 </td>
@@ -814,7 +947,7 @@ const CourseDetail = () => {
                                                         variant="outline-danger"
                                                         size="sm"
                                                         onClick={() => handleRemoveStudent(student)}
-                                                        title="Xóa học sinh khỏi khóa học"
+                                                        title="Remove student from course"
                                                     >
                                                         <X size={14} />
                                                     </Button>
@@ -829,10 +962,10 @@ const CourseDetail = () => {
                     <Modal.Footer>
                         <div className="d-flex justify-content-between w-100 align-items-center">
                             <div className="text-muted small">
-                                Hiển thị {filteredStudents.length} / {students.length} học sinh
+                                Showing {filteredStudents.length} / {students.length} students
                             </div>
                             <Button variant="secondary" onClick={() => setShowStudentsModal(false)}>
-                                Đóng
+                                Close
                             </Button>
                         </div>
                     </Modal.Footer>
@@ -841,17 +974,17 @@ const CourseDetail = () => {
                 {/* Remove Student Confirmation Modal */}
                 <Modal show={showRemoveStudentModal} onHide={() => setShowRemoveStudentModal(false)} centered>
                     <Modal.Header closeButton>
-                        <Modal.Title>Xác nhận xóa học sinh</Modal.Title>
+                        <Modal.Title>Confirm Student Removal</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
                         <Alert variant="warning" className="mb-3">
-                            <strong>Cảnh báo!</strong> Học sinh sẽ bị xóa khỏi khóa học.
+                            <strong>Warning!</strong> The student will be removed from the course.
                         </Alert>
                         {studentToRemove && (
                             <div>
                                 <p>
-                                    Bạn có chắc chắn muốn xóa học sinh{" "}
-                                    <strong>"{studentToRemove.profile?.fullName || studentToRemove.username}"</strong> khỏi khóa học này?
+                                    Are you sure you want to remove the student{" "}
+                                    <strong>"{studentToRemove.profile?.fullName || studentToRemove.username}"</strong> from this course?
                                 </p>
                                 <div className="d-flex align-items-center p-3 rounded" style={{ background: "#f8f9fa" }}>
                                     <img
@@ -866,7 +999,7 @@ const CourseDetail = () => {
                                     <div>
                                         <div className="fw-semibold">{studentToRemove.profile?.fullName || studentToRemove.username}</div>
                                         <div className="text-muted small">{studentToRemove.email}</div>
-                                        <div className="text-muted small">Tham gia từ: {formatDateTime(studentToRemove.enrolledAt)}</div>
+                                        <div className="text-muted small">Enrolled since: {formatDateTime(studentToRemove.enrolledAt)}</div>
                                     </div>
                                 </div>
                             </div>
@@ -874,10 +1007,10 @@ const CourseDetail = () => {
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowRemoveStudentModal(false)}>
-                            Hủy
+                            Cancel
                         </Button>
                         <Button variant="danger" onClick={confirmRemoveStudent}>
-                            Xóa học sinh
+                            Remove Student
                         </Button>
                     </Modal.Footer>
                 </Modal>
@@ -885,29 +1018,29 @@ const CourseDetail = () => {
                 {/* Delete Confirmation Modal */}
                 <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
                     <Modal.Header closeButton>
-                        <Modal.Title>Xác nhận xóa khóa học</Modal.Title>
+                        <Modal.Title>Confirm Course Deletion</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
                         <Alert variant="danger" className="mb-3">
-                            <strong>Cảnh báo!</strong> Hành động này không thể hoàn tác.
+                            <strong>Warning!</strong> This action cannot be undone.
                         </Alert>
                         <p>
-                            Bạn có chắc chắn muốn xóa khóa học <strong>"{course.title}"</strong>? Tất cả dữ liệu liên quan sẽ bị xóa
-                            vĩnh viễn.
+                            Are you sure you want to delete the course <strong>"{course.title}"</strong>? All related data will be
+                            permanently deleted.
                         </p>
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-                            Hủy
+                            Cancel
                         </Button>
                         <Button variant="danger" onClick={handleDelete}>
-                            Xóa khóa học
+                            Delete Course
                         </Button>
                     </Modal.Footer>
                 </Modal>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default CourseDetail
+export default CourseDetail;
