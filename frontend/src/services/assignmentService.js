@@ -1,6 +1,6 @@
 import api from "../utils/api"
 
-export const assignmentService = {
+ const assignmentService = {
     // Lấy tất cả assignments của một khóa học
     getAssignmentsByCourse: async (courseId) => {
         const response = await api.get(`/instructor/assignments/course/${courseId}`)

@@ -7,7 +7,7 @@ import AssignmentManager from "./assignment-manager"
 import api from '../../utils/api'
 import { useSelector } from 'react-redux';
 import courseService from "../../services/courseService"
-
+import assignmentService from "../../services/assignmentService"
 const AddCourseModal = ({ show, onHide, onSubmit }) => {
     // Lấy user hiện tại từ redux hoặc localStorage
     const user = useSelector(state => state.auth.user) || JSON.parse(localStorage.getItem('user') || '{}');
@@ -285,7 +285,27 @@ console.log(formData);
             };
 
             const response = await courseService.createCourse(courseData);
+  const courseId = response.data._id;
 
+        // B2: Tạo assignments nếu có
+        if (formData.assignments.length > 0) {
+            for (const assignment of formData.assignments) {
+                const payload = {
+                    courseId,
+                    title: assignment.title,
+                    description: assignment.description || "",
+                    type: assignment.type,
+                    dueDate: assignment.dueDate,
+                };
+
+                // Nếu là quiz thì gửi thêm câu hỏi
+                if (assignment.type === "quiz") {
+                    payload.questions = assignment.questions || [];
+                }
+
+                await assignmentService.createAssignment(payload);
+            }
+        }
             if (response.success) {
                 onSubmit(response.data);
                 handleClose();

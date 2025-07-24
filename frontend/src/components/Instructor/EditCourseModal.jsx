@@ -111,7 +111,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
     const addModule = () => {
         const newModule = {
             moduleId: Date.now().toString(),
-            title: "Chương mới",
+            title: "New module",
             isVisible: true,
             lessons: [],
         }
@@ -144,7 +144,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
     const addLesson = (moduleIndex) => {
         const newLesson = {
             lessonId: Date.now().toString(),
-            title: "Bài học mới",
+            title: "New lesson",
             content: "",
             isVisible: true,
         }
@@ -192,7 +192,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
             <Modal.Header closeButton>
                 <Modal.Title className="d-flex align-items-center">
                     <Edit size={20} className="me-2" />
-                    Chỉnh sửa khóa học - {courseData?.title}
+                    Edit course - {courseData?.title}
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body style={{ maxHeight: "70vh", overflowY: "auto" }}>
@@ -201,19 +201,19 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                     <Nav.Item>
                         <Nav.Link eventKey="basic" className="d-flex align-items-center">
                             <FileText size={16} className="me-2" />
-                            Thông tin cơ bản
+                            Basic information
                         </Nav.Link>
                     </Nav.Item>
                     <Nav.Item>
                         <Nav.Link eventKey="content" className="d-flex align-items-center">
                             <BookOpen size={16} className="me-2" />
-                            Nội dung khóa học
+                            Detail information of course
                         </Nav.Link>
                     </Nav.Item>
                     <Nav.Item>
                         <Nav.Link eventKey="assignments" className="d-flex align-items-center">
                             <CheckCircle size={16} className="me-2" />
-                            Bài tập ({editForm.assignments.length})
+                         Assigment ({editForm.assignments.length})
                         </Nav.Link>
                     </Nav.Item>
                 </Nav>
@@ -224,18 +224,18 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                         <Tab.Pane active={activeTab === "basic"}>
                             <Card className="mb-4">
                                 <Card.Header>
-                                    <h5 className="mb-0">Thông tin cơ bản</h5>
+                                    <h5 className="mb-0">Basic information</h5>
                                 </Card.Header>
                                 <Card.Body>
                                     <Row>
                                         <Col md={12} className="mb-3">
                                             <Form.Group>
-                                                <Form.Label>Tên khóa học *</Form.Label>
+                                                <Form.Label>Course Name *</Form.Label>
                                                 <Form.Control
                                                     type="text"
                                                     value={editForm.title}
                                                     onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                                                    placeholder="Nhập tên khóa học"
+                                                    placeholder="Enter course name"
                                                     isInvalid={!!errors.title}
                                                 />
                                                 <Form.Control.Feedback type="invalid">{errors.title}</Form.Control.Feedback>
@@ -243,19 +243,19 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                         </Col>
                                         <Col md={12} className="mb-3">
                                             <Form.Group>
-                                                <Form.Label>Mô tả khóa học</Form.Label>
+                                                <Form.Label>Course Description</Form.Label>
                                                 <Form.Control
                                                     as="textarea"
                                                     rows={4}
                                                     value={editForm.description}
                                                     onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                                                    placeholder="Nhập mô tả khóa học"
+                                                    placeholder="Enter course description"
                                                 />
                                             </Form.Group>
                                         </Col>
                                         <Col md={4} className="mb-3">
                                             <Form.Group>
-                                                <Form.Label>Số tín chỉ *</Form.Label>
+                                                <Form.Label>Credits *</Form.Label>
                                                 <Form.Control
                                                     type="number"
                                                     min="1"
@@ -269,7 +269,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                         </Col>
                                         <Col md={4} className="mb-3">
                                             <Form.Group>
-                                                <Form.Label>Ngày bắt đầu *</Form.Label>
+                                                <Form.Label>Starts Date*</Form.Label>
                                                 <Form.Control
                                                     type="date"
                                                     value={formatDateForInput(editForm.startDate)}
@@ -281,7 +281,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                         </Col>
                                         <Col md={4} className="mb-3">
                                             <Form.Group>
-                                                <Form.Label>Ngày kết thúc *</Form.Label>
+                                                <Form.Label>End Date *</Form.Label>
                                                 <Form.Control
                                                     type="date"
                                                     value={formatDateForInput(editForm.endDate)}
@@ -300,18 +300,18 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                         <Tab.Pane active={activeTab === "content"}>
                             <Card>
                                 <Card.Header className="d-flex justify-content-between align-items-center">
-                                    <h5 className="mb-0">Quản lý chương học</h5>
+                                    <h5 className="mb-0">Manage Module</h5>
                                     <Button variant="success" size="sm" onClick={addModule}>
                                         <Plus size={16} className="me-1" />
-                                        Thêm chương
+                                      Add module
                                     </Button>
                                 </Card.Header>
                                 <Card.Body>
                                     {editForm.modules.length === 0 ? (
                                         <div className="text-center py-4">
                                             <BookOpen size={48} className="text-muted mb-3" />
-                                            <h6 className="text-muted">Chưa có chương học nào</h6>
-                                            <p className="text-muted small">Nhấn "Thêm chương" để bắt đầu tạo nội dung khóa học</p>
+                                            <h6 className="text-muted">No module</h6>
+                                            <p className="text-muted small">CLick "Add module" to create module of course</p>
                                         </div>
                                     ) : (
                                         <Accordion>
@@ -320,13 +320,13 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                                     <Accordion.Header>
                                                         <div className="d-flex align-items-center justify-content-between w-100 me-3">
                                                             <span>
-                                                                Chương {moduleIndex + 1}: {module.title}
+                                                                Module {moduleIndex + 1}: {module.title}
                                                             </span>
                                                             <div className="d-flex align-items-center gap-2">
                                                                 <Badge bg={module.isVisible ? "success" : "secondary"}>
                                                                     {module.isVisible ? "Hiển thị" : "Ẩn"}
                                                                 </Badge>
-                                                                <Badge bg="info">{module.lessons.length} bài học</Badge>
+                                                                <Badge bg="info">{module.lessons.length} lesson</Badge>
                                                             </div>
                                                         </div>
                                                     </Accordion.Header>
@@ -334,18 +334,18 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                                         <Row className="mb-3">
                                                             <Col md={8}>
                                                                 <Form.Group>
-                                                                    <Form.Label>Tên chương *</Form.Label>
+                                                                    <Form.Label>Name of module *</Form.Label>
                                                                     <Form.Control
                                                                         type="text"
                                                                         value={module.title}
                                                                         onChange={(e) => updateModule(moduleIndex, "title", e.target.value)}
-                                                                        placeholder="Nhập tên chương"
+                                                                        placeholder="Enter name module"
                                                                     />
                                                                 </Form.Group>
                                                             </Col>
                                                             <Col md={2}>
                                                                 <Form.Group>
-                                                                    <Form.Label>Hiển thị</Form.Label>
+                                                                    <Form.Label>Show</Form.Label>
                                                                     <Form.Check
                                                                         type="switch"
                                                                         checked={module.isVisible}
@@ -368,16 +368,16 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                                         <hr />
 
                                                         <div className="d-flex justify-content-between align-items-center mb-3">
-                                                            <h6 className="mb-0">Bài học</h6>
+                                                            <h6 className="mb-0">Lessons</h6>
                                                             <Button variant="outline-primary" size="sm" onClick={() => addLesson(moduleIndex)}>
                                                                 <Plus size={14} className="me-1" />
-                                                                Thêm bài học
+                                                                Add lesson
                                                             </Button>
                                                         </div>
 
                                                         {module.lessons.length === 0 ? (
                                                             <div className="text-center py-3" style={{ background: "#f8f9fa" }}>
-                                                                <p className="text-muted small mb-0">Chưa có bài học nào trong chương này</p>
+                                                                <p className="text-muted small mb-0">No lessons</p>
                                                             </div>
                                                         ) : (
                                                             <div className="d-grid gap-3">
@@ -386,7 +386,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                                                         <Row>
                                                                             <Col md={6}>
                                                                                 <Form.Group className="mb-2">
-                                                                                    <Form.Label className="small">Tên bài học *</Form.Label>
+                                                                                    <Form.Label className="small">Name of lesson *</Form.Label>
                                                                                     <Form.Control
                                                                                         type="text"
                                                                                         size="sm"
@@ -400,7 +400,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                                                             </Col>
                                                                             <Col md={4}>
                                                                                 <Form.Group className="mb-2">
-                                                                                    <Form.Label className="small">Hiển thị</Form.Label>
+                                                                                    <Form.Label className="small">Show</Form.Label>
                                                                                     <div className="d-flex align-items-center">
                                                                                         <Form.Check
                                                                                             type="switch"
@@ -429,7 +429,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                                                             </Col>
                                                                             <Col md={12}>
                                                                                 <Form.Group>
-                                                                                    <Form.Label className="small">Nội dung bài học</Form.Label>
+                                                                                    <Form.Label className="small">Lesson Detail</Form.Label>
                                                                                     <Form.Control
                                                                                         as="textarea"
                                                                                         rows={2}
@@ -438,7 +438,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                                                                         onChange={(e) =>
                                                                                             updateLesson(moduleIndex, lessonIndex, "content", e.target.value)
                                                                                         }
-                                                                                        placeholder="Nhập nội dung bài học"
+                                                                                        placeholder="Enter Lesson"
                                                                                     />
                                                                                 </Form.Group>
                                                                             </Col>
@@ -473,13 +473,13 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
             <Modal.Footer>
                 <div className="d-flex justify-content-between w-100 align-items-center">
                     <div className="text-muted small">
-                        {editForm.modules.length} chương •{" "}
+                        {editForm.modules.length} lesson •{" "}
                         {editForm.modules.reduce((total, module) => total + module.lessons.length, 0)} bài học •{" "}
-                        {editForm.assignments.length} bài tập
+                        {editForm.assignments.length} lesson
                     </div>
                     <div className="d-flex gap-2">
                         <Button variant="secondary" onClick={onHide} disabled={isLoading}>
-                            Hủy
+                            Delete
                         </Button>
                         <Button
                             style={{ background: "#fbbf24", border: "none", color: "#000" }}
@@ -487,7 +487,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                             disabled={isLoading}
                         >
                             <Save size={16} className="me-2" />
-                            {isLoading ? "Đang lưu..." : "Lưu thay đổi"}
+                            {isLoading ? "Saving..." : "Saved"}
                         </Button>
                     </div>
                 </div>

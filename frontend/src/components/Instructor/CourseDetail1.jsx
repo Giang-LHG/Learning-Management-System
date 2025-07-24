@@ -32,7 +32,7 @@ import AssignmentManager from './assignment-manager';
 const CourseDetail = () => {
     const { id: courseId } = useParams();
     const navigate = useNavigate();
-
+const token = localStorage.getItem("token");
     // State for course data
     const [course, setCourse] = useState(null);
     const [assignments, setAssignments] = useState([]);
@@ -65,7 +65,11 @@ const CourseDetail = () => {
     const fetchCourseDetail = async () => {
         try {
             setLoading(true);
-            const response = await api.get(`/instructor/courses/${courseId}`);
+            const response = await api.get(`/instructor/courses/${courseId}`, {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+});
             if (response.data.success) {
                 setCourse(response.data.data);
             } else {
@@ -93,7 +97,11 @@ const CourseDetail = () => {
 
     const fetchEnrolledStudents = async () => {
         try {
-            const response = await api.get(`/instructor/courses/${courseId}/students`);
+            const response = await api.get(`/instructor/courses/${courseId}/students`, {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+});
             if (response.data.success) {
                 setStudents(response.data.data || []);
             }
@@ -108,14 +116,18 @@ const CourseDetail = () => {
 
     const handleSaveEdit = async (updatedCourseData) => {
         try {
-            const response = await api.put(`/instructor/courses/${courseId}`, updatedCourseData);
+            const response = await api.put(`/instructor/courses/${courseId}`, {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }, updatedCourseData
+});
             if (response.data.success) {
                 setCourse({
                     ...course,
                     ...updatedCourseData,
                     updatedAt: new Date().toISOString(),
                 });
-                console.log("Course updated:", updatedCourseData);
+                console.log("Course updated:", response.data);
             }
         } catch (err) {
             console.error("Error updating course:", err);
@@ -125,7 +137,11 @@ const CourseDetail = () => {
 
     const handleDelete = async () => {
         try {
-            const response = await api.delete(`/instructor/courses/${courseId}`);
+            const response = await api.delete(`/instructor/courses/${courseId}`, {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+});
             if (response.data.success) {
                 console.log("Course deleted:", courseId);
                 navigate("/instructor/course");
