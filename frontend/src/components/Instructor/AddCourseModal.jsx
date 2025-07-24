@@ -1,16 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Modal, Form, Button, Row, Col, Alert, Nav, Tab } from "react-bootstrap"
 import { Calendar, BookOpen, FileText, Plus, Trash2, CheckCircle } from "lucide-react"
 import AssignmentManager from "./assignment-manager"
+import api from '../../utils/api'
+import { useSelector } from 'react-redux';
 
 const AddCourseModal = ({ show, onHide, onSubmit }) => {
+    // Lấy user hiện tại từ redux hoặc localStorage
+    const user = useSelector(state => state.auth.user) || JSON.parse(localStorage.getItem('user') || '{}');
+
     const [formData, setFormData] = useState({
         title: "",
         description: "",
         subjectId: "",
-        instructorId: "",
         startDate: "",
         endDate: "",
         credits: 0,
@@ -34,19 +38,23 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
     const [errors, setErrors] = useState({})
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [activeTab, setActiveTab] = useState("basic") // Tab navigation
+    const [subjects, setSubjects] = useState([])
+    const [instructors, setInstructors] = useState([])
+    const [loadingSubjects, setLoadingSubjects] = useState(false)
+    const [loadingInstructors, setLoadingInstructors] = useState(false)
 
-    // Mock data cho subjects và instructors
-    const mockSubjects = [
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d2", name: "Công Nghệ Thông Tin", code: "CNTT" },
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d7", name: "Khoa Học Máy Tính", code: "KHMT" },
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d8", name: "Hệ Thống Thông Tin", code: "HTTT" },
-    ]
-
-    const mockInstructors = [
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d1", name: "Nguyễn Văn An", email: "nguyenvanan@example.com" },
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d4", name: "Trần Thị Bình", email: "tranthibinh@example.com" },
-        { _id: "64f8a1b2c3d4e5f6a7b8c9d6", name: "Lê Văn Cường", email: "levancuong@example.com" },
-    ]
+    useEffect(() => {
+        if (show) {
+            setLoadingSubjects(true)
+            setLoadingInstructors(true)
+            api.get('/subjects')
+                .then(res => setSubjects(res.data.subjects || []))
+                .finally(() => setLoadingSubjects(false))
+            api.get('/instructor/list')
+                .then(res => setInstructors(res.data.instructors || []))
+                .finally(() => setLoadingInstructors(false))
+        }
+    }, [show])
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({
@@ -185,10 +193,6 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
             newErrors.subjectId = "Vui lòng chọn môn học"
         }
 
-        if (!formData.instructorId) {
-            newErrors.instructorId = "Vui lòng chọn giảng viên"
-        }
-
         if (!formData.startDate) {
             newErrors.startDate = "Ngày bắt đầu là bắt buộc"
         }
@@ -255,6 +259,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
             // Process form data
             const courseData = {
                 ...formData,
+                instructorId: user?._id, // Gán instructorId là user hiện tại
                 term: formData.term.filter((term) => term.trim()),
                 modules: formData.modules.map((module) => ({
                     ...module,
@@ -283,7 +288,6 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
             title: "",
             description: "",
             subjectId: "",
-            instructorId: "",
             startDate: "",
             endDate: "",
             credits: 0,
@@ -384,9 +388,10 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                             value={formData.subjectId}
                                             onChange={(e) => handleInputChange("subjectId", e.target.value)}
                                             isInvalid={!!errors.subjectId}
+                                            disabled={loadingSubjects}
                                         >
-                                            <option value="">Chọn môn học</option>
-                                            {mockSubjects.map((subject) => (
+                                            <option value="">{loadingSubjects ? "Đang tải..." : "Chọn môn học"}</option>
+                                            {subjects.map((subject) => (
                                                 <option key={subject._id} value={subject._id}>
                                                     {subject.code} - {subject.name}
                                                 </option>
@@ -395,24 +400,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                         <Form.Control.Feedback type="invalid">{errors.subjectId}</Form.Control.Feedback>
                                     </Col>
 
-                                    <Col md={6} className="mb-3">
-                                        <Form.Label>
-                                            Giảng viên <span className="text-danger">*</span>
-                                        </Form.Label>
-                                        <Form.Select
-                                            value={formData.instructorId}
-                                            onChange={(e) => handleInputChange("instructorId", e.target.value)}
-                                            isInvalid={!!errors.instructorId}
-                                        >
-                                            <option value="">Chọn giảng viên</option>
-                                            {mockInstructors.map((instructor) => (
-                                                <option key={instructor._id} value={instructor._id}>
-                                                    {instructor.name}
-                                                </option>
-                                            ))}
-                                        </Form.Select>
-                                        <Form.Control.Feedback type="invalid">{errors.instructorId}</Form.Control.Feedback>
-                                    </Col>
+                                    {/* BỎ hoàn toàn phần chọn giảng viên ở đây */}
 
                                     <Col md={4} className="mb-3">
                                         <Form.Label>
