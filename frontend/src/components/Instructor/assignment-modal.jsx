@@ -150,8 +150,9 @@ const AssignmentModal = ({
             newErrors.title = "Tên bài tập là bắt buộc"
         }
 
-        if (!formData.description.trim()) {
-            newErrors.description = "Mô tả bài tập là bắt buộc"
+        // Chỉ bắt buộc mô tả nếu là quiz
+        if (formData.type === "quiz" && !formData.description.trim()) {
+            newErrors.description = "Mô tả bài tập là bắt buộc cho bài tập trắc nghiệm"
         }
 
         if (!formData.dueDate) {
@@ -236,7 +237,7 @@ const AssignmentModal = ({
             term: [],
             questions: [],
         })
-        setErrors({})
+        setErrors({}) // Clear errors khi đóng modal
         onHide()
     }
 

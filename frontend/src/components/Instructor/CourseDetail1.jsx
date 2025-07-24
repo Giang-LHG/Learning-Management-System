@@ -27,6 +27,7 @@ import EditCourseModal from "./EditCourseModal"
 import AssignmentDetailModal from "./assignment-detail-modal"
 import api from "../../utils/api"
 import assignmentService from "../../services/assignmentService"
+import AssignmentManager from './assignment-manager';
 
 const CourseDetail = () => {
     const { id: courseId } = useParams()
@@ -45,12 +46,14 @@ const CourseDetail = () => {
     const [showEditModal, setShowEditModal] = useState(false)
     const [showRemoveStudentModal, setShowRemoveStudentModal] = useState(false)
     const [showAssignmentDetail, setShowAssignmentDetail] = useState(false)
+    const [showAssignmentModal, setShowAssignmentModal] = useState(false);
 
     // Other states
     const [searchStudent, setSearchStudent] = useState("")
     const [studentToRemove, setStudentToRemove] = useState(null)
     const [activeTab, setActiveTab] = useState("overview")
     const [selectedAssignment, setSelectedAssignment] = useState(null)
+    const [assignmentsState, setAssignmentsState] = useState(assignments || []);
 
     useEffect(() => {
         if (courseId) {
@@ -546,159 +549,23 @@ const CourseDetail = () => {
 
                                             {/* Assignments Tab */}
                                             <Tab.Pane active={activeTab === "assignments"}>
-                                                <div className="d-flex align-items-center justify-content-between mb-4">
-                                                    <div className="d-flex align-items-center">
+                                                <div className="mb-4">
+                                                    <h5 className="mb-0 d-flex align-items-center">
                                                         <FileText size={20} className="me-2" />
-                                                        <h5 className="mb-0">Danh sách bài tập</h5>
-                                                    </div>
-                                                    <Button
-                                                        style={{ background: "#fbbf24", border: "none", color: "#000" }}
-                                                        size="sm"
-                                                        onClick={() => navigate(`/instructor/assignments/create/${courseId}`)}
-                                                    >
-                                                        <Plus size={16} className="me-2" />
-                                                        Thêm bài tập
-                                                    </Button>
+                                                        Danh sách bài tập
+                                                    </h5>
                                                 </div>
-
-                                                {assignments.length === 0 ? (
-                                                    <div className="text-center py-5">
-                                                        <div className="p-4 rounded-circle d-inline-flex mb-3" style={{ background: "#f8f9fa" }}>
-                                                            <FileText size={32} className="text-muted" />
-                                                        </div>
-                                                        <h5 className="text-muted mb-2">Chưa có bài tập nào</h5>
-                                                        <p className="text-muted mb-3">Tạo bài tập đầu tiên để học sinh có thể luyện tập</p>
-                                                        <Button
-                                                            style={{ background: "#fbbf24", border: "none", color: "#000" }}
-                                                            onClick={() => navigate(`/instructor/assignments/create/${courseId}`)}
-                                                        >
-                                                            <Plus size={16} className="me-2" />
-                                                            Tạo bài tập đầu tiên
-                                                        </Button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="d-grid gap-3">
-                                                        {assignments.map((assignment, index) => (
-                                                            <motion.div
-                                                                key={assignment._id}
-                                                                initial={{ opacity: 0, x: -20 }}
-                                                                animate={{ opacity: 1, x: 0 }}
-                                                                transition={{ duration: 0.3, delay: index * 0.1 }}
-                                                            >
-                                                                <Card className="border">
-                                                                    <Card.Body>
-                                                                        <Row className="align-items-center">
-                                                                            <Col md={8}>
-                                                                                <div className="d-flex align-items-start">
-                                                                                    <div
-                                                                                        className="p-2 rounded me-3 flex-shrink-0"
-                                                                                        style={{
-                                                                                            background: assignment.type === "quiz" ? "#e0f2fe" : "#f3e8ff",
-                                                                                        }}
-                                                                                    >
-                                                                                        {assignment.type === "quiz" ? (
-                                                                                            <CheckCircle size={20} style={{ color: "#0891b2" }} />
-                                                                                        ) : (
-                                                                                            <FileText size={20} style={{ color: "#7c3aed" }} />
-                                                                                        )}
-                                                                                    </div>
-                                                                                    <div className="flex-grow-1">
-                                                                                        <div className="d-flex align-items-center gap-2 mb-1">
-                                                                                            <h6 className="fw-semibold mb-0">{assignment.title}</h6>
-                                                                                            {getAssignmentStatusBadge(assignment)}
-                                                                                            <Badge
-                                                                                                bg={assignment.type === "quiz" ? "info" : "primary"}
-                                                                                                className="small"
-                                                                                            >
-                                                                                                {assignment.type === "quiz" ? "Trắc nghiệm" : "Tự luận"}
-                                                                                            </Badge>
-                                                                                        </div>
-                                                                                        <p className="text-muted small mb-2 lh-sm">{assignment.description}</p>
-                                                                                        <div className="d-flex align-items-center gap-3 small text-muted">
-                                                                                            <div className="d-flex align-items-center">
-                                                                                                <Clock size={14} className="me-1" />
-                                                                                                <span>
-                                                                                                    Hạn nộp: {formatDateTime(assignment.dueDate)}
-                                                                                                    {!isOverdue(assignment.dueDate) && (
-                                                                                                        <span className="ms-1">
-                                                                                                            ({getDaysUntilDue(assignment.dueDate)} ngày)
-                                                                                                        </span>
-                                                                                                    )}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            {assignment.type === "quiz" && assignment.questions && (
-                                                                                                <div className="d-flex align-items-center">
-                                                                                                    <FileText size={14} className="me-1" />
-                                                                                                    <span>{assignment.questions.length} câu hỏi</span>
-                                                                                                </div>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </Col>
-                                                                            <Col md={4}>
-                                                                                <div className="text-end">
-                                                                                    <div className="mb-2">
-                                                                                        <div className="d-flex align-items-center justify-content-end gap-2 mb-1">
-                                                                                            <BarChart3 size={14} className="text-muted" />
-                                                                                            <span className="small text-muted">Tỷ lệ nộp bài</span>
-                                                                                        </div>
-                                                                                        <div className="d-flex align-items-center justify-content-end">
-                                                                                            <div className="progress me-2" style={{ width: "60px", height: "6px" }}>
-                                                                                                <div
-                                                                                                    className="progress-bar"
-                                                                                                    style={{
-                                                                                                        width: `${getSubmissionRate(assignment)}%`,
-                                                                                                        backgroundColor:
-                                                                                                            getSubmissionRate(assignment) >= 80
-                                                                                                                ? "#16a34a"
-                                                                                                                : getSubmissionRate(assignment) >= 50
-                                                                                                                    ? "#eab308"
-                                                                                                                    : "#dc2626",
-                                                                                                    }}
-                                                                                                />
-                                                                                            </div>
-                                                                                            <span className="small fw-medium">
-                                                                                                {assignment.submissions || 0}/{students.length}(
-                                                                                                {getSubmissionRate(assignment)}%)
-                                                                                            </span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div className="d-flex gap-1 justify-content-end">
-                                                                                        <Button
-                                                                                            variant="outline-primary"
-                                                                                            size="sm"
-                                                                                            title="Xem chi tiết"
-                                                                                            onClick={() => handleViewAssignmentDetail(assignment)}
-                                                                                        >
-                                                                                            <Eye size={14} />
-                                                                                        </Button>
-                                                                                        <Button
-                                                                                            variant="outline-secondary"
-                                                                                            size="sm"
-                                                                                            title="Chỉnh sửa"
-                                                                                            onClick={() => navigate(`/instructor/assignments/edit/${assignment._id}`)}
-                                                                                        >
-                                                                                            <Edit size={14} />
-                                                                                        </Button>
-                                                                                        <Button
-                                                                                            variant="outline-danger"
-                                                                                            size="sm"
-                                                                                            title="Xóa"
-                                                                                            onClick={() => handleDeleteAssignment(assignment._id)}
-                                                                                        >
-                                                                                            <Trash2 size={14} />
-                                                                                        </Button>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </Col>
-                                                                        </Row>
-                                                                    </Card.Body>
-                                                                </Card>
-                                                            </motion.div>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                {/* AssignmentManager tích hợp trực tiếp, không còn UI dư thừa */}
+                                                <div id="assignment-manager-section">
+                                                    <AssignmentManager
+                                                        assignments={assignmentsState}
+                                                        onChange={setAssignmentsState}
+                                                        errors={{}}
+                                                        courseStartDate={course.startDate}
+                                                        courseEndDate={course.endDate}
+                                                        courseTerm={course.term}
+                                                    />
+                                                </div>
                                             </Tab.Pane>
                                         </Tab.Content>
                                     </Card.Body>
