@@ -21,7 +21,7 @@ export default function InstructorAppealList() {
       }
     } catch (error) {
       console.error("Error fetching appeals:", error);
-      setError("Không thể tải dữ liệu khiếu nại.");
+      setError("Error: Unable to load appeal data.");
     } finally {
       setIsLoading(false);
     }
@@ -91,11 +91,11 @@ export default function InstructorAppealList() {
             <FiZap size={48} className="text-white" />
           </div>
           <h1 className="text-white fw-bold mb-3 display-4">
-            📢 Khiếu Nại Điểm Số
+             Grade Appeals
           </h1>
           <p className="text-white-50 fs-4">
             <FiAlertCircle className="me-2" />
-            🔍 Xem xét và phản hồi khiếu nại từ học viên
+             Review and respond to student appeals
           </p>
           <Badge 
             bg="warning" 
@@ -104,7 +104,7 @@ export default function InstructorAppealList() {
             style={{ borderRadius: '25px' }}
           >
             <FiClock className="me-2" />
-            {appeals.length} khiếu nại đang chờ
+            {appeals.length} pending appeals
           </Badge>
         </div>
 
@@ -123,7 +123,7 @@ export default function InstructorAppealList() {
           >
             <h4 className="mb-0 fw-bold">
               <FiMessageSquare className="me-3" />
-              📋 Danh Sách Khiếu Nại Mở
+               Open Appeals List
             </h4>
             <div className="d-flex align-items-center">
               <div 
@@ -132,7 +132,7 @@ export default function InstructorAppealList() {
               >
                 {appeals.length}
               </div>
-              <span className="fw-bold">đang chờ xử lý</span>
+              <span className="fw-bold">pending</span>
             </div>
           </Card.Header>
           
@@ -146,7 +146,7 @@ export default function InstructorAppealList() {
                   animation: 'shake 0.5s ease-in-out'
                 }}
               >
-                <strong>❌ Lỗi:</strong> {error}
+                <strong> Error:</strong> {error}
               </Alert>
             )}
 
@@ -158,9 +158,9 @@ export default function InstructorAppealList() {
                 >
                   <FiMessageSquare size={64} className="text-primary" />
                 </div>
-                <h4 className="text-muted mb-3">🎉 Không có khiếu nại nào</h4>
+                <h4 className="text-muted mb-3"> No appeals</h4>
                 <p className="text-muted fs-5">
-                  Hiện tại không có khiếu nại nào cần xem xét.
+                  There are currently no appeals to review.
                 </p>
               </div>
             ) : (
@@ -170,15 +170,15 @@ export default function InstructorAppealList() {
                     <tr>
                       <th className="border-0 py-4 fw-bold">
                         <FiUser className="me-2 text-primary" />
-                        👤 Tên học viên
+                         Student Name
                       </th>
-                      <th className="border-0 py-4 fw-bold">📝 Bài tập</th>
+                      <th className="border-0 py-4 fw-bold"> Assignment</th>
                       <th className="border-0 py-4 fw-bold">
                         <FiClock className="me-2 text-info" />
-                        ⏰ Thời gian gửi
+                        Submit Time
                       </th>
-                      <th className="border-0 py-4 fw-bold">🎯 Điểm gốc</th>
-                      <th className="border-0 py-4 fw-bold text-center">🔧 Thao tác</th>
+                      <th className="border-0 py-4 fw-bold"> Original Score</th>
+                      <th className="border-0 py-4 fw-bold text-center"> Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -215,15 +215,15 @@ export default function InstructorAppealList() {
                             className="fs-6 px-3 py-2"
                             style={{ borderRadius: '15px' }}
                           >
-                            📚 {appeal.assignmentTitle}
+                             {appeal.assignmentTitle}
                           </Badge>
                         </td>
                         <td className="py-4">
                           <div className="text-muted">
                             <small>
-                              📅 {new Date(appeal.appealCreatedAt).toLocaleDateString('vi-VN')}
+                               {new Date(appeal.appealCreatedAt).toLocaleDateString('vi-VN')}
                               <br />
-                              ⏰ {new Date(appeal.appealCreatedAt).toLocaleTimeString('vi-VN')}
+                               {new Date(appeal.appealCreatedAt).toLocaleTimeString('vi-VN')}
                             </small>
                           </div>
                         </td>
@@ -233,7 +233,7 @@ export default function InstructorAppealList() {
                             className="fs-5 px-3 py-2"
                             style={{ borderRadius: '15px' }}
                           >
-                            {appeal.originalScore} điểm
+                            {appeal.originalScore} points
                           </Badge>
                         </td>
                         <td className="py-4 text-center">
@@ -261,7 +261,7 @@ export default function InstructorAppealList() {
                             }}
                           >
                             <FiEye className="me-2" />
-                            👀 Xem xét
+                             Review
                           </Button>
                         </td>
                       </tr>
@@ -280,7 +280,7 @@ export default function InstructorAppealList() {
               <div className="d-flex justify-content-center align-items-center">
                 <FiClock className="me-2 text-warning" />
                 <span className="text-muted fs-5">
-                  ⚡ Khiếu nại cần được xem xét và phản hồi kịp thời
+                  Appeals should be reviewed and responded to promptly.
                 </span>
               </div>
             </Card.Footer>
