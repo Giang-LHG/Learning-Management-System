@@ -1,17 +1,25 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Modal, Tab, Nav, Card, Table, Button, Badge, Row, Col } from "react-bootstrap"
+import { Modal, Tab, Nav, Card, Table, Button, Badge, Row, Col, Form, InputGroup } from "react-bootstrap"
 import { FileText, CheckCircle, Users, Clock, Star, Eye, BarChart3 } from "lucide-react"
 import EssaySubmissionDetail from "./essay-submission-detail"
 import QuizResultDetail from "./quiz-result-detail"
+import api from '../../utils/api';
 
-const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
+const AssignmentDetailModal = ({ show, onHide, assignment }) => {
     const [activeTab, setActiveTab] = useState("overview")
     const [submissions, setSubmissions] = useState([])
-    const [quizResults, setQuizResults] = useState([])
+    const [studentsSubmitted, setStudentsSubmitted] = useState([])
+    const [studentsNotSubmitted, setStudentsNotSubmitted] = useState([])
     const [selectedSubmission, setSelectedSubmission] = useState(null)
     const [showSubmissionDetail, setShowSubmissionDetail] = useState(false)
+    const [showGradeModal, setShowGradeModal] = useState(false)
+    const [gradingStudent, setGradingStudent] = useState(null)
+    const [gradeValue, setGradeValue] = useState('')
+    const [gradeLoading, setGradeLoading] = useState(false)
+    const [gradeError, setGradeError] = useState('')
+    const [quizResults, setQuizResults] = useState([])
     const [selectedQuizResult, setSelectedQuizResult] = useState(null)
     const [showQuizDetail, setShowQuizDetail] = useState(false)
 
@@ -156,13 +164,23 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
 
     useEffect(() => {
         if (show && assignment) {
-            if (assignment.type === "essay") {
-                setSubmissions(mockEssaySubmissions)
-                setActiveTab("submissions")
-            } else if (assignment.type === "quiz") {
-                setQuizResults(mockQuizResults)
-                setActiveTab("results")
-            }
+            // Gọi API lấy danh sách đã nộp/chưa nộp
+            api.get(`/instructor/submissions/assignment/${assignment._id}/submission-status`)
+                .then(res => {
+                    setStudentsSubmitted(res.data.data.submitted || [])
+                    setStudentsNotSubmitted(res.data.data.notSubmitted || [])
+                })
+                .catch(() => {
+                    setStudentsSubmitted([])
+                    setStudentsNotSubmitted([])
+                })
+            // Gọi API lấy submissions
+            api.get(`/instructor/submissions/assignment/${assignment._id}`)
+                .then(res => {
+                    setSubmissions(res.data.data || [])
+                })
+                .catch(() => setSubmissions([]))
+            setActiveTab(assignment.type === 'essay' ? 'submissions' : 'results')
         }
     }, [show, assignment])
 
@@ -183,11 +201,11 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
 
     const getSubmissionStats = () => {
         if (assignment?.type === "essay") {
-            const totalStudents = students?.length || 0
-            const submittedCount = submissions.length
-            const gradedCount = submissions.filter((sub) => sub.grade !== null).length
+            const totalStudents = studentsSubmitted.length + studentsNotSubmitted.length; // Total students in the assignment
+            const submittedCount = studentsSubmitted.length;
+            const gradedCount = studentsSubmitted.filter((sub) => sub.grade !== null).length;
             const avgGrade =
-                submissions.filter((sub) => sub.grade !== null).reduce((sum, sub) => sum + sub.grade, 0) / (gradedCount || 1)
+                studentsSubmitted.filter((sub) => sub.grade !== null).reduce((sum, sub) => sum + sub.grade, 0) / (gradedCount || 1)
 
             return {
                 totalStudents,
@@ -197,9 +215,9 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                 submissionRate: totalStudents > 0 ? Math.round((submittedCount / totalStudents) * 100) : 0,
             }
         } else if (assignment?.type === "quiz") {
-            const totalStudents = students?.length || 0
-            const completedCount = quizResults.length
-            const avgScore = quizResults.reduce((sum, result) => sum + result.percentage, 0) / (completedCount || 1)
+            const totalStudents = studentsSubmitted.length + studentsNotSubmitted.length; // Total students in the assignment
+            const completedCount = studentsSubmitted.length;
+            const avgScore = studentsSubmitted.reduce((sum, result) => sum + result.percentage, 0) / (completedCount || 1)
 
             return {
                 totalStudents,
@@ -221,20 +239,40 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
         setShowQuizDetail(true)
     }
 
-    const handleGradeUpdate = (submissionId, grade, feedback) => {
-        setSubmissions((prev) =>
-            prev.map((sub) =>
-                sub._id === submissionId
-                    ? {
-                        ...sub,
-                        grade,
-                        feedback,
-                        gradedAt: new Date().toISOString(),
-                        gradedBy: "Nguyễn Văn An",
-                    }
-                    : sub,
-            ),
-        )
+    // Chấm điểm học sinh chưa nộp bài tự luận
+    const handleOpenGradeModal = (student) => {
+        setGradingStudent(student)
+        setGradeValue('')
+        setGradeError('')
+        setShowGradeModal(true)
+    }
+    const handleGradeStudent = async () => {
+        if (!gradeValue || isNaN(gradeValue) || gradeValue < 0 || gradeValue > 10) {
+            setGradeError('Điểm phải là số từ 0 đến 10')
+            return
+        }
+        setGradeLoading(true)
+        setGradeError('')
+        try {
+            await api.post(`/instructor/submissions/assignment/${assignment._id}/grade-student`, {
+                studentId: gradingStudent._id,
+                score: Number(gradeValue),
+                content: ''
+            })
+            setShowGradeModal(false)
+            // Refresh lại danh sách
+            const [statusRes, subRes] = await Promise.all([
+                api.get(`/instructor/submissions/assignment/${assignment._id}/submission-status`),
+                api.get(`/instructor/submissions/assignment/${assignment._id}`)
+            ])
+            setStudentsSubmitted(statusRes.data.data.submitted || [])
+            setStudentsNotSubmitted(statusRes.data.data.notSubmitted || [])
+            setSubmissions(subRes.data.data || [])
+        } catch (err) {
+            setGradeError('Chấm điểm thất bại')
+        } finally {
+            setGradeLoading(false)
+        }
     }
 
     const stats = getSubmissionStats()
@@ -318,7 +356,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                             <Nav.Item>
                                 <Nav.Link eventKey="submissions" className="d-flex align-items-center">
                                     <FileText size={16} className="me-2" />
-                                    Bài nộp ({submissions.length})
+                                    Bài nộp ({studentsSubmitted.length})
                                 </Nav.Link>
                             </Nav.Item>
                         )}
@@ -326,7 +364,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                             <Nav.Item>
                                 <Nav.Link eventKey="results" className="d-flex align-items-center">
                                     <CheckCircle size={16} className="me-2" />
-                                    Kết quả ({quizResults.length})
+                                    Kết quả ({studentsSubmitted.length})
                                 </Nav.Link>
                             </Nav.Item>
                         )}
@@ -383,42 +421,39 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                                             <h6 className="mb-0">Học sinh chưa làm bài</h6>
                                         </Card.Header>
                                         <Card.Body style={{ maxHeight: "300px", overflowY: "auto" }}>
-                                            {(() => {
-                                                const completedStudentIds =
-                                                    assignment.type === "essay"
-                                                        ? submissions.map((sub) => sub.studentId)
-                                                        : quizResults.map((result) => result.studentId)
-
-                                                const incompleteStudents =
-                                                    students?.filter((student) => !completedStudentIds.includes(student._id)) || []
-
-                                                return incompleteStudents.length === 0 ? (
-                                                    <div className="text-center text-muted py-3">
-                                                        <Users size={32} className="mb-2" />
-                                                        <p className="mb-0">Tất cả học sinh đã hoàn thành bài tập</p>
-                                                    </div>
-                                                ) : (
-                                                    <div className="d-grid gap-2">
-                                                        {incompleteStudents.map((student) => (
-                                                            <div key={student._id} className="d-flex align-items-center p-2 border rounded">
+                                            {studentsNotSubmitted.length === 0 ? (
+                                                <div className="text-center text-muted py-3">
+                                                    <Users size={32} className="mb-2" />
+                                                    <p className="mb-0">Tất cả học sinh đã hoàn thành bài tập</p>
+                                                </div>
+                                            ) : (
+                                                <div className="d-grid gap-2">
+                                                    {studentsNotSubmitted.map((student) => (
+                                                        <div key={student._id} className="d-flex align-items-center p-2 border rounded justify-content-between">
+                                                            <div className="d-flex align-items-center">
                                                                 <img
                                                                     src={
-                                                                        student.profile.avatarUrl ||
-                                                                        `https://ui-avatars.com/api/?name=${encodeURIComponent(student.profile.fullName)}&background=6366f1&color=fff`
+                                                                        student.profile?.avatarUrl ||
+                                                                        `https://ui-avatars.com/api/?name=${encodeURIComponent(student.profile?.fullName || '')}&background=6366f1&color=fff`
                                                                     }
-                                                                    alt={student.profile.fullName}
+                                                                    alt={student.profile?.fullName}
                                                                     className="rounded-circle me-3"
                                                                     style={{ width: "32px", height: "32px", objectFit: "cover" }}
                                                                 />
                                                                 <div>
-                                                                    <div className="fw-medium small">{student.profile.fullName}</div>
+                                                                    <div className="fw-medium small">{student.profile?.fullName}</div>
                                                                     <div className="text-muted small">{student.email}</div>
                                                                 </div>
                                                             </div>
-                                                        ))}
-                                                    </div>
-                                                )
-                                            })()}
+                                                            {assignment.type === 'essay' && (
+                                                                <Button size="sm" variant="outline-primary" onClick={() => handleOpenGradeModal(student)}>
+                                                                    Chấm điểm
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </Card.Body>
                                     </Card>
                                 </Col>
@@ -452,14 +487,14 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                                                         <td>
                                                             <div className="d-flex align-items-center">
                                                                 <img
-                                                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(submission.studentName)}&background=6366f1&color=fff`}
-                                                                    alt={submission.studentName}
+                                                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(submission.studentId?.profile?.fullName || '')}&background=6366f1&color=fff`}
+                                                                    alt={submission.studentId?.profile?.fullName}
                                                                     className="rounded-circle me-3"
                                                                     style={{ width: "32px", height: "32px", objectFit: "cover" }}
                                                                 />
                                                                 <div>
-                                                                    <div className="fw-medium">{submission.studentName}</div>
-                                                                    <small className="text-muted">{submission.studentEmail}</small>
+                                                                    <div className="fw-medium">{submission.studentId?.profile?.fullName}</div>
+                                                                    <small className="text-muted">{submission.studentId?.email}</small>
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -467,17 +502,17 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                                                             <div className="small">{formatDateTime(submission.submittedAt)}</div>
                                                         </td>
                                                         <td>
-                                                            {submission.grade !== null ? (
+                                                            {submission.grade?.score !== null && submission.grade?.score !== undefined ? (
                                                                 <Badge bg="success">Đã chấm</Badge>
                                                             ) : (
                                                                 <Badge bg="warning">Chờ chấm</Badge>
                                                             )}
                                                         </td>
                                                         <td>
-                                                            {submission.grade !== null ? (
+                                                            {submission.grade?.score !== null && submission.grade?.score !== undefined ? (
                                                                 <div className="d-flex align-items-center">
                                                                     <Star size={16} className="text-warning me-1" />
-                                                                    <span className="fw-bold">{submission.grade}/10</span>
+                                                                    <span className="fw-bold">{submission.grade.score}/10</span>
                                                                 </div>
                                                             ) : (
                                                                 <span className="text-muted">-</span>
@@ -487,10 +522,10 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                                                             <Button
                                                                 variant="outline-primary"
                                                                 size="sm"
-                                                                onClick={() => handleViewSubmission(submission)}
+                                                                onClick={() => setSelectedSubmission(submission)}
                                                             >
                                                                 <Eye size={14} className="me-1" />
-                                                                {submission.grade !== null ? "Xem chi tiết" : "Chấm điểm"}
+                                                                {submission.grade?.score !== null && submission.grade?.score !== undefined ? "Xem chi tiết" : "Chấm điểm"}
                                                             </Button>
                                                         </td>
                                                     </tr>
@@ -505,7 +540,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                         {/* Quiz Results Tab */}
                         {assignment.type === "quiz" && (
                             <Tab.Pane active={activeTab === "results"}>
-                                {quizResults.length === 0 ? (
+                                {studentsSubmitted.length === 0 ? (
                                     <div className="text-center py-5">
                                         <CheckCircle size={48} className="text-muted mb-3" />
                                         <h5 className="text-muted">Chưa có kết quả nào</h5>
@@ -525,7 +560,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {quizResults.map((result) => (
+                                                {studentsSubmitted.map((result) => (
                                                     <tr key={result._id}>
                                                         <td>
                                                             <div className="d-flex align-items-center">
@@ -586,7 +621,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                         <div className="text-muted small">
                             {assignment.type === "essay"
                                 ? `${submissions.length} bài nộp • ${stats.gradedCount} đã chấm • Điểm TB: ${stats.avgGrade}/10`
-                                : `${quizResults.length} kết quả • Điểm TB: ${stats.avgScore}%`}
+                                : `${studentsSubmitted.length} kết quả • Điểm TB: ${stats.avgScore}%`}
                         </div>
                         <Button variant="secondary" onClick={onHide}>
                             Đóng
@@ -601,7 +636,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                 onHide={() => setShowSubmissionDetail(false)}
                 submission={selectedSubmission}
                 assignment={assignment}
-                onGradeUpdate={handleGradeUpdate}
+                onGradeUpdate={() => {}} // This prop is no longer needed as grading is handled by API
             />
 
             {/* Quiz Result Detail Modal */}
@@ -611,6 +646,42 @@ const AssignmentDetailModal = ({ show, onHide, assignment, students }) => {
                 result={selectedQuizResult}
                 assignment={assignment}
             />
+
+            {/* Modal chấm điểm học sinh chưa nộp */}
+            <Modal show={showGradeModal} onHide={() => setShowGradeModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Chấm điểm cho học sinh</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="mb-3">
+                        <strong>Học sinh:</strong> {gradingStudent?.profile?.fullName} <br />
+                        <strong>Email:</strong> {gradingStudent?.email}
+                    </div>
+                    <Form.Group>
+                        <Form.Label>Điểm (0-10)</Form.Label>
+                        <InputGroup>
+                            <Form.Control
+                                type="number"
+                                min={0}
+                                max={10}
+                                step={0.1}
+                                value={gradeValue}
+                                onChange={e => setGradeValue(e.target.value)}
+                                disabled={gradeLoading}
+                            />
+                        </InputGroup>
+                        {gradeError && <div className="text-danger small mt-2">{gradeError}</div>}
+                    </Form.Group>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowGradeModal(false)} disabled={gradeLoading}>
+                        Hủy
+                    </Button>
+                    <Button variant="primary" onClick={handleGradeStudent} disabled={gradeLoading}>
+                        {gradeLoading ? 'Đang lưu...' : 'Lưu điểm'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </>
     )
 }

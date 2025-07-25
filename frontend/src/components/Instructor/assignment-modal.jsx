@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import { Modal, Form, Button, Row, Col, Card, Badge, Alert, Table } from "react-bootstrap"
 import { Save, Plus, Trash2, FileText, CheckCircle, Clock, Eye, User, Calendar, Info } from "lucide-react"
+import api from '../../utils/api';
+import { Star } from "lucide-react";
 
 const AssignmentModal = ({
     show,
@@ -16,6 +18,7 @@ const AssignmentModal = ({
     courseId,
     mode = "add", // "add", "edit", "view"
 }) => {
+    const isViewMode = mode === "view";
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -29,6 +32,16 @@ const AssignmentModal = ({
     const [errors, setErrors] = useState({})
     const [isSubmitting, setIsSubmitting] = useState(false)
     const token = localStorage.getItem("token");
+
+    // Thêm state cho tính năng xem/chấm điểm
+    const [studentsSubmitted, setStudentsSubmitted] = useState([])
+    const [studentsNotSubmitted, setStudentsNotSubmitted] = useState([])
+    const [submissions, setSubmissions] = useState([])
+    const [showGradeModal, setShowGradeModal] = useState(false)
+    const [gradingStudent, setGradingStudent] = useState(null)
+    const [gradeValue, setGradeValue] = useState('')
+    const [gradeLoading, setGradeLoading] = useState(false)
+    const [gradeError, setGradeError] = useState('')
 
     useEffect(() => {
         if (show) {
@@ -58,6 +71,27 @@ const AssignmentModal = ({
             setErrors({})
         }
     }, [show, assignmentData, isEditing, courseTerm, mode])
+
+    useEffect(() => {
+        if (show && isViewMode && assignmentData && assignmentData._id) {
+            // Gọi API lấy danh sách đã nộp/chưa nộp
+            api.get(`/instructor/submissions/assignment/${assignmentData._id}/submission-status`)
+                .then(res => {
+                    setStudentsSubmitted(res.data.data.submitted || [])
+                    setStudentsNotSubmitted(res.data.data.notSubmitted || [])
+                })
+                .catch(() => {
+                    setStudentsSubmitted([])
+                    setStudentsNotSubmitted([])
+                })
+            // Gọi API lấy submissions
+            api.get(`/instructor/submissions/assignment/${assignmentData._id}`)
+                .then(res => {
+                    setSubmissions(res.data.data || [])
+                })
+                .catch(() => setSubmissions([]))
+        }
+    }, [show, isViewMode, assignmentData])
 
     const formatDateForInput = (dateString) => {
         if (!dateString) return ""
@@ -343,7 +377,6 @@ const AssignmentModal = ({
 
     // Determine if this is a due date update mode
     const isDueDateUpdateMode = courseId && isEditing && assignmentData._id && mode === "edit"
-    const isViewMode = mode === "view"
 
     const getModalTitle = () => {
         if (isViewMode) {
@@ -529,6 +562,147 @@ const AssignmentModal = ({
         )
     }
 
+    // Thêm UI hiển thị danh sách đã nộp/chưa nộp ở chế độ view
+    const renderSubmissionStatus = () => {
+        if (!isViewMode || !assignmentData) return null
+        return (
+            <Row>
+                <Col md={6}>
+                    <Card className="mb-4">
+                        <Card.Header>
+                            <h6 className="mb-0">Học sinh đã nộp bài</h6>
+                        </Card.Header>
+                        <Card.Body style={{ maxHeight: "300px", overflowY: "auto" }}>
+                            {submissions.length === 0 ? (
+                                <div className="text-center text-muted py-3">
+                                    <User size={32} className="mb-2" />
+                                    <p className="mb-0">Chưa có bài nộp nào</p>
+                                </div>
+                            ) : (
+                                <Table hover size="sm">
+                                    <thead className="table-light">
+                                        <tr>
+                                            <th>Học sinh</th>
+                                            <th>Thời gian nộp</th>
+                                            <th>Điểm</th>
+                                            <th>Hành động</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {submissions.map((submission) => (
+                                            <tr key={submission._id}>
+                                                <td>
+                                                    <div className="d-flex align-items-center">
+                                                        <img
+                                                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(submission.studentId?.profile?.fullName || '')}&background=6366f1&color=fff`}
+                                                            alt={submission.studentId?.profile?.fullName}
+                                                            className="rounded-circle me-2"
+                                                            style={{ width: "28px", height: "28px", objectFit: "cover" }}
+                                                        />
+                                                        <span>{submission.studentId?.profile?.fullName}</span>
+                                                    </div>
+                                                </td>
+                                                <td>{formatDateTime(submission.submittedAt)}</td>
+                                                <td>
+                                                    {submission.grade?.score !== null && submission.grade?.score !== undefined ? (
+                                                        <span className="fw-bold text-success"><Star size={14} className="text-warning me-1" />{submission.grade.score}/10</span>
+                                                    ) : (
+                                                        <span className="text-muted">-</span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    <Button size="sm" variant="outline-primary">
+                                                        <Eye size={14} className="me-1" />
+                                                        {submission.grade?.score !== null && submission.grade?.score !== undefined ? "Xem chi tiết" : "Chấm điểm"}
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            )}
+                        </Card.Body>
+                    </Card>
+                </Col>
+                <Col md={6}>
+                    <Card className="mb-4">
+                        <Card.Header>
+                            <h6 className="mb-0">Học sinh chưa nộp bài</h6>
+                        </Card.Header>
+                        <Card.Body style={{ maxHeight: "300px", overflowY: "auto" }}>
+                            {studentsNotSubmitted.length === 0 ? (
+                                <div className="text-center text-muted py-3">
+                                    <User size={32} className="mb-2" />
+                                    <p className="mb-0">Tất cả học sinh đã nộp bài</p>
+                                </div>
+                            ) : (
+                                <div className="d-grid gap-2">
+                                    {studentsNotSubmitted.map((student) => (
+                                        <div key={student._id} className="d-flex align-items-center justify-content-between p-2 border rounded">
+                                            <div className="d-flex align-items-center">
+                                                <img
+                                                    src={
+                                                        student.profile?.avatarUrl ||
+                                                        `https://ui-avatars.com/api/?name=${encodeURIComponent(student.profile?.fullName || '')}&background=6366f1&color=fff`
+                                                    }
+                                                    alt={student.profile?.fullName}
+                                                    className="rounded-circle me-2"
+                                                    style={{ width: "28px", height: "28px", objectFit: "cover" }}
+                                                />
+                                                <span>{student.profile?.fullName}</span>
+                                            </div>
+                                            {assignmentData.type === 'essay' && (
+                                                <Button size="sm" variant="outline-primary" onClick={() => handleOpenGradeModal(student)}>
+                                                    Chấm điểm
+                                                </Button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+        )
+    }
+
+    // Chấm điểm học sinh chưa nộp bài tự luận
+    const handleOpenGradeModal = (student) => {
+        setGradingStudent(student)
+        setGradeValue('')
+        setGradeError('')
+        setShowGradeModal(true)
+    }
+    const handleGradeStudent = async () => {
+        if (!gradeValue || isNaN(gradeValue) || gradeValue < 0 || gradeValue > 10) {
+            setGradeError('Điểm phải là số từ 0 đến 10')
+            return
+        }
+        setGradeLoading(true)
+        setGradeError('')
+        try {
+            await api.post(`/instructor/submissions/assignment/${assignmentData._id}/grade-student`, {
+                studentId: gradingStudent._id,
+                score: Number(gradeValue),
+                content: ''
+            })
+            setShowGradeModal(false)
+            // Refresh lại danh sách
+            const [statusRes, subRes] = await Promise.all([
+                api.get(`/instructor/submissions/assignment/${assignmentData._id}/submission-status`),
+                api.get(`/instructor/submissions/assignment/${assignmentData._id}`)
+            ])
+            setStudentsSubmitted(statusRes.data.data.submitted || [])
+            setStudentsNotSubmitted(statusRes.data.data.notSubmitted || [])
+            setSubmissions(subRes.data.data || [])
+        } catch (err) {
+            setGradeError('Chấm điểm thất bại')
+        } finally {
+            setGradeLoading(false)
+        }
+    }
+
     return (
         <Modal show={show} onHide={handleClose} size="xl" centered>
             <Modal.Header closeButton>
@@ -551,11 +725,14 @@ const AssignmentModal = ({
                         </Alert>
                     )}
 
-                    {/* View Mode - Show Assignment Details */}
+                    {/* View Mode - Show  */}
                     {isViewMode && renderAssignmentDetails()}
 
                     {/* View Mode - Show Quiz Questions Details */}
                     {isViewMode && renderQuizQuestionsDetails()}
+
+                    {/* Thêm bảng xem/chấm điểm ở view mode */}
+                    {isViewMode && renderSubmissionStatus()}
 
                     {/* Edit/Add Mode - Basic Information */}
                     {!isViewMode && (
@@ -859,6 +1036,39 @@ const AssignmentModal = ({
                     </div>
                 </Modal.Footer>
             </div>
+            {/* Modal chấm điểm học sinh chưa nộp */}
+            <Modal show={showGradeModal} onHide={() => setShowGradeModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Chấm điểm cho học sinh</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="mb-3">
+                        <strong>Học sinh:</strong> {gradingStudent?.profile?.fullName} <br />
+                        <strong>Email:</strong> {gradingStudent?.email}
+                    </div>
+                    <Form.Group>
+                        <Form.Label>Điểm (0-10)</Form.Label>
+                        <Form.Control
+                            type="number"
+                            min={0}
+                            max={10}
+                            step={0.1}
+                            value={gradeValue}
+                            onChange={e => setGradeValue(e.target.value)}
+                            disabled={gradeLoading}
+                        />
+                        {gradeError && <div className="text-danger small mt-2">{gradeError}</div>}
+                    </Form.Group>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowGradeModal(false)} disabled={gradeLoading}>
+                        Hủy
+                    </Button>
+                    <Button variant="primary" onClick={handleGradeStudent} disabled={gradeLoading}>
+                        {gradeLoading ? 'Đang lưu...' : 'Lưu điểm'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </Modal>
     )
 }

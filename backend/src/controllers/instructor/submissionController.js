@@ -2,6 +2,8 @@
 const mongoose = require('mongoose');
 const Submission = require('../../models/Submission');
 const Assignment = require('../../models/Assignment');
+const Enrollment = require('../../models/Enrollment');
+const User = require('../../models/User');
 
 const getSubmissionsForGrading = async (req, res) => {
   try {
@@ -76,8 +78,90 @@ const gradeSubmission = async (req, res) => {
   }
 };
 
+// LẤY DANH SÁCH HỌC SINH ĐÃ NỘP/CHƯA NỘP CHO ASSIGNMENT
+const getAssignmentSubmissionStatus = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid assignmentId' });
+    }
+    const assignment = await Assignment.findById(assignmentId).lean();
+    if (!assignment || !assignment.term || assignment.term.length === 0) {
+      return res.status(404).json({ success: false, message: 'Assignment not found or has no active term.' });
+    }
+    const currentTerm = assignment.term[assignment.term.length - 1];
+    // Lấy danh sách học sinh của course trong term này
+    const enrollments = await Enrollment.find({ courseId: assignment.courseId, term: currentTerm, status: 'active' }).lean();
+    const studentIds = enrollments.map(e => e.studentId.toString());
+    // Lấy tất cả submission của assignment này trong term này
+    const submissions = await Submission.find({ assignmentId, term: currentTerm }).lean();
+    const submittedStudentIds = submissions.map(s => s.studentId.toString());
+    // Đã nộp
+    const studentsSubmitted = enrollments.filter(e => submittedStudentIds.includes(e.studentId.toString()));
+    // Chưa nộp
+    const studentsNotSubmitted = enrollments.filter(e => !submittedStudentIds.includes(e.studentId.toString()));
+    // Lấy thông tin user cho cả hai nhóm
+    const [submittedUsers, notSubmittedUsers] = await Promise.all([
+      User.find({ _id: { $in: studentsSubmitted.map(e => e.studentId) } }).select('profile.fullName email').lean(),
+      User.find({ _id: { $in: studentsNotSubmitted.map(e => e.studentId) } }).select('profile.fullName email').lean()
+    ]);
+    return res.status(200).json({
+      success: true,
+      data: {
+        submitted: submittedUsers,
+        notSubmitted: notSubmittedUsers
+      }
+    });
+  } catch (err) {
+    console.error('Error in getAssignmentSubmissionStatus:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// CHẤM ĐIỂM HỌC SINH CHƯA NỘP BÀI TỰ LUẬN
+// POST: /api/instructor/assignments/:assignmentId/grade-student
+// body: { studentId, score, content (optional) }
+const gradeStudentWithoutSubmission = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+    const { studentId, score, content } = req.body;
+    if (!mongoose.Types.ObjectId.isValid(assignmentId) || !mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid ID' });
+    }
+    if (typeof score !== 'number' || score < 0 || score > 10) {
+      return res.status(400).json({ success: false, message: 'Score must be a number between 0 and 10' });
+    }
+    const assignment = await Assignment.findById(assignmentId).lean();
+    if (!assignment || assignment.type !== 'essay') {
+      return res.status(400).json({ success: false, message: 'Only essay assignments can be graded without submission.' });
+    }
+    const currentTerm = assignment.term[assignment.term.length - 1];
+    // Kiểm tra đã có submission chưa
+    const existing = await Submission.findOne({ assignmentId, studentId, term: currentTerm });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Student already has a submission for this assignment.' });
+    }
+    // Tạo submission mới với điểm số
+    const newSubmission = new Submission({
+      assignmentId,
+      studentId,
+      term: currentTerm,
+      content: content || '',
+      grade: { score: score, gradedAt: new Date(), graderId: req.user._id },
+      submittedAt: new Date()
+    });
+    await newSubmission.save();
+    return res.status(201).json({ success: true, message: 'Submission created and graded successfully', data: newSubmission });
+  } catch (err) {
+    console.error('Error in gradeStudentWithoutSubmission:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 module.exports = {
     getSubmissionsForGrading,
     getSubmissionDetail,
-    gradeSubmission
+    gradeSubmission,
+    getAssignmentSubmissionStatus,
+    gradeStudentWithoutSubmission
 };
