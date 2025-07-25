@@ -46,6 +46,28 @@ exports.submitAssignment = async (req, res) => {
     });
 const user = await User.findById(studentId);
     await newSubmission.save();
+
+    // Auto-grade nếu là quiz
+    if (assignment.type === 'quiz' && Array.isArray(assignment.questions) && assignment.questions.length > 0) {
+      const answersMap = new Map((answers || []).map(a => [a.questionId.toString(), a.selectedOption]));
+      let totalPoints = 0;
+      let correctPoints = 0;
+      assignment.questions.forEach(q => {
+        const pts = q.points || 0;
+        totalPoints += pts;
+        if (answersMap.get(q._id?.toString?.() || q.questionId?.toString?.()) === q.correctOption) {
+          correctPoints += pts;
+        }
+      });
+      const rawScore = totalPoints > 0 ? (correctPoints / totalPoints) * 10 : 0;
+      const score = Math.round(rawScore * 100) / 100;
+      newSubmission.grade = {
+        score,
+        gradedAt: new Date(),
+        graderId: assignment.instructorId || null // nếu có instructorId
+      };
+      await newSubmission.save();
+    }
        const course = await Course.findById(assignment.courseId).select(' title instructorId').lean();
     if (course?.instructorId) {
       await Notification.create({

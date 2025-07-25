@@ -50,7 +50,9 @@ const getSubmissionDetail = async (req, res) => {
 const gradeSubmission = async (req, res) => {
   try {
     const { submissionId } = req.params;
-    const { score, instructorId } = req.body;
+    const { score, instructorId: instructorIdFromBody } = req.body;
+    // Ưu tiên lấy instructorId từ req.user nếu có
+    const instructorId = req.user?._id || instructorIdFromBody;
     if (!mongoose.Types.ObjectId.isValid(submissionId) || !mongoose.Types.ObjectId.isValid(instructorId)) {
       return res.status(400).json({ success: false, message: 'Invalid ID' });
     }
@@ -119,6 +121,7 @@ const getAssignmentSubmissionStatus = async (req, res) => {
 };
 
 // CHẤM ĐIỂM HỌC SINH CHƯA NỘP BÀI TỰ LUẬN
+// Lưu ý: Chỉ tạo submission mới nếu học sinh chưa nộp bài. Nếu đã nộp, trả về lỗi, không ghi đè điểm.
 // POST: /api/instructor/assignments/:assignmentId/grade-student
 // body: { studentId, score, content (optional) }
 const gradeStudentWithoutSubmission = async (req, res) => {
