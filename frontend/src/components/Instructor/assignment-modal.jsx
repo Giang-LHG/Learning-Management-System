@@ -5,6 +5,8 @@ import { Modal, Form, Button, Row, Col, Card, Badge, Alert, Table } from "react-
 import { Save, Plus, Trash2, FileText, CheckCircle, Clock, Eye, User, Calendar, Info } from "lucide-react"
 import api from '../../utils/api';
 import { Star } from "lucide-react";
+import QuizResultDetail from "./quiz-result-detail";
+import EssaySubmissionDetail from "./essay-submission-detail";
 
 const AssignmentModal = ({
     show,
@@ -42,6 +44,10 @@ const AssignmentModal = ({
     const [gradeValue, setGradeValue] = useState('')
     const [gradeLoading, setGradeLoading] = useState(false)
     const [gradeError, setGradeError] = useState('')
+
+    const [showQuizDetail, setShowQuizDetail] = useState(false);
+    const [showEssayDetail, setShowEssayDetail] = useState(false);
+    const [selectedSubmission, setSelectedSubmission] = useState(null);
 
     useEffect(() => {
         if (show) {
@@ -615,12 +621,18 @@ const AssignmentModal = ({
                                                 </td>
                                                 <td>
                                                     {assignmentData.type === 'essay' ? (
-                                                        <Button size="sm" variant="outline-primary" onClick={() => handleOpenGradeModal(submission.studentId)} disabled={submission.grade?.score !== null && submission.grade?.score !== undefined}>
+                                                        <Button size="sm" variant="outline-primary" onClick={() => {
+                                                            setSelectedSubmission(submission);
+                                                            setShowEssayDetail(true);
+                                                        }} disabled={submission.grade?.score === null || submission.grade?.score === undefined}>
                                                             <Eye size={14} className="me-1" />
-                                                            {submission.grade?.score !== null && submission.grade?.score !== undefined ? "Xem chi tiết" : "Chấm điểm"}
+                                                            Xem chi tiết
                                                         </Button>
                                                     ) : (
-                                                        <Button size="sm" variant="outline-secondary" disabled>
+                                                        <Button size="sm" variant="outline-secondary" onClick={() => {
+                                                            setSelectedSubmission(submission);
+                                                            setShowQuizDetail(true);
+                                                        }} disabled={submission.grade?.score === null || submission.grade?.score === undefined}>
                                                             <Eye size={14} className="me-1" />
                                                             Xem chi tiết
                                                         </Button>
@@ -1060,6 +1072,18 @@ const AssignmentModal = ({
                     </Button>
                 </Modal.Footer>
             </Modal>
+            <QuizResultDetail
+                show={showQuizDetail}
+                onHide={() => setShowQuizDetail(false)}
+                result={selectedSubmission}
+                assignment={assignmentData}
+            />
+            <EssaySubmissionDetail
+                show={showEssayDetail}
+                onHide={() => setShowEssayDetail(false)}
+                submission={selectedSubmission}
+                assignment={assignmentData}
+            />
         </Modal>
     )
 }
