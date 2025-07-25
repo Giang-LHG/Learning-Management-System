@@ -125,12 +125,7 @@ const createNewTerm = async (req, res) => {
       })
     }
 
-    if (new Date(assignment.dueDate) > new Date()) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot create a new term until the current due date has passed.",
-      })
-    }
+ 
 
     if (!course) {
       return res.status(404).json({ success: false, message: "Parent course not found." })

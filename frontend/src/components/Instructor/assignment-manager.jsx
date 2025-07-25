@@ -2,23 +2,33 @@
 
 import { useState } from "react"
 import { Card, Button, Badge, Row, Col } from "react-bootstrap"
-import { Plus, Trash2, FileText, CheckCircle, Clock, Eye, EyeOff, Edit } from "lucide-react"
+import { Plus, FileText, CheckCircle, Clock, Edit, Eye } from "lucide-react"
 import AssignmentModal from "./assignment-modal"
 
-const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, courseEndDate, courseTerm }) => {
+const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, courseEndDate, courseTerm, courseId }) => {
     const [showAssignmentModal, setShowAssignmentModal] = useState(false)
     const [editingAssignment, setEditingAssignment] = useState(null)
     const [editingIndex, setEditingIndex] = useState(-1)
+    const [modalMode, setModalMode] = useState("add") // "add", "edit", "view"
 
     const handleAddAssignment = () => {
         setEditingAssignment(null)
         setEditingIndex(-1)
+        setModalMode("add")
         setShowAssignmentModal(true)
     }
 
     const handleEditAssignment = (assignment, index) => {
         setEditingAssignment(assignment)
         setEditingIndex(index)
+        setModalMode("edit")
+        setShowAssignmentModal(true)
+    }
+
+    const handleViewAssignment = (assignment, index) => {
+        setEditingAssignment(assignment)
+        setEditingIndex(index)
+        setModalMode("view")
         setShowAssignmentModal(true)
     }
 
@@ -26,10 +36,8 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
         const newAssignments = [...assignments]
 
         if (editingIndex >= 0) {
-            // Edit existing assignment
             newAssignments[editingIndex] = {
                 ...assignmentData,
-                // ✅ Giữ lại các field cũ nếu đang edit
                 _id: assignments[editingIndex]._id,
                 createdAt: assignments[editingIndex].createdAt,
                 updatedAt: new Date().toISOString(),
@@ -37,10 +45,8 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                 totalStudents: assignments[editingIndex].totalStudents || 0,
             }
         } else {
-            // ✅ FIXED: Không tạo ID ở đây nữa, để API tạo
             newAssignments.push({
                 ...assignmentData,
-                // Không tạo _id ở đây nữa - ID sẽ được tạo bởi database
                 createdAt: new Date().toISOString(),
                 submissions: 0,
                 totalStudents: 0,
@@ -49,20 +55,6 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
 
         onChange(newAssignments)
         setShowAssignmentModal(false)
-    }
-
-    const handleDeleteAssignment = (index) => {
-        const newAssignments = assignments.filter((_, i) => i !== index)
-        onChange(newAssignments)
-    }
-
-    const toggleAssignmentVisibility = (index) => {
-        const newAssignments = [...assignments]
-        newAssignments[index] = {
-            ...newAssignments[index],
-            isVisible: !newAssignments[index].isVisible,
-        }
-        onChange(newAssignments)
     }
 
     const formatDateTime = (dateString) => {
@@ -198,13 +190,12 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                 <div className="text-end">
                                                     <div className="d-flex gap-1 justify-content-end">
                                                         <Button
-                                                            variant="outline-secondary"
+                                                            variant="outline-info"
                                                             size="sm"
-                                                            hidden ="true"
-                                                            onClick={() => toggleAssignmentVisibility(index)}
-                                                            title={assignment.isVisible ? "Hide assignment" : "Show assignment"}
+                                                            onClick={() => handleViewAssignment(assignment, index)}
+                                                            title="View Details"
                                                         >
-                                                            {assignment.isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+                                                            <Eye size={14} />
                                                         </Button>
                                                         <Button
                                                             variant="outline-primary"
@@ -213,14 +204,6 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                             title="Edit"
                                                         >
                                                             <Edit size={14} />
-                                                        </Button>
-                                                        <Button
-                                                            variant="outline-danger"
-                                                            size="sm"
-                                                            onClick={() => handleDeleteAssignment(index)}
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 size={14} />
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -243,7 +226,9 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                 courseStartDate={courseStartDate}
                 courseEndDate={courseEndDate}
                 courseTerm={courseTerm}
+                courseId={courseId}
                 isEditing={editingIndex >= 0}
+                mode={modalMode}
             />
         </div>
     )

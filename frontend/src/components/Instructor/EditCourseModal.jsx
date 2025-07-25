@@ -20,7 +20,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
     const [errors, setErrors] = useState({})
     const [activeTab, setActiveTab] = useState("basic")
     const [newTerm, setNewTerm] = useState("")
-
+const [courseId, setCourseId] = useState("")
     // Danh sách các term có sẵn (có thể lấy từ props hoặc API)
     const availableTerms = [
         "Spring 2024",
@@ -44,6 +44,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                 modules: courseData.modules ? [...courseData.modules] : [],
                 assignments: courseData.assignments ? [...courseData.assignments] : [],
             })
+            setCourseId(courseData._id)
             setErrors({})
             setActiveTab("basic")
         }
@@ -296,7 +297,7 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
             assignments: [...assignments], // Tạo bản sao mới
         }))
     }
-
+console.log("courseData", courseData);
     return (
         <Modal show={show} onHide={onHide} size="xl" centered>
             <Modal.Header closeButton>
@@ -605,9 +606,11 @@ const EditCourseModal = ({ show, onHide, onSubmit, courseData }) => {
                                 assignments={editForm.assignments}
                                 onChange={handleAssignmentsChange}
                                 errors={errors}
+
                                 courseStartDate={editForm.startDate}
                                 courseEndDate={editForm.endDate}
                                 courseTerm={editForm.term}
+                                courseId = {courseId}
                             />
                         </Tab.Pane>
                     </Tab.Content>

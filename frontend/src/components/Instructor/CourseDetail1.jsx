@@ -380,7 +380,7 @@ console.log("students", students);
         border: "none",
         boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
     };
-
+console.log("Course details page rendered",course);
     return (
         <div>
             <Header />
@@ -594,6 +594,7 @@ console.log("students", students);
                                                         courseStartDate={course.startDate}
                                                         courseEndDate={course.endDate}
                                                         courseTerm={course.term}
+                                                        courseId = {course._id}
                                                     />
                                                 </div>
                                             </Tab.Pane>
