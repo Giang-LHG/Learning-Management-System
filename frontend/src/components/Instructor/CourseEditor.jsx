@@ -18,7 +18,12 @@ export default function CourseEditor() {
   const fetchCourse = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`/api/student/courses/${courseId}`);
+      const res = await axios.get(`/api/student/courses/${courseId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
       if (res.data.success) setCourse(res.data.data);
     } catch (err) {
       console.error("Error fetching course:", err);
@@ -34,7 +39,11 @@ export default function CourseEditor() {
 
   const handleDeleteCourse = async () => {
     try {
-      await axios.delete(`/api/instructor/courses/${courseId}`);
+      await axios.delete(`/api/instructor/courses/${courseId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
       alert("🎉 Khóa học đã được xóa thành công!");
       setShowDeleteModal(false);
       navigate('/instructor/dashboard');
@@ -48,8 +57,11 @@ export default function CourseEditor() {
     try {
       const res = await axios.put(
         `/api/instructor/courses/${courseId}/materials/toggle-visibility`,
-        { materialType, materialId, isVisible: !currentVisibility }
-      );
+        { materialType, materialId, isVisible: !currentVisibility,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
       if (res.data.success) {
         setCourse(res.data.data);
       }

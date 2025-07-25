@@ -1,6 +1,7 @@
 // src/pages/AnalyticsDashboard.jsx
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -11,92 +12,90 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { useQuery } from '@tanstack/react-query';
-import dashboardService from '../services/dashboardService';
 
 ChartJS.register(BarElement, ArcElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 const AnalyticsDashboard = () => {
-  // Fetch tổng quan
-  const { data: stats, isLoading: loadingStats } = useQuery({
-    queryKey: ['dashboardStats'],
-    queryFn: dashboardService.fetchDashboardStats
-  });
-  // Fetch user status
-  const { data: userStatus, isLoading: loadingStatus } = useQuery({
-    queryKey: ['userStatus'],
-    queryFn: dashboardService.fetchUserStatusStats
-  });
-  // Fetch activity chart
-  const { data: activityChart, isLoading: loadingActivity } = useQuery({
-    queryKey: ['activityChart'],
-    queryFn: dashboardService.fetchActivityChart
-  });
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Bar chart: 7 ngày qua
-  const barData = activityChart ? {
-    labels: activityChart.labels,
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get('/api/instructor/analytics/dashboard');
+        if (res.data.success) {
+          setData(res.data.data);
+        } else {
+          setError('Không lấy được dữ liệu dashboard');
+        }
+      } catch (err) {
+        setError('Lỗi khi lấy dữ liệu dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div style={{ padding: '2rem' }}>Đang tải dữ liệu...</div>;
+  if (error) return <div style={{ padding: '2rem', color: 'red' }}>{error}</div>;
+  if (!data) return <div style={{ padding: '2rem' }}>Không có dữ liệu.</div>;
+
+  // Bar chart: Thống kê đăng ký theo tháng
+  const barData = {
+    labels: data.monthlyStats.map(m => m.label),
     datasets: [
       {
-        label: 'Active Users',
-        data: activityChart.data,
+        label: 'Số lượt đăng ký',
+        data: data.monthlyStats.map(m => m.count),
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
       },
     ],
-  } : {
-    labels: [],
-    datasets: []
   };
 
-  // Doughnut: user status
-  const doughnutData = userStatus ? {
-    labels: userStatus.labels,
+  // Doughnut chart: Phân bố điểm số
+  const doughnutData = {
+    labels: ['Loại A (>=8)', 'Loại B (6.5-7.9)', 'Loại C (5-6.4)', 'Loại D (<5)'],
     datasets: [
       {
-        data: userStatus.data,
-        backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384'],
+        data: [data.gradeDistribution.A, data.gradeDistribution.B, data.gradeDistribution.C, data.gradeDistribution.D],
+        backgroundColor: ['#36A2EB', '#FFCE56', '#4BC0C0', '#FF6384'],
       },
     ],
-  } : {
-    labels: [],
-    datasets: []
   };
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h2>📊 Analytics Dashboard</h2>
-      {loadingStats ? <div>Loading...</div> : (
-        <div style={{ display: 'flex', gap: '2rem', marginBottom: 24 }}>
-          <div style={{ background: '#f5f5f5', padding: 16, borderRadius: 8 }}>
-            <div style={{ fontWeight: 600 }}>Total Users</div>
-            <div style={{ fontSize: 24 }}>{stats?.totalUsers ?? '-'}</div>
-          </div>
-          <div style={{ background: '#f5f5f5', padding: 16, borderRadius: 8 }}>
-            <div style={{ fontWeight: 600 }}>Total Subjects</div>
-            <div style={{ fontSize: 24 }}>{stats?.totalSubjects ?? '-'}</div>
-          </div>
-          <div style={{ background: '#f5f5f5', padding: 16, borderRadius: 8 }}>
-            <div style={{ fontWeight: 600 }}>Total Courses</div>
-            <div style={{ fontSize: 24 }}>{stats?.totalCourses ?? '-'}</div>
-          </div>
-          <div style={{ background: '#f5f5f5', padding: 16, borderRadius: 8 }}>
-            <div style={{ fontWeight: 600 }}>Total Enrollments</div>
-            <div style={{ fontSize: 24 }}>{stats?.totalEnrollments ?? '-'}</div>
-          </div>
-          <div style={{ background: '#f5f5f5', padding: 16, borderRadius: 8 }}>
-            <div style={{ fontWeight: 600 }}>User Growth</div>
-            <div style={{ fontSize: 24 }}>{stats?.userGrowth ?? '-'}</div>
-          </div>
+      <h2>📊 Instructor Dashboard</h2>
+      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: 32 }}>
+        <div style={{ minWidth: 200, background: '#f5f5fa', borderRadius: 8, padding: 16 }}>
+          <div><b>Tổng khóa học:</b> {data.totalCourses}</div>
+          <div><b>Tổng học viên:</b> {data.totalStudents}</div>
+          <div><b>Tổng bài tập:</b> {data.totalAssignments}</div>
+          <div><b>Điểm trung bình:</b> {data.averageScore}</div>
         </div>
-      )}
+        <div style={{ minWidth: 300, background: '#f5f5fa', borderRadius: 8, padding: 16 }}>
+          <b>Khóa học của tôi:</b>
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            {data.courseList.map(c => (
+              <li key={c._id}>
+                <b>{c.title}</b> ({c.term})<br/>
+                Học viên: {c.numStudents} | Chương: {c.numChapters} | Bài tập: {c.numAssignments}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
         <div style={{ width: '400px' }}>
-          <h4>Active Users (Last 7 Days)</h4>
-          {loadingActivity ? <div>Loading...</div> : <Bar data={barData} />}
+          <h4>Thống kê đăng ký theo tháng</h4>
+          <Bar data={barData} />
         </div>
         <div style={{ width: '300px' }}>
-          <h4>User Status</h4>
-          {loadingStatus ? <div>Loading...</div> : <Doughnut data={doughnutData} />}
+          <h4>Phân bố điểm số</h4>
+          <Doughnut data={doughnutData} />
         </div>
       </div>
     </div>

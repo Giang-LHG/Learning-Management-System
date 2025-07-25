@@ -1,24 +1,37 @@
 "use client"
 
 import { useState } from "react"
-import { Card, Button, Badge, Row, Col } from "react-bootstrap"
-import { Plus, Trash2, FileText, CheckCircle, Clock, Eye, EyeOff, Edit } from "lucide-react"
+import { Card, Button, Badge, Row, Col, Alert } from "react-bootstrap"
+import { Plus, FileText, CheckCircle, Clock, Edit, Eye, Trash2 } from "lucide-react"
 import AssignmentModal from "./assignment-modal"
 
-const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, courseEndDate, courseTerm }) => {
+const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, courseEndDate, courseTerm, courseId }) => {
     const [showAssignmentModal, setShowAssignmentModal] = useState(false)
     const [editingAssignment, setEditingAssignment] = useState(null)
     const [editingIndex, setEditingIndex] = useState(-1)
+    const [modalMode, setModalMode] = useState("add") // "add", "edit", "view"
+    const [deletingAssignment, setDeletingAssignment] = useState(null)
+    const [deleteError, setDeleteError] = useState("")
+    const token = localStorage.getItem("token");
 
     const handleAddAssignment = () => {
         setEditingAssignment(null)
         setEditingIndex(-1)
+        setModalMode("add")
         setShowAssignmentModal(true)
     }
 
     const handleEditAssignment = (assignment, index) => {
         setEditingAssignment(assignment)
         setEditingIndex(index)
+        setModalMode("edit")
+        setShowAssignmentModal(true)
+    }
+
+    const handleViewAssignment = (assignment, index) => {
+        setEditingAssignment(assignment)
+        setEditingIndex(index)
+        setModalMode("view")
         setShowAssignmentModal(true)
     }
 
@@ -26,18 +39,17 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
         const newAssignments = [...assignments]
 
         if (editingIndex >= 0) {
-            // Edit existing assignment
             newAssignments[editingIndex] = {
                 ...assignmentData,
                 _id: assignments[editingIndex]._id,
                 createdAt: assignments[editingIndex].createdAt,
                 updatedAt: new Date().toISOString(),
+                submissions: assignments[editingIndex].submissions || 0,
+                totalStudents: assignments[editingIndex].totalStudents || 0,
             }
         } else {
-            // Add new assignment
             newAssignments.push({
                 ...assignmentData,
-                _id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
                 createdAt: new Date().toISOString(),
                 submissions: 0,
                 totalStudents: 0,
@@ -48,18 +60,56 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
         setShowAssignmentModal(false)
     }
 
-    const handleDeleteAssignment = (index) => {
-        const newAssignments = assignments.filter((_, i) => i !== index)
-        onChange(newAssignments)
+    // API call to delete assignment
+    const deleteAssignmentAPI = async (assignmentId) => {
+        try {
+            const response = await fetch(`/api/instructor/assignments/${assignmentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.message || 'Failed to delete assignment')
+            }
+
+            return await response.json()
+        } catch (error) {
+            console.error('Error deleting assignment:', error)
+            throw error
+        }
     }
 
-    const toggleAssignmentVisibility = (index) => {
-        const newAssignments = [...assignments]
-        newAssignments[index] = {
-            ...newAssignments[index],
-            isVisible: !newAssignments[index].isVisible,
+    const handleDeleteAssignment = async (assignment, index) => {
+        if (!assignment._id) {
+            // For local assignments without _id, just remove from array
+            const newAssignments = assignments.filter((_, i) => i !== index)
+            onChange(newAssignments)
+            return
         }
-        onChange(newAssignments)
+
+        if (!confirm(`Are you sure you want to delete "${assignment.title}"? This action cannot be undone.`)) {
+            return
+        }
+
+        setDeletingAssignment(assignment._id)
+        setDeleteError("")
+
+        try {
+            await deleteAssignmentAPI(assignment._id)
+            
+            // Remove from local state
+            const newAssignments = assignments.filter((_, i) => i !== index)
+            onChange(newAssignments)
+        } catch (error) {
+            console.error("Error deleting assignment:", error)
+            setDeleteError(error.message || 'Failed to delete assignment')
+        } finally {
+            setDeletingAssignment(null)
+        }
     }
 
     const formatDateTime = (dateString) => {
@@ -112,30 +162,37 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                 <Card.Header className="d-flex justify-content-between align-items-center">
                     <h5 className="mb-0 d-flex align-items-center">
                         <FileText size={20} className="me-2" />
-                        Quản lý bài tập
+                        Assignment Management
                     </h5>
                     <Button variant="success" size="sm" onClick={handleAddAssignment}>
                         <Plus size={16} className="me-1" />
-                        Thêm bài tập
+                        Add Assignment
                     </Button>
                 </Card.Header>
                 <Card.Body>
+                    {/* Show delete error if exists */}
+                    {deleteError && (
+                        <Alert variant="danger" className="mb-3" dismissible onClose={() => setDeleteError("")}>
+                            <strong>Delete Error:</strong> {deleteError}
+                        </Alert>
+                    )}
+
                     {assignments.length === 0 ? (
                         <div className="text-center py-5">
                             <div className="p-4 rounded-circle d-inline-flex mb-3" style={{ background: "#f8f9fa" }}>
                                 <FileText size={32} className="text-muted" />
                             </div>
-                            <h6 className="text-muted mb-2">Chưa có bài tập nào</h6>
-                            <p className="text-muted mb-3">Tạo bài tập đầu tiên để học sinh có thể luyện tập</p>
+                            <h6 className="text-muted mb-2">No assignments yet</h6>
+                            <p className="text-muted mb-3">Create the first assignment so students can practice</p>
                             <Button variant="success" onClick={handleAddAssignment}>
                                 <Plus size={16} className="me-2" />
-                                Tạo bài tập đầu tiên
+                                Create First Assignment
                             </Button>
                         </div>
                     ) : (
                         <div className="d-grid gap-3">
                             {assignments.map((assignment, index) => (
-                                <Card key={assignment._id || index} className="border">
+                                <Card key={assignment._id || `temp_${index}`} className="border">
                                     <Card.Body>
                                         <Row className="align-items-center">
                                             <Col md={8}>
@@ -165,16 +222,16 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                             <div className="d-flex align-items-center">
                                                                 <Clock size={14} className="me-1" />
                                                                 <span>
-                                                                    Hạn nộp: {formatDateTime(assignment.dueDate)}
+                                                                    Due Date: {formatDateTime(assignment.dueDate)}
                                                                     {!isOverdue(assignment.dueDate) && (
-                                                                        <span className="ms-1">({getDaysUntilDue(assignment.dueDate)} ngày)</span>
+                                                                        <span className="ms-1">({getDaysUntilDue(assignment.dueDate)} days)</span>
                                                                     )}
                                                                 </span>
                                                             </div>
                                                             {assignment.type === "quiz" && assignment.questions && (
                                                                 <div className="d-flex align-items-center">
                                                                     <FileText size={14} className="me-1" />
-                                                                    <span>{assignment.questions.length} câu hỏi</span>
+                                                                    <span>{assignment.questions.length} questions</span>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -195,28 +252,35 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                 <div className="text-end">
                                                     <div className="d-flex gap-1 justify-content-end">
                                                         <Button
-                                                            variant="outline-secondary"
+                                                            variant="outline-info"
                                                             size="sm"
-                                                            onClick={() => toggleAssignmentVisibility(index)}
-                                                            title={assignment.isVisible ? "Ẩn bài tập" : "Hiển thị bài tập"}
+                                                            onClick={() => handleViewAssignment(assignment, index)}
+                                                            title="View Details"
+                                                            disabled={deletingAssignment === assignment._id}
                                                         >
-                                                            {assignment.isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+                                                            <Eye size={14} />
                                                         </Button>
                                                         <Button
                                                             variant="outline-primary"
                                                             size="sm"
                                                             onClick={() => handleEditAssignment(assignment, index)}
-                                                            title="Chỉnh sửa"
+                                                            title="Edit"
+                                                            disabled={deletingAssignment === assignment._id}
                                                         >
                                                             <Edit size={14} />
                                                         </Button>
                                                         <Button
                                                             variant="outline-danger"
                                                             size="sm"
-                                                            onClick={() => handleDeleteAssignment(index)}
-                                                            title="Xóa"
+                                                            onClick={() => handleDeleteAssignment(assignment, index)}
+                                                            title="Delete"
+                                                            disabled={deletingAssignment === assignment._id}
                                                         >
-                                                            <Trash2 size={14} />
+                                                            {deletingAssignment === assignment._id ? (
+                                                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                            ) : (
+                                                                <Trash2 size={14} />
+                                                            )}
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -239,7 +303,9 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                 courseStartDate={courseStartDate}
                 courseEndDate={courseEndDate}
                 courseTerm={courseTerm}
+                courseId={courseId}
                 isEditing={editingIndex >= 0}
+                mode={modalMode}
             />
         </div>
     )

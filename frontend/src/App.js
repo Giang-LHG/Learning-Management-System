@@ -7,8 +7,8 @@ import store from './store/store';
 // --- Header----
 import Header from './components/header/Header.js';
 // --- layouts ---
-import MainLayout from './layouts/MainLayout.jsx';
-import AuthLayout from './layouts/AuthLayout.jsx';
+import MainLayout from './Layouts/MainLayout.jsx';
+import AuthLayout from './Layouts/AuthLayout.jsx';
 
 // --- Components ---
 import ProtectedRoute from './components/common/ProtectedRoute.jsx';
@@ -31,16 +31,10 @@ import ChangePasswordPage from './pages/auth/ChangePasswordPage.jsx';
 import Profile from './pages/Profile.jsx';
 
 // --- Pages/Components for Instructor ---
-import InstructorCommunication from './components/Instructor/instructor-communication.jsx'
-import InstructorSubmissionList from './components/Instructor/InstructorSubmissionList';
-import GradeSubmission from './components/Instructor/GradeSubmission';
+
 import InstructorAppealList from './components/Instructor/InstructorAppealList';
-import ReviewAppeal from './components/Instructor/ReviewAppeal';
-import CourseParticipantsList from './components/Instructor/CourseParticipantsList';
-import DeadlineScheduler from './components/Instructor/DeadlineScheduler';
-import CourseEditor from './components/Instructor/CourseEditor';
-import AnalyticsDashboard1 from './components/Instructor/AnalyticsDashboard';
-import AssignmentCreate from './components/Instructor/AssignmentCreate';
+
+
 import CourseList from './components/Instructor/CourseList1';
 import CourseDetail1 from './components/Instructor/CourseDetail1';
 import InstructorDashboard from './components/Instructor/InstructorDashboard';
@@ -56,13 +50,13 @@ import QuizList from './components/Student/QuizList';
 import GradeOverview from './components/Student/GradeOverview';
 import AppealListStudent from './components/Student/AppealListStudent';
 import AppealFormStudent from './components/Student/AppealFormStudent';
-import SidebarStudent from './layouts/Student/SideBarStudent.js';
+import SidebarStudent from './Layouts/Student/SideBarStudent.js';
 import ParentStatsDashboard from './components/parent/ParentStatsDashboard';
 
 const queryClient = new QueryClient();
 
 import SubjectOverView from './components/parent/SubjectOverView';
-import SidebarParent from './layouts/parent/SideBarParent';
+import SidebarParent from './Layouts/parent/SideBarParent';
 import NotificationList from './components/notifications/notificationList';
 function App() {
   return (
@@ -134,12 +128,12 @@ function App() {
               <Profile />
             </ProtectedRoute>
           } />
-<Route path ="/notifications" element ={
-  <ProtectedRoute>
-      <Header />
-    <NotificationList/>
-  </ProtectedRoute>
-}/>
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <Header />
+              <NotificationList />
+            </ProtectedRoute>
+          } />
           {/* Student Routes - Chỉ cho phép student */}
           <Route path="/student" element={
             <ProtectedRoute allowedRoles={['student']}>
@@ -181,20 +175,17 @@ function App() {
           </Route>
 
           {/* --- INSTRUCTOR ROUTES --- */}
-          <Route path="/Learning Analytics" element={< InstructorDashboard />} />
-          <Route path="/instructor/chat" element={< InstructorCommunication />} />
+       
+
+
+
+
+
+
+          <Route path="/instructor/LearningAnalytics" element={< InstructorDashboard />} />
           <Route path="/instructor/course" element={< CourseList />} />
           <Route path="/instructor/course/:id" element={< CourseDetail1 />} />
-          <Route path="/instructor/assignment/:assignmentId/submissions" element={<InstructorSubmissionList />} />
-          <Route path="/instructor/submission/:submissionId/grade" element={<GradeSubmission />} />
           <Route path="/instructor/appeals" element={<InstructorAppealList />} />
-          <Route path="/instructor/appeal/review/:submissionId/:appealId" element={<ReviewAppeal />} />
-          <Route path="/instructor/course/:courseId/participants" element={<CourseParticipantsList />} />
-          <Route path="/instructor/course/:courseId/edit" element={<CourseEditor />} />
-          <Route path="/instructor/course/:courseId/deadlines" element={<DeadlineScheduler />} />
-          <Route path="/instructor/course/:courseId/analytics" element={<AnalyticsDashboard1 />} />
-          <Route path="/instructor/course/:courseId/assignments/new" element={<AssignmentCreate />} />
-
 
           <Route
             path="*"

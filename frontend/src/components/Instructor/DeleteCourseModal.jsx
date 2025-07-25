@@ -32,8 +32,8 @@ export default function DeleteCourseModal({ show, handleClose, handleDelete, cou
               <FiAlertTriangle size={24} />
             </div>
             <div>
-              <h4 className="mb-0">⚠️ Xác Nhận Xóa</h4>
-              <small className="opacity-75">Hành động không thể hoàn tác</small>
+              <h4 className="mb-0">⚠️Confirm delete</h4>
+              <small className="opacity-75">Action cannot be undone</small>
             </div>
           </Modal.Title>
         </Modal.Header>

@@ -17,7 +17,11 @@ export default function GradeSubmission() {
   const fetchSubmission = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`/api/instructor/submissions/${submissionId}`);
+      const res = await axios.get(`/api/instructor/submissions/${submissionId}`, {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
       if (res.data.success) {
         const sub = res.data.data;
         setSubmission(sub);
@@ -26,7 +30,7 @@ export default function GradeSubmission() {
       }
     } catch (err) {
       console.error("Error fetching submission:", err);
-      setError("Không thể tải dữ liệu bài nộp.");
+      setError("Unable to fetch submission.");
     } finally {
       setIsLoading(false);
     }
@@ -47,12 +51,16 @@ export default function GradeSubmission() {
         feedback: feedback.trim()
       };
       
-      await axios.put(`/api/instructor/submissions/${submissionId}/grade`, payload);
-      alert('🎉 Chấm điểm thành công rồi nè!');
+      await axios.put(`/api/instructor/submissions/${submissionId}/grade`,  {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  },payload
+});
+      alert('🎉 Grade added!');
       navigate(-1);
     } catch (err) {
       console.error("Error grading submission:", err);
-      setError(err.response?.data?.message || 'Chấm điểm thất bại rồi.');
+      setError(err.response?.data?.message || 'Grade add fail.');
     } finally {
       setIsSubmitting(false);
     }
@@ -66,7 +74,7 @@ export default function GradeSubmission() {
       }}>
         <div className="text-center">
           <div className="spinner-border text-light mb-3" style={{ width: '4rem', height: '4rem' }}></div>
-          <h4 className="text-white">Đang tải bài nộp...</h4>
+          <h4 className="text-white">Load submission...</h4>
         </div>
       </div>
     );
@@ -77,7 +85,7 @@ export default function GradeSubmission() {
       <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: '100vh' }}>
         <Container className="py-5">
           <Alert variant="danger" className="border-0 shadow-lg">
-            Không tìm thấy bài nộp.
+            No found submission.
           </Alert>
         </Container>
       </div>
@@ -125,14 +133,14 @@ export default function GradeSubmission() {
                 }}
               >
                 <FiArrowLeft className="me-2" />
-                🔙 Quay lại
+                🔙Back
               </Button>
               <div style={{ animation: 'fadeInRight 0.8s ease-out' }}>
                 <h1 className="text-white fw-bold mb-1 display-5">
                   <FiZap className="me-3" />
-                  ⭐ Chấm Điểm
+                  ⭐ Add grade
                 </h1>
-                <p className="text-white-50 mb-0 fs-5">Đánh giá và phản hồi bài làm của học viên</p>
+                <p className="text-white-50 mb-0 fs-5"></p>
               </div>
             </div>
 
@@ -150,7 +158,7 @@ export default function GradeSubmission() {
               >
                 <h4 className="mb-0 fw-bold">
                   <FiUser className="me-3" />
-                  📋 Thông Tin Bài Nộp
+                  📋 Information of submission
                 </h4>
               </Card.Header>
               <Card.Body className="p-4">
@@ -163,7 +171,7 @@ export default function GradeSubmission() {
                       >
                         👤
                       </div>
-                      <strong className="text-primary fs-5">Học viên:</strong>
+                      <strong className="text-primary fs-5">Student:</strong>
                       <div className="mt-2">
                         <Badge bg="primary" className="fs-6 px-3 py-2">
                           {submission.studentId.profile.fullName}
@@ -179,7 +187,7 @@ export default function GradeSubmission() {
                       >
                         📝
                       </div>
-                      <strong className="text-success fs-5">Bài tập:</strong>
+                      <strong className="text-success fs-5">Assigment:</strong>
                       <div className="mt-2">
                         <Badge bg="success" className="fs-6 px-3 py-2">
                           {submission.assignmentId.title}
@@ -195,7 +203,7 @@ export default function GradeSubmission() {
                       >
                         📅
                       </div>
-                      <strong className="text-warning fs-5">Học kỳ:</strong>
+                      <strong className="text-warning fs-5">Term:</strong>
                       <div className="mt-2">
                         <Badge bg="warning" text="dark" className="fs-6 px-3 py-2">
                           {submission.term || 'N/A'}
@@ -211,7 +219,7 @@ export default function GradeSubmission() {
                       >
                         ⏰
                       </div>
-                      <strong className="text-info fs-5">Nộp lúc:</strong>
+                      <strong className="text-info fs-5">Date submision:</strong>
                       <div className="mt-2 text-muted fs-6">
                         {new Date(submission.submittedAt).toLocaleString('vi-VN')}
                       </div>
@@ -235,7 +243,7 @@ export default function GradeSubmission() {
               >
                 <h4 className="mb-0 fw-bold">
                   <FiBookOpen className="me-3" />
-                  📖 Bài Làm Của Học Viên
+                  📖 Submission of student
                 </h4>
               </Card.Header>
               <Card.Body className="p-4">
@@ -253,10 +261,10 @@ export default function GradeSubmission() {
                         return (
                           <div key={q._id} className="mb-4 p-3 bg-white rounded-3 shadow-sm">
                             <h6 className="text-primary fw-bold mb-3">
-                              ❓ Câu {idx + 1}: {q.text}
+                              ❓ Question {idx + 1}: {q.text}
                             </h6>
                             <div className="mt-2">
-                              <strong>Câu trả lời của học viên:</strong>
+                              <strong>Answer of student:</strong>
                               <Badge bg="secondary" className="ms-2 fs-6">
                                 {studentAnswer?.selectedOption || 'Chưa trả lời'}
                               </Badge>
@@ -267,7 +275,7 @@ export default function GradeSubmission() {
                     </div>
                   ) : (
                     <div className="text-dark fs-5 lh-lg">
-                      {submission.content || "Không có nội dung."}
+                      {submission.content || "Not content."}
                     </div>
                   )}
                 </div>
@@ -288,7 +296,7 @@ export default function GradeSubmission() {
               >
                 <h4 className="mb-0 fw-bold">
                   <FiStar className="me-3" />
-                  ⭐ Chấm Điểm & Phản Hồi
+                  ⭐ Add Grade 
                 </h4>
               </Card.Header>
               <Card.Body className="p-5">
@@ -297,12 +305,12 @@ export default function GradeSubmission() {
                     <Col md={6}>
                       <div className="mb-4">
                         <Form.Label className="fw-bold fs-5 mb-3">
-                          🎯 Điểm số (0-100)
+                          🎯 Score (0-10)
                         </Form.Label>
                         <Form.Control
                           type="number"
                           min="0"
-                          max="100"
+                          max="10"
                           value={score}
                           onChange={(e) => setScore(e.target.value)}
                           placeholder="Nhập điểm số..."
@@ -318,14 +326,14 @@ export default function GradeSubmission() {
 
                   <div className="mb-5">
                     <Form.Label className="fw-bold fs-5 mb-3">
-                      💭 Phản hồi chi tiết
+                      💭 
                     </Form.Label>
                     <Form.Control
                       as="textarea"
                       rows={6}
                       value={feedback}
                       onChange={(e) => setFeedback(e.target.value)}
-                      placeholder="Viết phản hồi chi tiết và khuyến khích cho học viên..."
+                      placeholder="Add feedback"
                       className="border-0 shadow-sm"
                       style={{ 
                         borderRadius: '15px',
@@ -341,7 +349,7 @@ export default function GradeSubmission() {
                       className="border-0 shadow-sm mb-4"
                       style={{ borderRadius: '15px' }}
                     >
-                      <strong>❌ Lỗi:</strong> {error}
+                      <strong>❌ Error:</strong> {error}
                     </Alert>
                   )}
 
@@ -362,12 +370,12 @@ export default function GradeSubmission() {
                       {isSubmitting ? (
                         <>
                           <Spinner animation="border" size="sm" className="me-3" />
-                          🔄 Đang lưu điểm...
+                          🔄 Saving ...
                         </>
                       ) : (
                         <>
                           <FiSave className="me-3" />
-                          🚀 Lưu Điểm & Phản Hồi
+                          🚀 Saved
                         </>
                       )}
                     </Button>

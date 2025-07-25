@@ -43,7 +43,7 @@ function Header() {
     };
 
     fetchUnreadCount();
-    
+
     // Fetch unread count every 30 seconds
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
@@ -163,15 +163,15 @@ function Header() {
               <li>
                 <Link
                   to="/instructor/course"
-                  className={`nav-link ${location.pathname === '/courses' ? 'active' : ''}`}
+                  className={`nav-link ${location.pathname === '/instructor/course' ? 'active' : ''}`}
                 >
                   Courses
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/Learning Analytics"
-                  className={`nav-link ${location.pathname === '/Learning Analytics' ? 'active' : ''}`}
+                  to="/instructor/LearningAnalytics"
+                  className={`nav-link ${location.pathname === '/instructor/LearningAnalytics' ? 'active' : ''}`}
                 >
                   Learning Analytics
                 </Link>
@@ -188,46 +188,13 @@ function Header() {
                   Appeals
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/instructor/chat"
-                  className={`nav-link ${location.pathname === '/instructor/chat' ? 'active' : ''}`}
-                >
-                  Chat
-                </Link>
-              </li>
+             
             </>)}
           </ul>
         </nav>
 
         <div className="header-actions">
-          {/* Search Button */}
-          <button
-            className="search-button"
-            onClick={() => setSearchOpen(!searchOpen)}
-            aria-label="Search"
-          >
-            <FiSearch size={20} />
-          </button>
-
-          {/* Search Input */}
-          <form
-            ref={searchRef}
-            className={`search-container ${searchOpen ? 'open' : ''}`}
-            onSubmit={handleSearch}
-          >
-            <input
-              type="text"
-              placeholder="Search courses, instructors..."
-              className="search-input"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit" className="search-submit" aria-label="Submit search">
-              <FiSearch size={18} />
-            </button>
-          </form>
-
+       
           {/* User Actions */}
           <div className="user-actions" ref={userDropdownRef}>
             {isAuthenticated ? (
@@ -281,32 +248,32 @@ function Header() {
                       </li>)}
 
                       <li
-                      className="dropdown-link"
-                          onClick={handleNotificationClick}>
-                       
-                          <FiBell className="dropdown-icon" />
-                          Notifications
-                          {unreadCount > 0 && (
-                            <span style={{
-                              position: 'absolute',
-                              right: '1rem',
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              background: '#ef4444',
-                              color: 'white',
-                              borderRadius: '50%',
-                              width: '20px',
-                              height: '20px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.75rem',
-                              fontWeight: 600
-                            }}>
-                              {unreadCount > 99 ? '99+' : unreadCount}
-                            </span>
-                          )}
-                        
+                        className="dropdown-link"
+                        onClick={handleNotificationClick}>
+
+                        <FiBell className="dropdown-icon" />
+                        Notifications
+                        {unreadCount > 0 && (
+                          <span style={{
+                            position: 'absolute',
+                            right: '1rem',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: '#ef4444',
+                            color: 'white',
+                            borderRadius: '50%',
+                            width: '20px',
+                            height: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.75rem',
+                            fontWeight: 600
+                          }}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+
                       </li>
                       <li>
                         <Link to="/profile" className="dropdown-link" onClick={() => setUserDropdownOpen(false)}>
