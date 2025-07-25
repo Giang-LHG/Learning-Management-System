@@ -363,6 +363,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
         setErrors({});
         setActiveTab("basic");
         onHide();
+        onSubmit();
     };
 
     return (

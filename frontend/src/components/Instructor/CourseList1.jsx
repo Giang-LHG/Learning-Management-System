@@ -489,7 +489,7 @@ const token = localStorage.getItem("token");
           )}
         </Container>
 
-        <AddCourseModal show={showAddModal} onHide={() => setShowAddModal(false)}  />
+        <AddCourseModal show={showAddModal} onHide={() => setShowAddModal(false)} onSubmit={()=>  window.location.reload()} />
         <EditCourseModal
           show={showEditModal}
           onHide={() => setShowEditModal(false)}

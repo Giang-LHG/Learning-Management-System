@@ -841,7 +841,7 @@ const AssignmentModal = ({
                                         </Form.Text>
                                     </Col>
 
-                                    <Col md={12} className="mb-3">
+                                    <Col md={12} className="mb-3"hidden ="true">
                                         <Form.Check
                                         hidden ="true"
                                             type="switch"
