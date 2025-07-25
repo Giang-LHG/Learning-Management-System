@@ -10,181 +10,129 @@ exports.listOpenAppeals = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid instructorId' });
     }
 
-    const courses = await Course.find({ instructorId }).select('_id term').lean();
+    // Lấy danh sách course của instructor
+    const courses = await Course.find({ instructorId }).select('_id').lean();
     if (courses.length === 0) {
       return res.json({ success: true, data: [] });
     }
-    
-    // Tạo map courseId -> latest term
-    const courseTermMap = {};
-    courses.forEach(c => {
-        if (c.term && c.term.length > 0) {
-            courseTermMap[c._id.toString()] = c.term[c.term.length - 1];
-        }
-    });
 
-    const appeals = await Submission.aggregate([
-      { $unwind: '$appeals' },
-      { $match: { 'appeals.status': 'open' } },
-      
-      // Lookup assignment
-      { 
-        $lookup: { 
-          from: 'assignments', 
-          localField: 'assignmentId', 
-          foreignField: '_id', 
-          as: 'assignment' 
-        } 
-      },
-      { $unwind: '$assignment' },
-      
-      // Filter by courses that belong to instructor
-      { 
-        $match: { 
-          'assignment.courseId': { 
-            $in: courses.map(c => c._id) 
-          } 
-        } 
-      },
-      
-      // Lookup course to get term information
-      {
-        $lookup: {
-          from: 'courses',
-          localField: 'assignment.courseId',
-          foreignField: '_id',
-          as: 'course'
+    const courseIds = courses.map(c => c._id);
+
+    // Aggregation để lấy các open appeals của các assignment thuộc các course đó
+const appeals = await Submission.aggregate([
+  { $unwind: '$appeals' },
+  { $match: { 'appeals.status': 'open' } },
+
+  {
+    $lookup: {
+      from: 'assignments',
+      localField: 'assignmentId',
+      foreignField: '_id',
+      as: 'assignment'
+    }
+  },
+  { $unwind: '$assignment' },
+
+  {
+    $match: {
+      'assignment.courseId': { $in: courseIds }
+    }
+  },
+
+  {
+    $lookup: {
+      from: 'users',
+      localField: 'studentId',
+      foreignField: '_id',
+      as: 'student'
+    }
+  },
+  { $unwind: '$student' },
+
+  {
+    $project: {
+      _id: 0,
+      submissionId: '$_id',
+      appealId: '$appeals.appealId',
+      appealCreatedAt: '$appeals.createdAt',
+      studentName: '$student.profile.fullName',
+      assignmentTitle: '$assignment.title',
+      assigmentDescription: '$assignment.description',
+      originalScore: '$grade.score',
+
+      content: '$content',
+
+      // ===== answers đã được đánh số 1,2,3... =====
+      answers: {
+        $map: {
+          input: { $range: [0, { $size: { $ifNull: ['$answers', []] } }] },
+          as: 'idx',
+          in: {
+            index: { $add: ['$$idx', 1] },
+            questionId: { $arrayElemAt: ['$answers.questionId', '$$idx'] },
+            selectedOption: { $arrayElemAt: ['$answers.selectedOption', '$$idx'] }
+          }
         }
       },
-      { $unwind: '$course' },
-      
-      // Add field for latest term of the course
-      {
-        $addFields: {
-          latestCourseTerm: {
-            $cond: {
-              if: { $and: [{ $isArray: '$course.term' }, { $gt: [{ $size: '$course.term' }, 0] }] },
-              then: { $arrayElemAt: ['$course.term', -1] },
-              else: null
+
+      // ===== Thêm danh sách câu hỏi + correctAnswer + points (+ đáp án SV) =====
+      questions: {
+        $map: {
+          input: { $range: [0, { $size: { $ifNull: ['$assignment.questions', []] } }] },
+          as: 'qIdx',
+          in: {
+            index: { $add: ['$$qIdx', 1] },
+            questionId: { $arrayElemAt: ['$assignment.questions.questionId', '$$qIdx'] },
+            text: { $arrayElemAt: ['$assignment.questions.text', '$$qIdx'] },
+            options: { $arrayElemAt: ['$assignment.questions.options', '$$qIdx'] },
+            correctAnswer: { $arrayElemAt: ['$assignment.questions.correctOption', '$$qIdx'] },
+            points: { $arrayElemAt: ['$assignment.questions.points', '$$qIdx'] },
+
+            // (tuỳ chọn) gắn luôn đáp án sinh viên đã chọn cho câu hỏi này
+            studentSelectedOption: {
+              $let: {
+                vars: {
+                  qid: { $arrayElemAt: ['$assignment.questions.questionId', '$$qIdx'] },
+                  matchedAnswer: {
+                    $first: {
+                      $filter: {
+                        input: { $ifNull: ['$answers', []] },
+                        as: 'a',
+                        cond: { $eq: ['$$a.questionId', { $arrayElemAt: ['$assignment.questions.questionId', '$$qIdx'] }] }
+                      }
+                    }
+                  }
+                },
+                in: { $ifNull: ['$$matchedAnswer.selectedOption', null] }
+              }
             }
           }
         }
       },
-      
-      // Filter by matching term (only if both submission.term and course latest term exist)
-      {
-        $match: {
-          $or: [
-            { term: { $exists: false } }, // No term filtering if submission doesn't have term
-            { latestCourseTerm: null }, // No term filtering if course doesn't have term
-            { $expr: { $eq: ['$term', '$latestCourseTerm'] } } // Match terms
-          ]
-        }
-      },
 
-      // Lookup student information
-      { 
-        $lookup: { 
-          from: 'users', 
-          localField: 'studentId', 
-          foreignField: '_id', 
-          as: 'student' 
-        } 
-      },
-      { $unwind: '$student' },
-      
-      // Project final result
-      {
-        $project: {
-          _id: 0,
-          submissionId: '$_id',
-          appealId: '$appeals.appealId',
-          appealCreatedAt: '$appeals.createdAt',
-          studentName: '$student.profile.fullName',
-          assignmentTitle: '$assignment.title',
-          originalScore: '$grade.score',
-          studentComment: { 
-            $cond: {
-              if: { $and: [{ $isArray: '$appeals.comments' }, { $gt: [{ $size: '$appeals.comments' }, 0] }] },
-              then: { $arrayElemAt: ['$appeals.comments.text', 0] },
-              else: null
-            }
+      studentComment: {
+        $cond: {
+          if: {
+            $and: [
+              { $isArray: '$appeals.comments' },
+              { $gt: [{ $size: '$appeals.comments' }, 0] }
+            ]
           },
-          term: '$term',
-          courseTerm: '$latestCourseTerm'
+          then: { $arrayElemAt: ['$appeals.comments.text', 0] },
+          else: null
         }
-      },
-      { $sort: { appealCreatedAt: -1 } }
-    ]).allowDiskUse(true);
+      }
+    }
+  },
 
-    return res.status(200).json({ success: true, data: appeals });
-    
+  { $sort: { appealCreatedAt: -1 } }
+]).allowDiskUse(true);
+
+return res.status(200).json({ success: true, data: appeals });
+
   } catch (err) {
     console.error('Error in listOpenAppeals:', err);
-    
-    // Fallback to simpler approach if aggregation fails
-    try {
-      const courseIds = courses.map(c => c._id);
-      
-      const submissions = await Submission.find({
-        'appeals.status': 'open'
-      })
-      .populate({
-        path: 'assignmentId',
-        match: { courseId: { $in: courseIds } },
-        populate: {
-          path: 'courseId',
-          select: 'term'
-        }
-      })
-      .populate('studentId', 'profile.fullName')
-      .lean();
-
-      const appeals = [];
-      
-      submissions.forEach(submission => {
-        if (!submission.assignmentId) return; // Skip if assignment not found
-        
-        const course = submission.assignmentId.courseId;
-        const latestCourseTerm = course && course.term && course.term.length > 0 
-          ? course.term[course.term.length - 1] 
-          : null;
-        
-        // Filter by term if both exist
-        if (submission.term && latestCourseTerm && submission.term !== latestCourseTerm) {
-          return;
-        }
-        
-        submission.appeals.forEach(appeal => {
-          if (appeal.status === 'open') {
-            appeals.push({
-              submissionId: submission._id,
-              appealId: appeal.appealId,
-              appealCreatedAt: appeal.createdAt,
-              studentName: submission.studentId?.profile?.fullName,
-              assignmentTitle: submission.assignmentId?.title,
-              originalScore: submission.grade?.score,
-              studentComment: appeal.comments && appeal.comments.length > 0 
-                ? appeal.comments[0].text 
-                : null
-            });
-          }
-        });
-      });
-      
-      // Sort by creation date
-      appeals.sort((a, b) => new Date(b.appealCreatedAt) - new Date(a.appealCreatedAt));
-      
-      return res.status(200).json({ 
-        success: true, 
-        data: appeals,
-        note: 'Used fallback query due to aggregation error'
-      });
-      
-    } catch (fallbackErr) {
-      console.error('Fallback query also failed:', fallbackErr);
-      return res.status(500).json({ success: false, message: 'Server error' });
-    }
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 

@@ -238,7 +238,7 @@ function Header() {
                     <ul className="dropdown-links">
                       {user?.role !== 'student' && (<li>
                         <Link
-                          to={user?.role === 'admin' ? '/admin' : user?.role === 'student' ? '/student' : user?.role === 'parent' ? '/parent/dashboard' : '/dashboard'}
+                          to={user?.role === 'admin' ? '/admin' : user?.role === 'student' ? '/student' : user?.role === 'parent' ? '/parent/dashboard' : user?.role === 'instructor' ? '/instructor/LearningAnalytics' : '/dashboard'}
                           className="dropdown-link"
                           onClick={() => setUserDropdownOpen(false)}
                         >
