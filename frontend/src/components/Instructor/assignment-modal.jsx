@@ -56,7 +56,7 @@ const AssignmentModal = ({
                 setFormData({
                     title: assignmentData.title || "",
                     description: assignmentData.description || "",
-                    type: assignmentData.type || "essay",
+                    type: assignmentData.type || "quiz",
                     dueDate: assignmentData.dueDate ? formatDateForInput(assignmentData.dueDate) : "",
                     isVisible: assignmentData.isVisible !== undefined ? assignmentData.isVisible : true,
                     term: assignmentData.term || courseTerm || [],
@@ -67,7 +67,7 @@ const AssignmentModal = ({
                 setFormData({
                     title: "",
                     description: "",
-                    type: "essay",
+                    type: "quiz",
                     dueDate: "",
                     isVisible: true,
                     term: courseTerm || [],
@@ -376,7 +376,7 @@ const AssignmentModal = ({
         setFormData({
             title: "",
             description: "",
-            type: "essay",
+            type: "quiz",
             dueDate: "",
             isVisible: true,
             term: [],
@@ -433,7 +433,7 @@ const AssignmentModal = ({
                                 <label className="fw-semibold text-muted small">Assignment Type</label>
                                 <div className="mt-1">
                                     <Badge bg={assignmentData.type === "quiz" ? "info" : "primary"}>
-                                        {assignmentData.type === "quiz" ? "Trắc nghiệm" : "Tự luận"}
+                                        {assignmentData.type === "quiz" ? "Quiz" : "Essay"}
                                     </Badge>
                                 </div>
                             </div>
@@ -579,22 +579,22 @@ const AssignmentModal = ({
                 <Col md={6}>
                     <Card className="mb-4">
                         <Card.Header>
-                            <h6 className="mb-0">Học sinh đã nộp bài</h6>
+                            <h6 className="mb-0">Students have submitted</h6>
                         </Card.Header>
                         <Card.Body style={{ maxHeight: "300px", overflowY: "auto" }}>
                             {submissions.length === 0 ? (
                                 <div className="text-center text-muted py-3">
                                     <User size={32} className="mb-2" />
-                                    <p className="mb-0">Chưa có bài nộp nào</p>
+                                    <p className="mb-0">Not submission</p>
                                 </div>
                             ) : (
                                 <Table hover size="sm">
                                     <thead className="table-light">
                                         <tr>
-                                            <th>Học sinh</th>
-                                            <th>Thời gian nộp</th>
-                                            <th>Điểm</th>
-                                            <th>Hành động</th>
+                                            <th>Student</th>
+                                            <th>Time</th>
+                                            <th>Score</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -626,7 +626,7 @@ const AssignmentModal = ({
                                                             setShowEssayDetail(true);
                                                         }} disabled={submission.grade?.score === null || submission.grade?.score === undefined}>
                                                             <Eye size={14} className="me-1" />
-                                                            Xem chi tiết
+                                                            Show detail
                                                         </Button>
                                                     ) : (
                                                         <Button size="sm" variant="outline-secondary" onClick={() => {
@@ -634,8 +634,7 @@ const AssignmentModal = ({
                                                             setShowQuizDetail(true);
                                                         }} disabled={submission.grade?.score === null || submission.grade?.score === undefined}>
                                                             <Eye size={14} className="me-1" />
-                                                            Xem chi tiết
-                                                        </Button>
+    Show detail                                                        </Button>
                                                     )}
                                                 </td>
                                             </tr>
@@ -646,19 +645,21 @@ const AssignmentModal = ({
                         </Card.Body>
                     </Card>
                 </Col>
-                <Col md={6}>
+                <Col md={6} >
                     <Card className="mb-4">
                         <Card.Header>
-                            <h6 className="mb-0">Học sinh chưa nộp bài</h6>
+                            <h6 className="mb-0"></h6>
                         </Card.Header>
                         <Card.Body style={{ maxHeight: "300px", overflowY: "auto" }}>
                             {studentsNotSubmitted.length === 0 ? (
                                 <div className="text-center text-muted py-3">
                                     <User size={32} className="mb-2" />
-                                    <p className="mb-0">Tất cả học sinh đã nộp bài</p>
+                                    <p className="mb-0">Total student had submitted</p>
                                 </div>
                             ) : (
+                                
                                 <div className="d-grid gap-2">
+                                    
                                     {studentsNotSubmitted.map((student) => (
                                         <div key={student._id} className="d-flex align-items-center justify-content-between p-2 border rounded">
                                             <div className="d-flex align-items-center">
@@ -675,7 +676,7 @@ const AssignmentModal = ({
                                             </div>
                                             {assignmentData.type === 'essay' && (
                                                 <Button size="sm" variant="outline-primary" onClick={() => handleOpenGradeModal(student)}>
-                                                    Chấm điểm
+                                                 Add grade
                                                 </Button>
                                             )}
                                         </div>
@@ -798,11 +799,12 @@ const AssignmentModal = ({
                                             Assignment Type <span className="text-danger">*</span>
                                         </Form.Label>
                                         <div className="d-flex gap-3">
-                                            <Form.Check
+                                            <Form.Check 
+                                            hidden = "true"
                                                 type="radio"
                                                 id="type-essay"
                                                 name="assignmentType"
-                                                label="Essay"
+                                                
                                                 checked={formData.type === "essay"}
                                                 onChange={() => handleTypeChange("essay")}
                                             />

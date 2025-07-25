@@ -346,7 +346,7 @@ const token = localStorage.getItem("token");
                 />
               </div>
             </Col>
-            <Col md={4}>
+            <Col md={4} hidden="true">
               <Dropdown>
                 <Dropdown.Toggle
                   variant="outline-light"
