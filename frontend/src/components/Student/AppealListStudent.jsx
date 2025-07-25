@@ -533,9 +533,7 @@ const token = localStorage.getItem('token');
                       <Row className="align-items-start">
                         <Col lg={8} className="mb-3 mb-lg-0">
                           <div className="d-flex align-items-start mb-3">
-                            <div className="module-icon me-3 flex-shrink-0">
-                              {appeal.subjectName.charAt(0).toUpperCase()}
-                            </div>
+                           
                             <div className="flex-grow-1">
                               <div className="d-flex align-items-center mb-2">
                                 <h5 className="mb-0 me-3 fw-bold">

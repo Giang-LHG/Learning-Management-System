@@ -145,74 +145,118 @@ exports.getSubmissionsByStudent = async (req, res) => {
   }
 };
 exports.resubmitSubmission = async (req, res) => {
-  try {
-    const { submissionId } = req.params;
-    const { content, answers } = req.body; // content cho essay, answers cho quiz
+ try {
+  const { submissionId } = req.params;
+  const { content, answers } = req.body; // content cho essay, answers cho quiz
+console.log(answers);
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(submissionId)) {
+    return res.status(400).json({ success: false, message: 'Invalid submissionId' });
+  }
 
-    // Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(submissionId)) {
-      return res.status(400).json({ success: false, message: 'Invalid submissionId' });
-    }
+  // Tìm submission hiện tại
+  const submission = await Submission.findById(submissionId);
+  if (!submission) {
+    return res.status(404).json({ success: false, message: 'Submission not found' });
+  }
 
-    // Tìm submission hiện tại
-    const submission = await Submission.findById(submissionId);
-    if (!submission) {
-      return res.status(404).json({ success: false, message: 'Submission not found' });
-    }
+  // Lấy assignment để kiểm tra deadline và grading
+  const assignment = await Assignment.findById(submission.assignmentId).select('dueDate type questions instructorId');
+  if (!assignment) {
+    return res.status(404).json({ success: false, message: 'Assignment not found' });
+  }
 
-    //  Lấy assignment để kiểm tra deadline
-    const assignment = await Assignment.findById(submission.assignmentId).select('dueDate type');
-    if (!assignment) {
-      return res.status(404).json({ success: false, message: 'Assignment not found' });
-    }
-    const now = new Date();
-    if (now > assignment.dueDate) {
+  const now = new Date();
+  if (now > assignment.dueDate) {
+    return res.status(400).json({
+      success: false,
+      message: 'Cannot resubmit: due date has passed'
+    });
+  }
+
+  // Cập nhật nội dung mới
+  if (assignment.type === 'essay') {
+    if (typeof content !== 'string' || !content.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Cannot resubmit: due date has passed'
+        message: 'Please provide non-empty content for essay resubmission'
+      });
+    }
+    submission.content = content.trim();
+    // Reset điểm cho chấm tay
+    submission.grade = { score: null, gradedAt: null, graderId: null };
+
+  } else if (assignment.type === 'quiz') {
+    if (!Array.isArray(answers) || answers.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide answers array for quiz resubmission'
       });
     }
 
-    //  Cập nhật nội dung mới
-    if (assignment.type === 'essay') {
-      if (typeof content !== 'string' || !content.trim()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Please provide non-empty content for essay resubmission'
-        });
-      }
-      submission.content = content.trim();
-    } else if (assignment.type === 'quiz') {
-      if (!Array.isArray(answers) || answers.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Please provide answers array for quiz resubmission'
-        });
-      }
-      submission.answers = answers.map(ans => ({
-        questionId: ans.questionId,
-        selectedOption: ans.selectedOption
-      }));
-    }
+    submission.answers = answers.map(ans => ({
+      questionId: ans.questionId,
+      selectedOption: ans.selectedOption
+    }));
 
-    //  Đặt lại thời gian và xóa grade cũ
-    submission.submittedAt = now;
-    submission.grade = { score: null, gradedAt: null, graderId: null };
+    // Tính điểm tự động
+    if (Array.isArray(assignment.questions) && assignment.questions.length > 0) {
+const answersMap = new Map(
+  answers.map(a => [a.questionId.toString(), a.selectedOption])
+);   
+console.log("answersMap keys:", Array.from(answersMap.keys()));
 
-    await submission.save();
+   let totalPoints = 0;
+      let correctPoints = 0;
 
-    return res.json({
-      success: true,
-      data: submission,
-      message: 'Resubmission successful'
-    });
-  } catch (err) {
-    console.error('Error in resubmitSubmission:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error during resubmission'
-    });
+   assignment.questions.forEach((q, idx) => {
+  const qid = String(q.questionId); // ✅ sử dụng q.questionId thay vì q._id
+  const selected = answersMap.get(qid);
+
+  console.log(`#${idx + 1}`, {
+    qid,
+    selected,
+    correct: q.correctOption,
+    match: selected === q.correctOption
+  });
+
+  const pts = q.points || 0;
+  totalPoints += pts;
+
+  if (selected === q.correctOption) {
+    correctPoints += pts;
   }
+});
+
+const rawScore = totalPoints > 0 ? (correctPoints / totalPoints) * 10 : 0;
+const score = Math.round(rawScore * 100) / 100;
+
+submission.grade = {
+  score,
+  gradedAt: new Date(),
+  graderId: assignment.instructorId || null
+};
+    }
+  }
+
+  // Cập nhật lại thời gian nộp
+  submission.submittedAt = now;
+
+  await submission.save();
+
+  return res.json({
+    success: true,
+    data: submission,
+    message: 'Resubmission successful'
+  });
+
+} catch (err) {
+  console.error('Error in resubmitSubmission:', err);
+  return res.status(500).json({
+    success: false,
+    message: 'Server error during resubmission'
+  });
+}
 };
 exports.getSubmissionsByCourse = async (req, res) => {
    try {
