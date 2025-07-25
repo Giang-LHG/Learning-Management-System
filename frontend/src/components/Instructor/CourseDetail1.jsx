@@ -93,7 +93,7 @@ const CourseDetail = () => {
 
     const fetchEnrolledStudents = async () => {
         try {
-            const response = await api.get(`/instructor/courses/${courseId}/students`);
+            const response = await api.get(`/instructor/courses/${courseId}/participants`);
             if (response.data.success) {
                 setStudents(response.data.data || []);
             }
