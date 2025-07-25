@@ -36,7 +36,7 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
 
     if (!result) return null
 
-    // Mock questions for demo (in real app, this would come from assignment.questions)
+    // Use questions prop if provided, otherwise fallback to mockQuestions
     const mockQuestions = [
         {
             questionId: "q1",
@@ -99,13 +99,18 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
             points: 2,
         },
     ]
+    const questions = (Array.isArray(assignment?.questions) && assignment.questions.length > 0)
+        ? assignment.questions
+        : (Array.isArray(result?.questions) && result.questions.length > 0)
+            ? result.questions
+            : mockQuestions;
 
     return (
         <Modal show={show} onHide={onHide} size="xl" centered>
             <Modal.Header closeButton>
                 <Modal.Title className="d-flex align-items-center">
                     <CheckCircle size={24} className="me-2" />
-                    Kết quả bài trắc nghiệm - {result.studentName}
+                    Quiz Result - {result.studentName}
                 </Modal.Title>
             </Modal.Header>
 
@@ -115,7 +120,7 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
                     <Card.Header>
                         <h5 className="mb-0 d-flex align-items-center">
                             <User size={20} className="me-2" />
-                            Thông tin & Kết quả
+                            Student Info & Result
                         </h5>
                     </Card.Header>
                     <Card.Body>
@@ -135,12 +140,12 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
                                 </div>
                                 <div className="d-grid gap-2">
                                     <div className="d-flex justify-content-between">
-                                        <span className="text-muted">Thời gian hoàn thành:</span>
-                                        <span className="fw-medium">{formatDateTime(result.completedAt)}</span>
+                                        <span className="text-muted">Completed At:</span>
+                                        <span className="fw-medium">{result.completedAt ? formatDateTime(result.completedAt) : "Not specified"}</span>
                                     </div>
                                     <div className="d-flex justify-content-between">
-                                        <span className="text-muted">Thời gian làm bài:</span>
-                                        <span className="fw-medium">{result.timeSpent} phút</span>
+                                        <span className="text-muted">Time Spent:</span>
+                                        <span className="fw-medium">{result.timeSpent ?? 0} minutes</span>
                                     </div>
                                 </div>
                             </Col>
@@ -150,28 +155,28 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
                                         <Card className="text-center bg-light">
                                             <Card.Body className="py-3">
                                                 <div className="h3 fw-bold text-primary mb-1">
-                                                    {result.score}/{result.totalScore}
+                                                    {(result.score ?? 0)}/{(result.totalScore ?? 0)}
                                                 </div>
-                                                <small className="text-muted">Điểm số</small>
+                                                <small className="text-muted">Score</small>
                                             </Card.Body>
                                         </Card>
                                     </Col>
                                     <Col md={6}>
                                         <Card className="text-center bg-light">
                                             <Card.Body className="py-3">
-                                                <div className={`h3 fw-bold text-${getGradeColor(result.percentage)} mb-1`}>
-                                                    {result.percentage}%
+                                                <div className={`h3 fw-bold text-${getGradeColor(result.percentage ?? 0)} mb-1`}>
+                                                    {(result.percentage ?? 0)}%
                                                 </div>
-                                                <small className="text-muted">Tỷ lệ đúng</small>
+                                                <small className="text-muted">Correct Rate</small>
                                             </Card.Body>
                                         </Card>
                                     </Col>
                                     <Col md={12}>
                                         <Card className="text-center">
                                             <Card.Body className="py-3">
-                                                <Badge bg={getGradeColor(result.percentage)} className="fs-5 px-3 py-2">
+                                                <Badge bg={getGradeColor(result.percentage ?? 0)} className="fs-5 px-3 py-2">
                                                     <Award size={16} className="me-2" />
-                                                    Xếp loại: {getGradeLetter(result.percentage)}
+                                                    Grade: {getGradeLetter(result.percentage ?? 0)}
                                                 </Badge>
                                             </Card.Body>
                                         </Card>
@@ -187,35 +192,35 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
                     <Card.Header>
                         <h5 className="mb-0 d-flex align-items-center">
                             <BarChart3 size={20} className="me-2" />
-                            Thống kê chi tiết
+                            Detailed Statistics
                         </h5>
                     </Card.Header>
                     <Card.Body>
                         <Row className="text-center">
                             <Col md={3}>
                                 <div className="p-3">
-                                    <div className="h4 fw-bold text-success mb-1">{result.answers.filter((a) => a.isCorrect).length}</div>
-                                    <small className="text-muted">Câu đúng</small>
+                                    <div className="h4 fw-bold text-success mb-1">{result.answers ? result.answers.filter((a) => a.isCorrect).length : 0}</div>
+                                    <small className="text-muted">Correct</small>
                                 </div>
                             </Col>
                             <Col md={3}>
                                 <div className="p-3">
-                                    <div className="h4 fw-bold text-danger mb-1">{result.answers.filter((a) => !a.isCorrect).length}</div>
-                                    <small className="text-muted">Câu sai</small>
+                                    <div className="h4 fw-bold text-danger mb-1">{result.answers ? result.answers.filter((a) => !a.isCorrect).length : 0}</div>
+                                    <small className="text-muted">Incorrect</small>
                                 </div>
                             </Col>
                             <Col md={3}>
                                 <div className="p-3">
-                                    <div className="h4 fw-bold text-primary mb-1">{result.answers.length}</div>
-                                    <small className="text-muted">Tổng câu</small>
+                                    <div className="h4 fw-bold text-primary mb-1">{result.answers ? result.answers.length : 0}</div>
+                                    <small className="text-muted">Total</small>
                                 </div>
                             </Col>
                             <Col md={3}>
                                 <div className="p-3">
                                     <div className="h4 fw-bold text-info mb-1">
-                                        {result.answers.reduce((sum, a) => sum + a.points, 0)}
+                                        {result.answers ? result.answers.reduce((sum, a) => sum + (Number(a.points) || 0), 0) : 0}
                                     </div>
-                                    <small className="text-muted">Tổng điểm</small>
+                                    <small className="text-muted">Total Points</small>
                                 </div>
                             </Col>
                         </Row>
@@ -225,11 +230,11 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
                 {/* Detailed Answers */}
                 <Card>
                     <Card.Header>
-                        <h5 className="mb-0">Chi tiết từng câu hỏi</h5>
+                        <h5 className="mb-0">Question Details</h5>
                     </Card.Header>
                     <Card.Body>
                         <div className="d-grid gap-4">
-                            {mockQuestions.map((question, index) => {
+                            {questions.map((question, index) => {
                                 const studentAnswer = result.answers.find((a) => a.questionId === question.questionId)
                                 const isCorrect = studentAnswer?.isCorrect || false
 
@@ -241,24 +246,24 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
                                         <Card.Body>
                                             <div className="d-flex justify-content-between align-items-start mb-3">
                                                 <h6 className="fw-semibold mb-0">
-                                                    Câu {index + 1}: {question.text}
+                                                    Question {index + 1}: {question.text}
                                                 </h6>
                                                 <div className="d-flex align-items-center gap-2">
                                                     <Badge bg={isCorrect ? "success" : "danger"}>
                                                         {isCorrect ? (
                                                             <>
                                                                 <CheckCircle size={14} className="me-1" />
-                                                                Đúng
+                                                                Correct
                                                             </>
                                                         ) : (
                                                             <>
                                                                 <X size={14} className="me-1" />
-                                                                Sai
+                                                                Incorrect
                                                             </>
                                                         )}
                                                     </Badge>
                                                     <Badge bg="info">
-                                                        {studentAnswer?.points || 0}/{question.points} điểm
+                                                        {studentAnswer?.points || 0}/{question.points} points
                                                     </Badge>
                                                 </div>
                                             </div>
@@ -296,7 +301,7 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
                                                             <div className="d-flex align-items-center gap-2">
                                                                 {isStudentChoice && (
                                                                     <Badge bg="primary" className="small">
-                                                                        Lựa chọn
+                                                                        Selected
                                                                     </Badge>
                                                                 )}
                                                                 {icon}
@@ -309,7 +314,7 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
                                             {!isCorrect && (
                                                 <div className="mt-3 p-3 bg-light rounded">
                                                     <small className="text-muted">
-                                                        <strong>Đáp án đúng:</strong> {question.correctOption} -{" "}
+                                                        <strong>Correct Answer:</strong> {question.correctOption} -{" "}
                                                         {question.options.find((opt) => opt.key === question.correctOption)?.text}
                                                     </small>
                                                 </div>
@@ -326,11 +331,11 @@ const QuizResultDetail = ({ show, onHide, result, assignment }) => {
             <Modal.Footer>
                 <div className="d-flex justify-content-between w-100 align-items-center">
                     <div className="text-muted small">
-                        Bài trắc nghiệm: {assignment?.title} • Hoàn thành lúc: {formatDateTime(result.completedAt)}
+                        Quiz: {assignment?.title} • Completed at: {result.completedAt ? formatDateTime(result.completedAt) : "Not specified"}
                     </div>
                     <div className="d-flex gap-2">
                         <Button variant="secondary" onClick={onHide}>
-                            Đóng
+                            Close
                         </Button>
                     </div>
                 </div>

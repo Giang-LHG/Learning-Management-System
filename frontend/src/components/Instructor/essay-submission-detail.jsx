@@ -11,10 +11,13 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
     const [errors, setErrors] = useState({})
 
     const handleStartGrading = () => {
-        setIsGrading(true)
-        setGrade(submission?.grade?.toString() || "")
-        setFeedback(submission?.feedback || "")
-        setErrors({})
+        setIsGrading(true);
+        // Use score and feedback from new structure if available
+        const score = (submission.grade && (typeof submission.grade.score === 'number' || typeof submission.grade.score === 'string')) ? submission.grade.score : submission.grade || '';
+        const fb = (submission.grade && submission.grade.feedback) ? submission.grade.feedback : submission.feedback || '';
+        setGrade(score?.toString() || "");
+        setFeedback(fb);
+        setErrors({});
     }
 
     const handleCancelGrading = () => {
@@ -28,16 +31,16 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
         const newErrors = {}
 
         if (!grade.trim()) {
-            newErrors.grade = "Điểm số là bắt buộc"
+            newErrors.grade = "Score is required"
         } else {
             const gradeNum = Number.parseFloat(grade)
             if (isNaN(gradeNum) || gradeNum < 0 || gradeNum > 10) {
-                newErrors.grade = "grade between 0 and 10"
+                newErrors.grade = "Score must be between 0 and 10"
             }
         }
 
         if (!feedback.trim()) {
-            newErrors.feedback = "feedback is required"
+            newErrors.feedback = "Feedback is required"
         }
 
         setErrors(newErrors)
@@ -56,17 +59,17 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
     }
 
     const formatDateTime = (dateString) => {
-        if (!dateString) return "No specified"
+        if (!dateString) return "Not specified"
         try {
-            return new Date(dateString).toLocaleDateString("vi-VN", {
+            return new Date(dateString).toLocaleDateString("en-US", {
                 year: "numeric",
-                month: "long",
+                month: "short",
                 day: "numeric",
                 hour: "2-digit",
                 minute: "2-digit",
             })
         } catch (error) {
-            return "Thời gian không hợp lệ"
+            return "Invalid time"
         }
     }
 
@@ -80,12 +83,21 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
 
     if (!submission) return null
 
+    // Extract student info and grade info from submission (support both new and old structure)
+    const studentName = submission.studentId?.profile?.fullName || submission.studentName || '';
+    const studentEmail = submission.studentId?.email || submission.studentEmail || '';
+    const submittedAt = submission.submittedAt;
+    const gradeScore = (submission.grade && (typeof submission.grade.score === 'number' || typeof submission.grade.score === 'string')) ? submission.grade.score : submission.grade || null;
+    const feedbackValue = (submission.grade && submission.grade.feedback) ? submission.grade.feedback : submission.feedback || '';
+    const gradedBy = (submission.grade && submission.grade.gradedBy) ? submission.grade.gradedBy : submission.gradedBy || '';
+    const gradedAt = (submission.grade && submission.grade.gradedAt) ? submission.grade.gradedAt : submission.gradedAt || '';
+
     return (
         <Modal show={show} onHide={onHide} size="xl" centered>
             <Modal.Header closeButton>
                 <Modal.Title className="d-flex align-items-center">
                     <FileText size={24} className="me-2" />
-                    Detail submission - {submission.studentName}
+                    Submission Details - {studentName}
                 </Modal.Title>
             </Modal.Header>
 
@@ -95,7 +107,7 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                     <Card.Header>
                         <h5 className="mb-0 d-flex align-items-center">
                             <User size={20} className="me-2" />
-                          Student information
+                          Student Information
                         </h5>
                     </Card.Header>
                     <Card.Body>
@@ -103,14 +115,14 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                             <Col md={6}>
                                 <div className="d-flex align-items-center mb-3">
                                     <img
-                                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(submission.studentName)}&background=6366f1&color=fff`}
-                                        alt={submission.studentName}
+                                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(studentName)}&background=6366f1&color=fff`}
+                                        alt={studentName}
                                         className="rounded-circle me-3"
                                         style={{ width: "48px", height: "48px", objectFit: "cover" }}
                                     />
                                     <div>
-                                        <div className="fw-bold">{submission.studentName}</div>
-                                        <div className="text-muted small">{submission.studentEmail}</div>
+                                        <div className="fw-bold">{studentName}</div>
+                                        <div className="text-muted small">{studentEmail}</div>
                                     </div>
                                 </div>
                             </Col>
@@ -118,27 +130,27 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                                 <div className="d-grid gap-2">
                                     <div className="d-flex justify-content-between">
                                         <span className="text-muted">Date submission:</span>
-                                        <span className="fw-medium">{formatDateTime(submission.submittedAt)}</span>
+                                        <span className="fw-medium">{formatDateTime(submittedAt)}</span>
                                     </div>
                                     <div className="d-flex justify-content-between">
                                         <span className="text-muted">Graded:</span>
-                                        <Badge bg={submission.grade !== null ? "success" : "warning"}>
-                                            {submission.grade !== null ? "Đã chấm" : "Chờ chấm"}
+                                        <Badge bg={gradeScore !== null && gradeScore !== undefined ? "success" : "warning"}>
+                                            {gradeScore !== null && gradeScore !== undefined ? "Graded" : "Pending"}
                                         </Badge>
                                     </div>
-                                    {submission.grade !== null && (
+                                    {gradeScore !== null && gradeScore !== undefined && (
                                         <>
                                             <div className="d-flex justify-content-between">
                                                 <span className="text-muted">Score:</span>
-                                                <span className="fw-bold text-primary">{submission.grade}/10</span>
+                                                <span className="fw-bold text-primary">{gradeScore}/10</span>
                                             </div>
                                             <div className="d-flex justify-content-between">
                                                 <span className="text-muted">Graded by:</span>
-                                                <span className="fw-medium">{submission.gradedBy}</span>
+                                                <span className="fw-medium">{gradedBy}</span>
                                             </div>
                                             <div className="d-flex justify-content-between">
                                                 <span className="text-muted">Date graded:</span>
-                                                <span className="fw-medium">{formatDateTime(submission.gradedAt)}</span>
+                                                <span className="fw-medium">{formatDateTime(gradedAt)}</span>
                                             </div>
                                         </>
                                     )}
@@ -151,7 +163,7 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                 {/* Assignment Content */}
                 <Card className="mb-4">
                     <Card.Header>
-                        <h5 className="mb-0">Nội dung bài làm</h5>
+                        <h5 className="mb-0">Submission Content</h5>
                     </Card.Header>
                     <Card.Body>
                         <div className="bg-light p-3 rounded" style={{ minHeight: "200px" }}>
@@ -166,7 +178,7 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                 {submission.attachments && submission.attachments.length > 0 && (
                     <Card className="mb-4">
                         <Card.Header>
-                            <h5 className="mb-0">File đính kèm ({submission.attachments.length})</h5>
+                            <h5 className="mb-0">Attachments ({submission.attachments.length})</h5>
                         </Card.Header>
                         <Card.Body>
                             <div className="d-grid gap-2">
@@ -181,7 +193,7 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                                         </div>
                                         <Button variant="outline-primary" size="sm">
                                             <Download size={14} className="me-1" />
-                                            Tải xuống
+                                            Download
                                         </Button>
                                     </div>
                                 ))}
@@ -195,60 +207,60 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                     <Card.Header className="d-flex justify-content-between align-items-center">
                         <h5 className="mb-0 d-flex align-items-center">
                             <Star size={20} className="me-2" />
-                            Chấm điểm
+                            Grading
                         </h5>
-                        {!isGrading && submission.grade === null && (
+                        {!isGrading && gradeScore === null && (
                             <Button variant="primary" onClick={handleStartGrading}>
                                 <Edit3 size={16} className="me-1" />
-                                Bắt đầu chấm
+                                Start Grading
                             </Button>
                         )}
-                        {!isGrading && submission.grade !== null && (
+                        {!isGrading && gradeScore !== null && (
                             <Button variant="outline-primary" onClick={handleStartGrading}>
                                 <Edit3 size={16} className="me-1" />
-                                Chỉnh sửa điểm
+                                Edit Grade
                             </Button>
                         )}
                     </Card.Header>
                     <Card.Body>
                         {!isGrading ? (
                             // Display existing grade/feedback
-                            submission.grade !== null ? (
+                            gradeScore !== null && gradeScore !== undefined ? (
                                 <div>
                                     <Row className="mb-3">
                                         <Col md={6}>
                                             <div className="text-center p-3 bg-light rounded">
-                                                <div className="h2 fw-bold text-primary mb-1">{submission.grade}/10</div>
-                                                <small className="text-muted">Điểm số</small>
+                                                <div className="h2 fw-bold text-primary mb-1">{gradeScore}/10</div>
+                                                <small className="text-muted">Score</small>
                                             </div>
                                         </Col>
                                         <Col md={6}>
                                             <div className="text-center p-3 bg-light rounded">
                                                 <div className="h2 fw-bold text-success mb-1">
-                                                    {submission.grade >= 8
+                                                    {gradeScore >= 8
                                                         ? "A"
-                                                        : submission.grade >= 6.5
+                                                        : gradeScore >= 6.5
                                                             ? "B"
-                                                            : submission.grade >= 5
+                                                            : gradeScore >= 5
                                                                 ? "C"
                                                                 : "D"}
                                                 </div>
-                                                <small className="text-muted">Xếp loại</small>
+                                                <small className="text-muted">Grade</small>
                                             </div>
                                         </Col>
                                     </Row>
                                     <div>
-                                        <h6 className="fw-semibold mb-2">Nhận xét của giảng viên:</h6>
+                                        <h6 className="fw-semibold mb-2">Instructor Feedback:</h6>
                                         <div className="bg-light p-3 rounded">
-                                            <p className="mb-0 lh-lg">{submission.feedback}</p>
+                                            <p className="mb-0 lh-lg">{feedbackValue}</p>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="text-center py-4">
                                     <Star size={48} className="text-muted mb-3" />
-                                    <h6 className="text-muted">Bài làm chưa được chấm điểm</h6>
-                                    <p className="text-muted mb-3">Nhấn "Bắt đầu chấm" để chấm điểm cho bài làm này</p>
+                                    <h6 className="text-muted">This submission has not been graded yet</h6>
+                                    <p className="text-muted mb-3">Click "Start Grading" to grade this submission</p>
                                 </div>
                             )
                         ) : (
@@ -257,33 +269,33 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                                 <Row>
                                     <Col md={6} className="mb-3">
                                         <Form.Label>
-                                            Điểm số <span className="text-danger">*</span>
+                                            Score <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Control
                                             type="number"
                                             min="0"
                                             max="10"
                                             step="0.1"
-                                            placeholder="Nhập điểm (0-10)"
+                                            placeholder="Enter score (0-10)"
                                             value={grade}
                                             onChange={(e) => setGrade(e.target.value)}
                                             isInvalid={!!errors.grade}
                                         />
                                         <Form.Control.Feedback type="invalid">{errors.grade}</Form.Control.Feedback>
-                                        <Form.Text className="text-muted">Điểm từ 0 đến 10, có thể nhập số thập phân</Form.Text>
+                                        <Form.Text className="text-muted">Score from 0 to 10, decimals allowed</Form.Text>
                                     </Col>
                                     <Col md={6} className="mb-3">
-                                        <Form.Label>Xếp loại dự kiến</Form.Label>
+                                        <Form.Label>Expected Grade</Form.Label>
                                         <div className="p-2 bg-light rounded text-center">
                                             <span className="h5 fw-bold">
                                                 {grade
                                                     ? Number.parseFloat(grade) >= 8
-                                                        ? "A (Xuất sắc)"
+                                                        ? "A (Excellent)"
                                                         : Number.parseFloat(grade) >= 6.5
-                                                            ? "B (Khá)"
+                                                            ? "B (Good)"
                                                             : Number.parseFloat(grade) >= 5
-                                                                ? "C (Trung bình)"
-                                                                : "D (Yếu)"
+                                                                ? "C (Average)"
+                                                                : "D (Poor)"
                                                     : "-"}
                                             </span>
                                         </div>
@@ -291,23 +303,23 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                                 </Row>
                                 <div className="mb-3">
                                     <Form.Label>
-                                        Nhận xét <span className="text-danger">*</span>
+                                        Feedback <span className="text-danger">*</span>
                                     </Form.Label>
                                     <Form.Control
                                         as="textarea"
                                         rows={4}
-                                        placeholder="Nhập nhận xét chi tiết về bài làm của học sinh..."
+                                        placeholder="Enter detailed feedback for the student's submission..."
                                         value={feedback}
                                         onChange={(e) => setFeedback(e.target.value)}
                                         isInvalid={!!errors.feedback}
                                     />
                                     <Form.Control.Feedback type="invalid">{errors.feedback}</Form.Control.Feedback>
-                                    <Form.Text className="text-muted">Hãy đưa ra nhận xét chi tiết để giúp học sinh cải thiện</Form.Text>
+                                    <Form.Text className="text-muted">Please provide detailed feedback to help the student improve</Form.Text>
                                 </div>
 
                                 {Object.keys(errors).length > 0 && (
                                     <Alert variant="danger">
-                                        <strong>Vui lòng kiểm tra lại:</strong>
+                                        <strong>Please check the following:</strong>
                                         <ul className="mb-0 mt-2">
                                             {Object.values(errors).map((error, index) => (
                                                 <li key={index}>{error}</li>
@@ -319,10 +331,10 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
                                 <div className="d-flex gap-2">
                                     <Button variant="success" onClick={handleSaveGrade}>
                                         <Save size={16} className="me-1" />
-                                        Lưu điểm
+                                        Save Grade
                                     </Button>
                                     <Button variant="outline-secondary" onClick={handleCancelGrading}>
-                                        Hủy
+                                        Cancel
                                     </Button>
                                 </div>
                             </Form>
@@ -334,10 +346,10 @@ const EssaySubmissionDetail = ({ show, onHide, submission, assignment, onGradeUp
             <Modal.Footer>
                 <div className="d-flex justify-content-between w-100 align-items-center">
                     <div className="text-muted small">
-                        Bài tập: {assignment?.title} • Hạn nộp: {formatDateTime(assignment?.dueDate)}
+                        Assignment: {assignment?.title} • Due: {formatDateTime(assignment?.dueDate)}
                     </div>
                     <Button variant="secondary" onClick={onHide}>
-                        Đóng
+                        Close
                     </Button>
                 </div>
             </Modal.Footer>

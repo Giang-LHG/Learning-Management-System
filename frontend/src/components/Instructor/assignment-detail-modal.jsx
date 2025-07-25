@@ -23,145 +23,6 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
     const [selectedQuizResult, setSelectedQuizResult] = useState(null)
     const [showQuizDetail, setShowQuizDetail] = useState(false)
 
-    // Mock data for essay submissions
-    const mockEssaySubmissions = [
-        {
-            _id: "sub1",
-            studentId: "64f8a1b2c3d4e5f6a7b8c9e1",
-            studentName: "Nguyễn Văn A",
-            studentEmail: "nguyenvana@student.edu.vn",
-            submittedAt: "2024-03-14T15:30:00.000Z",
-            content:
-                "Đây là nội dung bài làm của học sinh. Học sinh đã trình bày khá chi tiết về React Components và cách sử dụng chúng trong ứng dụng thực tế. Bài làm thể hiện sự hiểu biết tốt về JSX, props, và state management.",
-            attachments: [
-                { name: "react-app.zip", size: "2.5MB", url: "#" },
-                { name: "screenshot.png", size: "1.2MB", url: "#" },
-            ],
-            grade: 8.5,
-            feedback: "Bài làm tốt, có thể cải thiện thêm về error handling.",
-            gradedAt: "2024-03-15T10:00:00.000Z",
-            gradedBy: "Nguyễn Văn An",
-        },
-        {
-            _id: "sub2",
-            studentId: "64f8a1b2c3d4e5f6a7b8c9e2",
-            studentName: "Trần Thị B",
-            studentEmail: "tranthib@student.edu.vn",
-            submittedAt: "2024-03-13T20:45:00.000Z",
-            content:
-                "Bài làm về React Components. Em đã tạo được một ứng dụng Todo đơn giản với các component như TodoList, TodoItem, và AddTodo. Ứng dụng có thể thêm, xóa và đánh dấu hoàn thành các task.",
-            attachments: [{ name: "todo-app.zip", size: "3.1MB", url: "#" }],
-            grade: null, // Chưa chấm
-            feedback: null,
-            gradedAt: null,
-            gradedBy: null,
-        },
-        {
-            _id: "sub3",
-            studentId: "64f8a1b2c3d4e5f6a7b8c9e3",
-            studentName: "Lê Văn Cường",
-            studentEmail: "levancuong@student.edu.vn",
-            submittedAt: "2024-03-15T09:15:00.000Z",
-            content:
-                "Trong bài này, em đã nghiên cứu về React Hooks, đặc biệt là useState và useEffect. Em đã xây dựng một ứng dụng weather app nhỏ để demo việc sử dụng các hooks này.",
-            attachments: [],
-            grade: 9.0,
-            feedback: "Excellent work! Hiểu rất rõ về React Hooks.",
-            gradedAt: "2024-03-15T14:20:00.000Z",
-            gradedBy: "Nguyễn Văn An",
-        },
-    ]
-
-    // Mock data for quiz results
-    const mockQuizResults = [
-        {
-            _id: "quiz1",
-            studentId: "64f8a1b2c3d4e5f6a7b8c9e1",
-            studentName: "Nguyễn Văn A",
-            studentEmail: "nguyenvana@student.edu.vn",
-            completedAt: "2024-03-19T14:30:00.000Z",
-            score: 8,
-            totalScore: 10,
-            percentage: 80,
-            timeSpent: 15, // minutes
-            answers: [
-                {
-                    questionId: "q1",
-                    selectedOption: "A",
-                    isCorrect: true,
-                    points: 2,
-                },
-                {
-                    questionId: "q2",
-                    selectedOption: "B",
-                    isCorrect: true,
-                    points: 2,
-                },
-                {
-                    questionId: "q3",
-                    selectedOption: "C",
-                    isCorrect: false,
-                    points: 0,
-                },
-                {
-                    questionId: "q4",
-                    selectedOption: "A",
-                    isCorrect: true,
-                    points: 2,
-                },
-                {
-                    questionId: "q5",
-                    selectedOption: "D",
-                    isCorrect: true,
-                    points: 2,
-                },
-            ],
-        },
-        {
-            _id: "quiz2",
-            studentId: "64f8a1b2c3d4e5f6a7b8c9e2",
-            studentName: "Trần Thị B",
-            studentEmail: "tranthib@student.edu.vn",
-            completedAt: "2024-03-20T10:15:00.000Z",
-            score: 6,
-            totalScore: 10,
-            percentage: 60,
-            timeSpent: 20,
-            answers: [
-                {
-                    questionId: "q1",
-                    selectedOption: "A",
-                    isCorrect: true,
-                    points: 2,
-                },
-                {
-                    questionId: "q2",
-                    selectedOption: "A",
-                    isCorrect: false,
-                    points: 0,
-                },
-                {
-                    questionId: "q3",
-                    selectedOption: "C",
-                    isCorrect: false,
-                    points: 0,
-                },
-                {
-                    questionId: "q4",
-                    selectedOption: "A",
-                    isCorrect: true,
-                    points: 2,
-                },
-                {
-                    questionId: "q5",
-                    selectedOption: "D",
-                    isCorrect: true,
-                    points: 2,
-                },
-            ],
-        },
-    ]
-
     useEffect(() => {
         if (show && assignment) {
             // Gọi API lấy danh sách đã nộp/chưa nộp
@@ -185,9 +46,9 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
     }, [show, assignment])
 
     const formatDateTime = (dateString) => {
-        if (!dateString) return "Chưa xác định"
+        if (!dateString) return "Not specified"
         try {
-            return new Date(dateString).toLocaleDateString("vi-VN", {
+            return new Date(dateString).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "short",
                 day: "numeric",
@@ -195,7 +56,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                 minute: "2-digit",
             })
         } catch (error) {
-            return "Thời gian không hợp lệ"
+            return "Invalid time"
         }
     }
 
@@ -230,8 +91,9 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
     }
 
     const handleViewSubmission = (submission) => {
-        setSelectedSubmission(submission)
-        setShowSubmissionDetail(true)
+        console.log('DEBUG selectedSubmission:', submission);
+        setSelectedSubmission(submission);
+        setShowSubmissionDetail(true);
     }
 
     const handleViewQuizResult = (result) => {
@@ -248,7 +110,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
     }
     const handleGradeStudent = async () => {
         if (!gradeValue || isNaN(gradeValue) || gradeValue < 0 || gradeValue > 10) {
-            setGradeError('Điểm phải là số từ 0 đến 10')
+            setGradeError('Score must be between 0 and 10')
             return
         }
         setGradeLoading(true)
@@ -269,7 +131,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
             setStudentsNotSubmitted(statusRes.data.data.notSubmitted || [])
             setSubmissions(subRes.data.data || [])
         } catch (err) {
-            setGradeError('Chấm điểm thất bại')
+            setGradeError('Failed to grade')
         } finally {
             setGradeLoading(false)
         }
@@ -289,7 +151,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                         ) : (
                             <FileText size={24} className="me-2 text-primary" />
                         )}
-                        Chi tiết bài tập: {assignment.title}
+                        Assignment Details: {assignment.title}
                     </Modal.Title>
                 </Modal.Header>
 
@@ -304,13 +166,13 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                     <div className="d-flex gap-3 small text-muted">
                                         <span className="d-flex align-items-center">
                                             <Clock size={14} className="me-1" />
-                                            Hạn nộp: {formatDateTime(assignment.dueDate)}
+                                            Due Date: {formatDateTime(assignment.dueDate)}
                                         </span>
                                         <Badge bg={assignment.type === "quiz" ? "info" : "primary"}>
-                                            {assignment.type === "quiz" ? "Trắc nghiệm" : "Tự luận"}
+                                            {assignment.type === "quiz" ? "Quiz" : "Essay"}
                                         </Badge>
                                         <Badge bg={assignment.isVisible ? "success" : "secondary"}>
-                                            {assignment.isVisible ? "Hiển thị" : "Ẩn"}
+                                            {assignment.isVisible ? "Visible" : "Hidden"}
                                         </Badge>
                                     </div>
                                 </Col>
@@ -322,19 +184,19 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                                     <div className="h4 fw-bold text-primary mb-0">
                                                         {assignment.type === "essay" ? stats.submittedCount : stats.completedCount}
                                                     </div>
-                                                    <small className="text-muted">{assignment.type === "essay" ? "Đã nộp" : "Đã làm"}</small>
+                                                    <small className="text-muted">{assignment.type === "essay" ? "Submitted" : "Completed"}</small>
                                                 </div>
                                                 <div>
                                                     <div className="h4 fw-bold text-success mb-0">
                                                         {assignment.type === "essay" ? `${stats.submissionRate}%` : `${stats.completionRate}%`}
                                                     </div>
-                                                    <small className="text-muted">Tỷ lệ</small>
+                                                    <small className="text-muted">Rate</small>
                                                 </div>
                                                 <div>
                                                     <div className="h4 fw-bold text-warning mb-0">
                                                         {assignment.type === "essay" ? stats.avgGrade : `${stats.avgScore}%`}
                                                     </div>
-                                                    <small className="text-muted">{assignment.type === "essay" ? "Điểm TB" : "Điểm TB"}</small>
+                                                    <small className="text-muted">{assignment.type === "essay" ? "Avg Grade" : "Avg Score"}</small>
                                                 </div>
                                             </div>
                                         </Card.Body>
@@ -349,14 +211,14 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                         <Nav.Item>
                             <Nav.Link eventKey="overview" className="d-flex align-items-center">
                                 <BarChart3 size={16} className="me-2" />
-                                Tổng quan
+                                Overview
                             </Nav.Link>
                         </Nav.Item>
                         {assignment.type === "essay" && (
                             <Nav.Item>
                                 <Nav.Link eventKey="submissions" className="d-flex align-items-center">
                                     <FileText size={16} className="me-2" />
-                                    Bài nộp ({studentsSubmitted.length})
+                                    Submissions ({studentsSubmitted.length})
                                 </Nav.Link>
                             </Nav.Item>
                         )}
@@ -364,7 +226,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                             <Nav.Item>
                                 <Nav.Link eventKey="results" className="d-flex align-items-center">
                                     <CheckCircle size={16} className="me-2" />
-                                    Kết quả ({studentsSubmitted.length})
+                                    Results ({studentsSubmitted.length})
                                 </Nav.Link>
                             </Nav.Item>
                         )}
@@ -377,22 +239,22 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                 <Col md={6}>
                                     <Card className="mb-4">
                                         <Card.Header>
-                                            <h6 className="mb-0">Thống kê chung</h6>
+                                            <h6 className="mb-0">General Statistics</h6>
                                         </Card.Header>
                                         <Card.Body>
                                             <div className="d-grid gap-3">
                                                 <div className="d-flex justify-content-between">
-                                                    <span>Tổng số học sinh:</span>
+                                                    <span>Total Students:</span>
                                                     <span className="fw-bold">{stats.totalStudents}</span>
                                                 </div>
                                                 <div className="d-flex justify-content-between">
-                                                    <span>{assignment.type === "essay" ? "Đã nộp bài:" : "Đã hoàn thành:"}</span>
+                                                    <span>{assignment.type === "essay" ? "Submitted:" : "Completed:"}</span>
                                                     <span className="fw-bold text-success">
                                                         {assignment.type === "essay" ? stats.submittedCount : stats.completedCount}
                                                     </span>
                                                 </div>
                                                 <div className="d-flex justify-content-between">
-                                                    <span>Chưa làm:</span>
+                                                    <span>Not submitted:</span>
                                                     <span className="fw-bold text-danger">
                                                         {stats.totalStudents -
                                                             (assignment.type === "essay" ? stats.submittedCount : stats.completedCount)}
@@ -400,13 +262,13 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                                 </div>
                                                 {assignment.type === "essay" && (
                                                     <div className="d-flex justify-content-between">
-                                                        <span>Đã chấm điểm:</span>
+                                                        <span>Graded:</span>
                                                         <span className="fw-bold text-info">{stats.gradedCount}</span>
                                                     </div>
                                                 )}
                                                 <hr />
                                                 <div className="d-flex justify-content-between">
-                                                    <span>Điểm trung bình:</span>
+                                                    <span>Average Score:</span>
                                                     <span className="fw-bold text-primary">
                                                         {assignment.type === "essay" ? `${stats.avgGrade}/10` : `${stats.avgScore}%`}
                                                     </span>
@@ -418,13 +280,13 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                 <Col md={6}>
                                     <Card className="mb-4">
                                         <Card.Header>
-                                            <h6 className="mb-0">Học sinh chưa làm bài</h6>
+                                            <h6 className="mb-0">Students not submitted</h6>
                                         </Card.Header>
                                         <Card.Body style={{ maxHeight: "300px", overflowY: "auto" }}>
                                             {studentsNotSubmitted.length === 0 ? (
                                                 <div className="text-center text-muted py-3">
                                                     <Users size={32} className="mb-2" />
-                                                    <p className="mb-0">Tất cả học sinh đã hoàn thành bài tập</p>
+                                                    <p className="mb-0">All students have completed the assignment</p>
                                                 </div>
                                             ) : (
                                                 <div className="d-grid gap-2">
@@ -447,7 +309,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                                             </div>
                                                             {assignment.type === 'essay' && (
                                                                 <Button size="sm" variant="outline-primary" onClick={() => handleOpenGradeModal(student)}>
-                                                                    Chấm điểm
+                                                                    Grade
                                                                 </Button>
                                                             )}
                                                         </div>
@@ -466,19 +328,19 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                 {submissions.length === 0 ? (
                                     <div className="text-center py-5">
                                         <FileText size={48} className="text-muted mb-3" />
-                                        <h5 className="text-muted">Chưa có bài nộp nào</h5>
-                                        <p className="text-muted">Các bài nộp của học sinh sẽ xuất hiện ở đây</p>
+                                        <h5 className="text-muted">No submissions yet</h5>
+                                        <p className="text-muted">Student submissions will appear here</p>
                                     </div>
                                 ) : (
                                     <div className="table-responsive">
                                         <Table hover>
                                             <thead className="table-light">
                                                 <tr>
-                                                    <th>Học sinh</th>
-                                                    <th>Thời gian nộp</th>
-                                                    <th>Trạng thái</th>
-                                                    <th>Điểm</th>
-                                                    <th className="text-center">Hành động</th>
+                                                    <th>Student</th>
+                                                    <th>Submission Time</th>
+                                                    <th>Status</th>
+                                                    <th>Grade</th>
+                                                    <th className="text-center">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -503,9 +365,9 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                                         </td>
                                                         <td>
                                                             {submission.grade?.score !== null && submission.grade?.score !== undefined ? (
-                                                                <Badge bg="success">Đã chấm</Badge>
+                                                                <Badge bg="success">Graded</Badge>
                                                             ) : (
-                                                                <Badge bg="warning">Chờ chấm</Badge>
+                                                                <Badge bg="warning">Pending Grade</Badge>
                                                             )}
                                                         </td>
                                                         <td>
@@ -522,10 +384,10 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                                             <Button
                                                                 variant="outline-primary"
                                                                 size="sm"
-                                                                onClick={() => setSelectedSubmission(submission)}
+                                                                onClick={() => handleViewSubmission(submission)}
                                                             >
                                                                 <Eye size={14} className="me-1" />
-                                                                {submission.grade?.score !== null && submission.grade?.score !== undefined ? "Xem chi tiết" : "Chấm điểm"}
+                                                                {submission.grade?.score !== null && submission.grade?.score !== undefined ? "View Details" : "Grade"}
                                                             </Button>
                                                         </td>
                                                     </tr>
@@ -543,20 +405,20 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                 {studentsSubmitted.length === 0 ? (
                                     <div className="text-center py-5">
                                         <CheckCircle size={48} className="text-muted mb-3" />
-                                        <h5 className="text-muted">Chưa có kết quả nào</h5>
-                                        <p className="text-muted">Kết quả bài trắc nghiệm sẽ xuất hiện ở đây</p>
+                                        <h5 className="text-muted">No results yet</h5>
+                                        <p className="text-muted">Quiz results will appear here</p>
                                     </div>
                                 ) : (
                                     <div className="table-responsive">
                                         <Table hover>
                                             <thead className="table-light">
                                                 <tr>
-                                                    <th>Học sinh</th>
-                                                    <th>Thời gian hoàn thành</th>
-                                                    <th>Thời gian làm bài</th>
-                                                    <th>Điểm</th>
-                                                    <th>Tỷ lệ đúng</th>
-                                                    <th className="text-center">Hành động</th>
+                                                    <th>Student</th>
+                                                    <th>Completion Time</th>
+                                                    <th>Time Spent</th>
+                                                    <th>Score</th>
+                                                    <th>Correct Rate</th>
+                                                    <th className="text-center">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -580,7 +442,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                                             <div className="small">{formatDateTime(result.completedAt)}</div>
                                                         </td>
                                                         <td>
-                                                            <span className="small">{result.timeSpent} phút</span>
+                                                            <span className="small">{result.timeSpent} minutes</span>
                                                         </td>
                                                         <td>
                                                             <div className="d-flex align-items-center">
@@ -602,7 +464,7 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                                                         <td className="text-center">
                                                             <Button variant="outline-primary" size="sm" onClick={() => handleViewQuizResult(result)}>
                                                                 <Eye size={14} className="me-1" />
-                                                                Xem chi tiết
+                                                                View Details
                                                             </Button>
                                                         </td>
                                                     </tr>
@@ -620,24 +482,48 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                     <div className="d-flex justify-content-between w-100 align-items-center">
                         <div className="text-muted small">
                             {assignment.type === "essay"
-                                ? `${submissions.length} bài nộp • ${stats.gradedCount} đã chấm • Điểm TB: ${stats.avgGrade}/10`
-                                : `${studentsSubmitted.length} kết quả • Điểm TB: ${stats.avgScore}%`}
+                                ? `${submissions.length} submissions • ${stats.gradedCount} graded • Avg Grade: ${stats.avgGrade}/10`
+                                : `${studentsSubmitted.length} results • Avg Score: ${stats.avgScore}%`}
                         </div>
                         <Button variant="secondary" onClick={onHide}>
-                            Đóng
+                            Close
                         </Button>
                     </div>
                 </Modal.Footer>
             </Modal>
 
             {/* Essay Submission Detail Modal */}
-            <EssaySubmissionDetail
-                show={showSubmissionDetail}
-                onHide={() => setShowSubmissionDetail(false)}
-                submission={selectedSubmission}
-                assignment={assignment}
-                onGradeUpdate={() => {}} // This prop is no longer needed as grading is handled by API
-            />
+            {selectedSubmission && (
+                <EssaySubmissionDetail
+                    show={showSubmissionDetail}
+                    onHide={() => setShowSubmissionDetail(false)}
+                    submission={selectedSubmission}
+                    assignment={assignment}
+                    onGradeUpdate={async (submissionId, score, feedback) => {
+                        if (!selectedSubmission) return;
+                        try {
+                            await api.post(`/instructor/submissions/assignment/${assignment._id}/grade-student`, {
+                                studentId: selectedSubmission.studentId?._id || selectedSubmission.studentId,
+                                score,
+                                content: feedback
+                            });
+                            // Reload submissions
+                            const [statusRes, subRes] = await Promise.all([
+                                api.get(`/instructor/submissions/assignment/${assignment._id}/submission-status`),
+                                api.get(`/instructor/submissions/assignment/${assignment._id}`)
+                            ]);
+                            setStudentsSubmitted(statusRes.data.data.submitted || []);
+                            setStudentsNotSubmitted(statusRes.data.data.notSubmitted || []);
+                            setSubmissions(subRes.data.data || []);
+                            // Update selectedSubmission with new grade/feedback
+                            const updated = (subRes.data.data || []).find(s => s._id === submissionId);
+                            if (updated) setSelectedSubmission(updated);
+                        } catch (err) {
+                            // Optionally: show error notification
+                        }
+                    }}
+                />
+            )}
 
             {/* Quiz Result Detail Modal */}
             <QuizResultDetail
@@ -645,20 +531,21 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                 onHide={() => setShowQuizDetail(false)}
                 result={selectedQuizResult}
                 assignment={assignment}
+                questions={assignment.questions || []}
             />
 
             {/* Modal chấm điểm học sinh chưa nộp */}
             <Modal show={showGradeModal} onHide={() => setShowGradeModal(false)} centered>
                 <Modal.Header closeButton>
-                    <Modal.Title>Chấm điểm cho học sinh</Modal.Title>
+                    <Modal.Title>Grade Student</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <div className="mb-3">
-                        <strong>Học sinh:</strong> {gradingStudent?.profile?.fullName} <br />
+                        <strong>Student:</strong> {gradingStudent?.profile?.fullName} <br />
                         <strong>Email:</strong> {gradingStudent?.email}
                     </div>
                     <Form.Group>
-                        <Form.Label>Điểm (0-10)</Form.Label>
+                        <Form.Label>Score (0-10)</Form.Label>
                         <InputGroup>
                             <Form.Control
                                 type="number"
@@ -675,10 +562,10 @@ const AssignmentDetailModal = ({ show, onHide, assignment }) => {
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShowGradeModal(false)} disabled={gradeLoading}>
-                        Hủy
+                        Cancel
                     </Button>
                     <Button variant="primary" onClick={handleGradeStudent} disabled={gradeLoading}>
-                        {gradeLoading ? 'Đang lưu...' : 'Lưu điểm'}
+                        {gradeLoading ? 'Saving...' : 'Save Grade'}
                     </Button>
                 </Modal.Footer>
             </Modal>
