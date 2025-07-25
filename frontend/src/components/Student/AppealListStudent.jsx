@@ -505,21 +505,7 @@ const token = localStorage.getItem('token');
                 </Card.Body>
               </Card>
             </Col>
-               <Col md={4} className="mb-3">
-              <Card className="stats-card h-100">
-                <Card.Body className="d-flex align-items-center">
-                  <div className="module-icon me-3" style={{ background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)' }}>
-                    <FiCheckCircle size={18} />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-muted small">Rejected</p>
-                    <h4 className="mb-0 fw-bold">
-                      {appeals.filter(a => a.appealStatus === "rejected").length}
-                    </h4>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
+             
           </Row>
 
           {/* Appeals List */}
@@ -653,65 +639,7 @@ const token = localStorage.getItem('token');
                           )}
 
                           {/* Add Comment Form */}
-                          {(appeal.appealStatus === "resolved" || appeal.appealStatus === "rejected") ? (
-  <div className="mt-4">
-    <Alert variant="info">
-      This appeal has been <strong>{appeal.appealStatus}</strong>. No further comments can be added.
-    </Alert>
-  </div>
-) : (
-                          <div className="comment-form">
-                            <h6 className="fw-bold mb-3">Add a Comment</h6>
-                            
-                            {/* Success Alert */}
-                            {commentSuccess[appeal.appealId] && (
-                              <Alert variant="success" className="mb-3">
-                                {commentSuccess[appeal.appealId]}
-                              </Alert>
-                            )}
-                            
-                            {/* Error Alert */}
-                            {commentErrors[appeal.appealId] && (
-                              <Alert variant="danger" className="mb-3">
-                                {commentErrors[appeal.appealId]}
-                              </Alert>
-                            )}
-
-                            <Form.Group className="mb-3">
-                              <Form.Control
-                                as="textarea"
-                                rows={3}
-                                placeholder="Enter your comment here..."
-                                value={commentTexts[appeal.appealId] || ""}
-                                onChange={(e) => handleCommentChange(appeal.appealId, e.target.value)}
-                                style={{ borderRadius: '12px' }}
-                              />
-                            </Form.Group>
-                            
-                            <div className="d-flex justify-content-end">
-                              <Button
-                                className="btn-send d-flex align-items-center"
-                                onClick={() => submitComment(appeal)}
-                                disabled={
-                                  submittingComment[appeal.appealId] || 
-                                  !commentTexts[appeal.appealId]?.trim()
-                                }
-                              >
-                                {submittingComment[appeal.appealId] ? (
-                                  <>
-                                    <Spinner animation="border" size="sm" className="me-2" />
-                                    Sending...
-                                  </>
-                                ) : (
-                                  <>
-                                    <FiSend className="me-2" size={16} />
-                                    Send Comment
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                            )}
+                         
                         </div>
                             
                       </Collapse>

@@ -211,7 +211,7 @@ const courseRaw = await Course.findById(courseId).lean();
   assignmentId: { $in: assignmentIds },
   studentId:{$in:studentId}
 })
-  .populate('assignmentId', 'title dueDate type questions')
+  .populate('assignmentId', 'title dueDate type questions term')
   .populate('studentId', 'name profile.email')
   .lean();
 
@@ -232,6 +232,8 @@ const submissions = submissionsRaw.map(sub => {
 const latestAssignmentTerm = assignmentTerms.length
   ? assignmentTerms[assignmentTerms.length - 1]
   : null;
+ 
+
   if (
    asg.type === 'quiz' &&
   (
