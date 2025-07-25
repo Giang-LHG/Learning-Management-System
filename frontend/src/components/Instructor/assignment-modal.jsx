@@ -614,10 +614,17 @@ const AssignmentModal = ({
                                                     )}
                                                 </td>
                                                 <td>
-                                                    <Button size="sm" variant="outline-primary">
-                                                        <Eye size={14} className="me-1" />
-                                                        {submission.grade?.score !== null && submission.grade?.score !== undefined ? "Xem chi tiết" : "Chấm điểm"}
-                                                    </Button>
+                                                    {assignmentData.type === 'essay' ? (
+                                                        <Button size="sm" variant="outline-primary" onClick={() => handleOpenGradeModal(submission.studentId)} disabled={submission.grade?.score !== null && submission.grade?.score !== undefined}>
+                                                            <Eye size={14} className="me-1" />
+                                                            {submission.grade?.score !== null && submission.grade?.score !== undefined ? "Xem chi tiết" : "Chấm điểm"}
+                                                        </Button>
+                                                    ) : (
+                                                        <Button size="sm" variant="outline-secondary" disabled>
+                                                            <Eye size={14} className="me-1" />
+                                                            Xem chi tiết
+                                                        </Button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
