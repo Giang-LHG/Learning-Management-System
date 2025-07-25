@@ -632,7 +632,7 @@ const AssignmentModal = ({
                                                         <Button size="sm" variant="outline-secondary" onClick={() => {
                                                             setSelectedSubmission(submission);
                                                             setShowQuizDetail(true);
-                                                        }} disabled={submission.grade?.score === null || submission.grade?.score === undefined}>
+                                                        }} disabled={ submission.grade?.score === undefined}>
                                                             <Eye size={14} className="me-1" />
     Show detail                                                        </Button>
                                                     )}
