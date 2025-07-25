@@ -242,26 +242,26 @@ const AssignmentModal = ({
         }
     }
 
-    // API call to update assignment due date (new term)
-    const updateAssignmentDueDateAPI = async (assignmentId, dueDate) => {
+    // API call to update assignment details (replaces updateAssignmentDueDateAPI)
+    const updateAssignmentDetailsAPI = async (assignmentId, updateData) => {
         try {
-            const response = await fetch(`/api/instructor/assignments/${assignmentId}/new-term`, {
+            const response = await fetch(`/api/instructor/assignments/${assignmentId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ dueDate }),
+                body: JSON.stringify(updateData),
             })
 
             if (!response.ok) {
                 const errorData = await response.json()
-                throw new Error(errorData.message || 'Failed to update assignment due date')
+                throw new Error(errorData.message || 'Failed to update assignment')
             }
 
             return await response.json()
         } catch (error) {
-            console.error('Error updating assignment due date:', error)
+            console.error('Error updating assignment:', error)
             throw error
         }
     }
@@ -278,41 +278,46 @@ const AssignmentModal = ({
             if (courseId) {
                 // If courseId is provided, use API endpoints
                 if (isEditing && assignmentData._id) {
-                    // Update existing assignment - only update due date
-                    const result = await updateAssignmentDueDateAPI(
-                        assignmentData._id, 
-                        new Date(formData.dueDate).toISOString()
-                    )
+                    // Update existing assignment - full update with all details
+                    const updateData = {
+                        title: formData.title,
+                        description: formData.description,
+                        type: formData.type,
+                        dueDate: new Date(formData.dueDate).toISOString(),
+                        isVisible: formData.isVisible,
+                        questions: formData.type === "quiz" ? formData.questions.filter((q) => q.text.trim()) : undefined,
+                    }
+                    
+                    const result = await updateAssignmentDetailsAPI(assignmentData._id, updateData)
                     
                     // Update the assignment data with the response
                     const updatedAssignment = {
                         ...assignmentData,
-                        dueDate: result.data.dueDate,
-                        term: result.data.term,
+                        ...result.data,
                         updatedAt: new Date().toISOString()
                     }
                     
                     onSubmit(updatedAssignment)
                 } else {
                     // Create new assignment
-                    const assignmentData = {
+                    const assignmentDataToCreate = {
                         ...formData,
                         dueDate: new Date(formData.dueDate).toISOString(),
                         questions: formData.type === "quiz" ? formData.questions.filter((q) => q.text.trim()) : undefined,
                     }
 
-                    const result = await createAssignmentAPI(assignmentData)
+                    const result = await createAssignmentAPI(assignmentDataToCreate)
                     onSubmit(result.data)
                 }
             } else {
                 // If no courseId, use the original local handling
-                const assignmentData = {
+                const assignmentDataLocal = {
                     ...formData,
                     dueDate: new Date(formData.dueDate).toISOString(),
                     questions: formData.type === "quiz" ? formData.questions.filter((q) => q.text.trim()) : undefined,
                 }
 
-                onSubmit(assignmentData)
+                onSubmit(assignmentDataLocal)
             }
 
             handleClose()
@@ -341,16 +346,11 @@ const AssignmentModal = ({
         onHide()
     }
 
-    // Determine if this is a due date update mode
-    const isDueDateUpdateMode = courseId && isEditing && assignmentData._id && mode === "edit"
     const isViewMode = mode === "view"
 
     const getModalTitle = () => {
         if (isViewMode) {
             return "Assignment Details"
-        }
-        if (isDueDateUpdateMode) {
-            return "Update Assignment Due Date When Course Term Changes"
         }
         return isEditing ? "Edit Assignment" : "Add New Assignment"
     }
@@ -561,75 +561,66 @@ const AssignmentModal = ({
                     {!isViewMode && (
                         <Card className="mb-4">
                             <Card.Header>
-                                <h5 className="mb-0">
-                                    {isDueDateUpdateMode ? "Update Due Date" : "Basic Information"}
-                                </h5>
+                                <h5 className="mb-0">Basic Information</h5>
                             </Card.Header>
                             <Card.Body>
                                 <Row>
-                                    {/* Show all fields for non-due-date-update mode */}
-                                    {!isDueDateUpdateMode && (
-                                        <>
-                                            <Col md={12} className="mb-3">
-                                                <Form.Label>
-                                                    Assignment Title <span className="text-danger">*</span>
-                                                </Form.Label>
-                                                <Form.Control
-                                                    type="text"
-                                                    placeholder="Enter assignment title"
-                                                    value={formData.title}
-                                                    onChange={(e) => handleInputChange("title", e.target.value)}
-                                                    isInvalid={!!errors.title}
-                                                />
-                                                <Form.Control.Feedback type="invalid">{errors.title}</Form.Control.Feedback>
-                                            </Col>
-
-                                            <Col md={12} className="mb-3">
-                                                <Form.Label>
-                                                    Assignment Description <span className="text-danger">*</span>
-                                                </Form.Label>
-                                                <Form.Control
-                                                    as="textarea"
-                                                    rows={3}
-                                                    placeholder="Enter detailed assignment description"
-                                                    value={formData.description}
-                                                    onChange={(e) => handleInputChange("description", e.target.value)}
-                                                    isInvalid={!!errors.description}
-                                                />
-                                                <Form.Control.Feedback type="invalid">{errors.description}</Form.Control.Feedback>
-                                            </Col>
-
-                                            <Col md={6} className="mb-3">
-                                                <Form.Label>
-                                                    Assignment Type <span className="text-danger">*</span>
-                                                </Form.Label>
-                                                <div className="d-flex gap-3">
-                                                    <Form.Check
-                                                        type="radio"
-                                                        id="type-essay"
-                                                        name="assignmentType"
-                                                        label="Essay"
-                                                        checked={formData.type === "essay"}
-                                                        onChange={() => handleTypeChange("essay")}
-                                                    />
-                                                    <Form.Check
-                                                        type="radio"
-                                                        id="type-quiz"
-                                                        name="assignmentType"
-                                                        label="Quiz"
-                                                        checked={formData.type === "quiz"}
-                                                        onChange={() => handleTypeChange("quiz")}
-                                                    />
-                                                </div>
-                                            </Col>
-                                        </>
-                                    )}
-
-                                    {/* Due Date field - always shown in edit/add mode */}
-                                    <Col md={isDueDateUpdateMode ? 12 : 6} className="mb-3">
+                                    <Col md={12} className="mb-3">
                                         <Form.Label>
-                                            {isDueDateUpdateMode ? "New Due Date" : "Due Date"} 
-                                            <span className="text-danger">*</span>
+                                            Assignment Title <span className="text-danger">*</span>
+                                        </Form.Label>
+                                        <Form.Control
+                                            type="text"
+                                            placeholder="Enter assignment title"
+                                            value={formData.title}
+                                            onChange={(e) => handleInputChange("title", e.target.value)}
+                                            isInvalid={!!errors.title}
+                                        />
+                                        <Form.Control.Feedback type="invalid">{errors.title}</Form.Control.Feedback>
+                                    </Col>
+
+                                    <Col md={12} className="mb-3">
+                                        <Form.Label>
+                                            Assignment Description <span className="text-danger">*</span>
+                                        </Form.Label>
+                                        <Form.Control
+                                            as="textarea"
+                                            rows={3}
+                                            placeholder="Enter detailed assignment description"
+                                            value={formData.description}
+                                            onChange={(e) => handleInputChange("description", e.target.value)}
+                                            isInvalid={!!errors.description}
+                                        />
+                                        <Form.Control.Feedback type="invalid">{errors.description}</Form.Control.Feedback>
+                                    </Col>
+
+                                    <Col md={6} className="mb-3">
+                                        <Form.Label>
+                                            Assignment Type <span className="text-danger">*</span>
+                                        </Form.Label>
+                                        <div className="d-flex gap-3">
+                                            <Form.Check
+                                                type="radio"
+                                                id="type-essay"
+                                                name="assignmentType"
+                                                label="Essay"
+                                                checked={formData.type === "essay"}
+                                                onChange={() => handleTypeChange("essay")}
+                                            />
+                                            <Form.Check
+                                                type="radio"
+                                                id="type-quiz"
+                                                name="assignmentType"
+                                                label="Quiz"
+                                                checked={formData.type === "quiz"}
+                                                onChange={() => handleTypeChange("quiz")}
+                                            />
+                                        </div>
+                                    </Col>
+
+                                    <Col md={6} className="mb-3">
+                                        <Form.Label>
+                                            Due Date <span className="text-danger">*</span>
                                         </Form.Label>
                                         <Form.Control
                                             type="datetime-local"
@@ -651,28 +642,25 @@ const AssignmentModal = ({
                                         </Form.Text>
                                     </Col>
 
-                                    {/* Visibility toggle - only for non-due-date-update mode */}
-                                    {!isDueDateUpdateMode && (
-                                        <Col md={12} className="mb-3">
-                                            <Form.Check
-                                                type="switch"
-                                                id="assignment-visible"
-                                                label="Show assignment to students"
-                                                checked={formData.isVisible}
-                                                onChange={(e) => handleInputChange("isVisible", e.target.checked)}
-                                            />
-                                            <Form.Text className="text-muted">
-                                                You can create the assignment as hidden and show it after completion.
-                                            </Form.Text>
-                                        </Col>
-                                    )}
+                                    <Col md={12} className="mb-3">
+                                        <Form.Check
+                                            type="switch"
+                                            id="assignment-visible"
+                                            label="Show assignment to students"
+                                            checked={formData.isVisible}
+                                            onChange={(e) => handleInputChange("isVisible", e.target.checked)}
+                                        />
+                                        <Form.Text className="text-muted">
+                                            You can create the assignment as hidden and show it after completion.
+                                        </Form.Text>
+                                    </Col>
                                 </Row>
                             </Card.Body>
                         </Card>
                     )}
 
-                    {/* Quiz Questions - only show for non-due-date-update mode and quiz type and not view mode */}
-                    {!isDueDateUpdateMode && !isViewMode && formData.type === "quiz" && (
+                    {/* Quiz Questions - only show for quiz type and not view mode */}
+                    {!isViewMode && formData.type === "quiz" && (
                         <Card>
                             <Card.Header className="d-flex justify-content-between align-items-center">
                                 <h5 className="mb-0">Quiz Questions</h5>
@@ -688,14 +676,14 @@ const AssignmentModal = ({
                                     </Alert>
                                 )}
 
-                                {formData.questions.length === 0 && !courseId ? (
+                                {formData.questions.length === 0 ? (
                                     <div className="text-center py-4">
                                         <CheckCircle size={48} className="text-muted mb-3" />
                                         <h6 className="text-muted">No questions in add form yet</h6>
-                                        <p className="text-muted small">Add the first question for the assigment</p>
+                                        <p className="text-muted small">Add the first question for the assignment</p>
                                         <Button variant="success" onClick={addQuestion}>
                                             <Plus size={16} className="me-2" />
-                                            Add  question
+                                            Add question
                                         </Button>
                                     </div>
                                 ) : (
@@ -816,8 +804,6 @@ const AssignmentModal = ({
                         <div className="text-muted small">
                             {isViewMode ? (
                                 `Viewing: ${assignmentData?.title || 'Assignment'}`
-                            ) : isDueDateUpdateMode ? (
-                                `Update due date for: ${assignmentData?.title || 'Assignment'}`
                             ) : formData.type === "quiz" ? (
                                 <>
                                     Quiz • {formData.questions.length} questions • Total Points:{" "}
@@ -845,12 +831,7 @@ const AssignmentModal = ({
                                     ) : (
                                         <>
                                             <Save size={16} className="me-1" />
-                                            {isDueDateUpdateMode 
-                                                ? "Update Due Date" 
-                                                : isEditing 
-                                                    ? "Update Assignment" 
-                                                    : "Create Assignment"
-                                            }
+                                            {isEditing ? "Update Assignment" : "Create Assignment"}
                                         </>
                                     )}
                                 </Button>

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Card, Button, Badge, Row, Col } from "react-bootstrap"
-import { Plus, FileText, CheckCircle, Clock, Edit, Eye } from "lucide-react"
+import { Card, Button, Badge, Row, Col, Alert } from "react-bootstrap"
+import { Plus, FileText, CheckCircle, Clock, Edit, Eye, Trash2 } from "lucide-react"
 import AssignmentModal from "./assignment-modal"
 
 const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, courseEndDate, courseTerm, courseId }) => {
@@ -10,6 +10,9 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
     const [editingAssignment, setEditingAssignment] = useState(null)
     const [editingIndex, setEditingIndex] = useState(-1)
     const [modalMode, setModalMode] = useState("add") // "add", "edit", "view"
+    const [deletingAssignment, setDeletingAssignment] = useState(null)
+    const [deleteError, setDeleteError] = useState("")
+    const token = localStorage.getItem("token");
 
     const handleAddAssignment = () => {
         setEditingAssignment(null)
@@ -55,6 +58,58 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
 
         onChange(newAssignments)
         setShowAssignmentModal(false)
+    }
+
+    // API call to delete assignment
+    const deleteAssignmentAPI = async (assignmentId) => {
+        try {
+            const response = await fetch(`/api/instructor/assignments/${assignmentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.message || 'Failed to delete assignment')
+            }
+
+            return await response.json()
+        } catch (error) {
+            console.error('Error deleting assignment:', error)
+            throw error
+        }
+    }
+
+    const handleDeleteAssignment = async (assignment, index) => {
+        if (!assignment._id) {
+            // For local assignments without _id, just remove from array
+            const newAssignments = assignments.filter((_, i) => i !== index)
+            onChange(newAssignments)
+            return
+        }
+
+        if (!confirm(`Are you sure you want to delete "${assignment.title}"? This action cannot be undone.`)) {
+            return
+        }
+
+        setDeletingAssignment(assignment._id)
+        setDeleteError("")
+
+        try {
+            await deleteAssignmentAPI(assignment._id)
+            
+            // Remove from local state
+            const newAssignments = assignments.filter((_, i) => i !== index)
+            onChange(newAssignments)
+        } catch (error) {
+            console.error("Error deleting assignment:", error)
+            setDeleteError(error.message || 'Failed to delete assignment')
+        } finally {
+            setDeletingAssignment(null)
+        }
     }
 
     const formatDateTime = (dateString) => {
@@ -115,6 +170,13 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                     </Button>
                 </Card.Header>
                 <Card.Body>
+                    {/* Show delete error if exists */}
+                    {deleteError && (
+                        <Alert variant="danger" className="mb-3" dismissible onClose={() => setDeleteError("")}>
+                            <strong>Delete Error:</strong> {deleteError}
+                        </Alert>
+                    )}
+
                     {assignments.length === 0 ? (
                         <div className="text-center py-5">
                             <div className="p-4 rounded-circle d-inline-flex mb-3" style={{ background: "#f8f9fa" }}>
@@ -194,6 +256,7 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                             size="sm"
                                                             onClick={() => handleViewAssignment(assignment, index)}
                                                             title="View Details"
+                                                            disabled={deletingAssignment === assignment._id}
                                                         >
                                                             <Eye size={14} />
                                                         </Button>
@@ -202,8 +265,22 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                             size="sm"
                                                             onClick={() => handleEditAssignment(assignment, index)}
                                                             title="Edit"
+                                                            disabled={deletingAssignment === assignment._id}
                                                         >
                                                             <Edit size={14} />
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline-danger"
+                                                            size="sm"
+                                                            onClick={() => handleDeleteAssignment(assignment, index)}
+                                                            title="Delete"
+                                                            disabled={deletingAssignment === assignment._id}
+                                                        >
+                                                            {deletingAssignment === assignment._id ? (
+                                                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                            ) : (
+                                                                <Trash2 size={14} />
+                                                            )}
                                                         </Button>
                                                     </div>
                                                 </div>

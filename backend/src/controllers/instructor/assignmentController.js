@@ -221,11 +221,131 @@ const toggleAssignmentVisibility = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" })
   }
 }
+const updateAssignment = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+    const updates = req.body;
 
+    // 1. Kiểm tra assignmentId hợp lệ
+    if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid assignmentId.' });
+    }
+
+    // 2. Tìm assignment
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ success: false, message: 'Assignment not found.' });
+    }
+
+    // 3. Lấy course để kiểm tra quyền và dueDate
+    const course = await Course.findById(assignment.courseId).lean();
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Associated course not found.' });
+    }
+
+    // 4. Permission check: chỉ instructor của khóa học mới được chỉnh sửa
+    if (req.user.role !== 'instructor' && course.instructorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn chỉ có thể chỉnh sửa assignment của khóa học mình quản lý.',
+      });
+    }
+
+    // 5. Nếu có cập nhật dueDate thì kiểm tra không vượt quá endDate của course
+    if (updates.dueDate) {
+      const newDue = new Date(updates.dueDate);
+      if (newDue > new Date(course.endDate)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Assignment due date cannot be later than the course end date.',
+        });
+      }
+      assignment.dueDate = newDue;
+
+      // --- MỚI: xử lý term ---
+      const currentTerm = course.term[course.term.length - 1];
+      const lastAssignedTerm = assignment.term[assignment.term.length - 1];
+      if (currentTerm && currentTerm !== lastAssignedTerm) {
+        assignment.term.push(currentTerm);
+      }
+    }
+
+    // 6. Nếu cập nhật type thành quiz, bắt buộc phải có questions
+    if (updates.type) {
+      if (!['essay', 'quiz'].includes(updates.type)) {
+        return res.status(400).json({ success: false, message: 'Invalid assignment type.' });
+      }
+      assignment.type = updates.type;
+    }
+    if (assignment.type === 'quiz') {
+      const qs = updates.questions || assignment.questions;
+      if (!Array.isArray(qs) || qs.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'For quiz type, questions array is required and cannot be empty.',
+        });
+      }
+      if (updates.questions) assignment.questions = updates.questions;
+    } else {
+      assignment.questions = undefined;
+    }
+
+    // 7. Các trường text-based có thể cập nhật bình thường
+    if (updates.title !== undefined)      assignment.title       = updates.title;
+    if (updates.description !== undefined)assignment.description = updates.description;
+    if (updates.isVisible !== undefined)  assignment.isVisible  = updates.isVisible;
+
+    // 8. Lưu và trả về kết quả
+    await assignment.save();
+    return res.status(200).json({ success: true, data: assignment });
+  } catch (err) {
+    console.error('Error updating assignment:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+const deleteAssignment = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+
+    // 1. Kiểm tra assignmentId hợp lệ
+    if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
+      return res.status(400).json({ success: false, message: 'Invalid assignmentId.' });
+    }
+
+    // 2. Tìm assignment
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ success: false, message: 'Assignment not found.' });
+    }
+
+    // 3. Lấy course để kiểm tra quyền
+    const course = await Course.findById(assignment.courseId).lean();
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Associated course not found.' });
+    }
+
+    // 4. Permission check: chỉ instructor của khóa học mới được xóa
+    if (req.user.role !== 'instructor' && course.instructorId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn chỉ có thể xóa assignment của khóa học mình quản lý.',
+      });
+    }
+
+    // 5. Thực hiện xóa
+    await Assignment.findByIdAndDelete(assignmentId);
+    return res.status(200).json({ success: true, message: 'Assignment deleted successfully.' });
+  } catch (err) {
+    console.error('Error deleting assignment:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
 module.exports = {
   getAssignmentsByCourse,
   createAssignment,
   createNewTerm,
   getAssignmentsForCalendar,
   toggleAssignmentVisibility,
+  updateAssignment,
+  deleteAssignment,
 }
