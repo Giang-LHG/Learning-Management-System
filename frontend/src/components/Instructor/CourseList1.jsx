@@ -163,24 +163,36 @@ const token = localStorage.getItem("token");
   };
 
   const confirmDelete = async () => {
-    console.log("confirmDelete triggered for course:", courseToDelete);
-    try {
-      await api.delete(`/instructor/courses/${courseToDelete._id}`,{ 
- 
-  headers: {
-    'Authorization': `Bearer ${token}`
-  }
-});
-      setCourses(courses.filter((course) => course._id !== courseToDelete._id));
-      setShowDeleteModal(false);
-      setCourseToDelete(null);
-      console.log("Courses after deletion:", courses);
-    } catch (err) {
-      setError("Unable to delete course.");
-      console.error("Error deleting course:", err.response ? err.response.data : err.message);
-      console.log("Catch block error for delete:", err.message);
+  console.log("confirmDelete triggered for course:", courseToDelete);
+  try {
+    const response = await fetch(`/api/instructor/courses/${courseToDelete._id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to delete course');
     }
-  };
+
+    console.log("Course deleted:", courseToDelete);
+    setCourses(courses.filter((course) => course._id !== courseToDelete._id));
+    setShowDeleteModal(false);
+    setCourseToDelete(null);
+    navigate("/instructor/course");
+    console.log("Courses after deletion:", courses);
+
+  } catch (err) {
+    const msg = err.message || "Unable to delete course.";
+    setError(msg);
+    console.error("Error deleting course:", msg);
+  }
+};
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {

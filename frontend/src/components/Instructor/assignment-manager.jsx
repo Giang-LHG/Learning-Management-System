@@ -141,19 +141,19 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
 
     const getAssignmentStatusBadge = (assignment) => {
         if (!assignment.isVisible) {
-            return <Badge bg="secondary">Ẩn</Badge>
+            return <Badge bg="secondary">Hidden</Badge>
         }
 
         if (isOverdue(assignment.dueDate)) {
-            return <Badge bg="danger">Quá hạn</Badge>
+            return <Badge bg="danger">Due Date</Badge>
         }
 
         const daysLeft = getDaysUntilDue(assignment.dueDate)
         if (daysLeft <= 3) {
-            return <Badge bg="warning">Sắp hết hạn</Badge>
+            return <Badge bg="warning">Due Soon</Badge>
         }
 
-        return <Badge bg="success">Đang mở</Badge>
+        return <Badge bg="success">Open</Badge>
     }
 
     return (
@@ -214,7 +214,7 @@ const AssignmentManager = ({ assignments, onChange, errors, courseStartDate, cou
                                                             <h6 className="fw-semibold mb-0">{assignment.title}</h6>
                                                             {getAssignmentStatusBadge(assignment)}
                                                             <Badge bg={assignment.type === "quiz" ? "info" : "primary"} className="small">
-                                                                {assignment.type === "quiz" ? "Trắc nghiệm" : "Tự luận"}
+                                                                {assignment.type === "quiz" ? "Quiz" : "Essay"}
                                                             </Badge>
                                                         </div>
                                                         <p className="text-muted small mb-2 lh-sm">{assignment.description}</p>

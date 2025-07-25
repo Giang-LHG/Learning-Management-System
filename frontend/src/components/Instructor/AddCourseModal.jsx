@@ -49,9 +49,12 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
         if (show) {
             setLoadingSubjects(true)
             setLoadingInstructors(true)
-            api.get('/subjects')
-                .then(res => setSubjects(res.data.subjects || []))
-                .finally(() => setLoadingSubjects(false))
+           api.get('/subjects')
+  .then(res => {
+    const subjects = (res.data.subjects || []).filter(subject => subject.status === 'approved');
+    setSubjects(subjects);
+  })
+  .finally(() => setLoadingSubjects(false));
             api.get('/instructor/list')
                 .then(res => setInstructors(res.data.instructors || []))
                 .finally(() => setLoadingInstructors(false))
@@ -560,7 +563,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                                     {errors[`module_${moduleIndex}_title`]}
                                                 </Form.Control.Feedback>
                                             </Col>
-                                            <Col md={2}>
+                                            <Col md={2} hidden="true">
                                                 <Form.Label>Visible</Form.Label>
                                                 <Form.Check
                                                     type="switch"
@@ -603,7 +606,7 @@ const AddCourseModal = ({ show, onHide, onSubmit }) => {
                                                                 {errors[`lesson_${moduleIndex}_${lessonIndex}_title`]}
                                                             </Form.Control.Feedback>
                                                         </Col>
-                                                        <Col md={2}>
+                                                        <Col md={2} hidden ="true">
                                                             <Form.Check
                                                                 type="switch"
                                                                 label="Visible"

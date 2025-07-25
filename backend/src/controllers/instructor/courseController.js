@@ -535,11 +535,15 @@ exports.deleteCourse = async (req, res) => {
       });
     }
 
-    const enrollmentCount = await Enrollment.countDocuments({ courseId });
+const sortedTerms = course.term.sort(); // Sort ascending
+const latestTerm = sortedTerms[sortedTerms.length - 1]; // Get last term
+
+// Check if there are enrollments for that latest term
+const enrollmentCount = await Enrollment.countDocuments({ courseId, term: latestTerm });
     if (enrollmentCount > 0) {
       return res.status(400).json({
         success: false,
-        message: "Không thể xóa khóa học đang có học viên tham gia",
+        message: "Cannot delete a course that has students enrolled.",
       });
     }
 
@@ -547,7 +551,7 @@ exports.deleteCourse = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Xóa khóa học thành công",
+      message: "Delete successfully",
     });
   } catch (err) {
     console.error("Error deleting course:", err);

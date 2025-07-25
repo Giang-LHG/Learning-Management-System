@@ -467,7 +467,7 @@ console.log("courseData", courseData);
                                                                 Module {moduleIndex + 1}: {module.title}
                                                             </span>
                                                             <div className="d-flex align-items-center gap-2">
-                                                                <Badge bg={module.isVisible ? "success" : "secondary"}>
+                                                                <Badge bg={module.isVisible ? "success" : "secondary"} hidden = "true">
                                                                     {module.isVisible ? "Hiển thị" : "Ẩn"}
                                                                 </Badge>
                                                                 <Badge bg="info">{module.lessons?.length || 0} lesson</Badge>
@@ -488,7 +488,7 @@ console.log("courseData", courseData);
                                                                 </Form.Group>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <Form.Group>
+                                                                <Form.Group hidden = "true">
                                                                     <Form.Label>Show</Form.Label>
                                                                     <Form.Check
                                                                         type="switch"
@@ -543,7 +543,7 @@ console.log("courseData", courseData);
                                                                                 </Form.Group>
                                                                             </Col>
                                                                             <Col md={4}>
-                                                                                <Form.Group className="mb-2">
+                                                                                <Form.Group className="mb-2" hidden="true">
                                                                                     <Form.Label className="small">Show</Form.Label>
                                                                                     <div className="d-flex align-items-center">
                                                                                         <Form.Check

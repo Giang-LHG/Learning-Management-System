@@ -451,7 +451,7 @@ const AssignmentModal = ({
                             <div className="mb-3">
                                 <label className="fw-semibold text-muted small">Visibility</label>
                                 <div className="mt-1">
-                                    <Badge bg={assignmentData.isVisible ? "success" : "secondary"}>
+                                    <Badge bg={assignmentData.isVisible ? "success" : "secondary"} hidden="true">
                                         {assignmentData.isVisible ? "Visible to Students" : "Hidden"}
                                     </Badge>
                                 </div>
@@ -843,6 +843,7 @@ const AssignmentModal = ({
 
                                     <Col md={12} className="mb-3">
                                         <Form.Check
+                                        hidden ="true"
                                             type="switch"
                                             id="assignment-visible"
                                             label="Show assignment to students"

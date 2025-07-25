@@ -148,24 +148,32 @@ console.log("students", students);
         }
     };
 
-    const handleDelete = async () => {
-        try {
-            const response = await api.delete(`/instructor/courses/${courseId}`, {
-  headers: {
-    'Authorization': `Bearer ${localStorage.getItem('token')}`
-  }
-});
-            if (response.data.success) {
-                console.log("Course deleted:", courseId);
-                navigate("/instructor/course");
+const handleDelete = async () => {
+    try {
+        const response = await fetch(`/api/instructor/courses/${courseId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
             }
-        } catch (err) {
-            console.error("Error deleting course:", err);
-            setError("Unable to delete course");
-        }
-        setShowDeleteModal(false);
-    };
+        });
 
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            console.log("Course deleted:", courseId);
+            navigate("/instructor/course");
+        } else {
+            setError(data.message || "Unable to delete course");
+        }
+
+    } catch (err) {
+        console.error("Error deleting course:", err);
+        setError("Unable to delete course");
+    }
+
+    setShowDeleteModal(false);
+};
     const handleBack = () => {
         navigate(`/instructor/course`);
     };
@@ -404,7 +412,7 @@ console.log("Course details page rendered",course);
                             </Col>
                             <Col xs="auto">
                                 <div className="d-flex gap-2">
-                                    <Button variant="info" onClick={handleShowStudents} className="text-white">
+                                    <Button hidden="true" variant="info" onClick={handleShowStudents} className="text-white">
                                         <Users size={16} className="me-2" />
                                         Students ({students.length})
                                     </Button>
@@ -534,7 +542,7 @@ console.log("Course details page rendered",course);
                                                                     <h6 className="fw-semibold text-dark mb-0">
                                                                         Module {index + 1}: {module.title}
                                                                     </h6>
-                                                                    <Badge bg={module.isVisible ? "success" : "secondary"}>
+                                                                    <Badge bg={module.isVisible ? "success" : "secondary"} hidden = "true">
                                                                         {module.isVisible ? "Visible" : "Hidden"}
                                                                     </Badge>
                                                                 </div>
@@ -673,17 +681,7 @@ console.log("Course details page rendered",course);
                                                 </Badge>
                                             </div>
                                             <hr className="my-2" />
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <span className="fw-medium">Average Submission Rate:</span>
-                                                <span className="fw-bold text-primary">
-                                                    {assignments.length > 0
-                                                        ? Math.round(
-                                                            assignments.reduce((acc, a) => acc + getSubmissionRate(a), 0) / assignments.length,
-                                                        )
-                                                        : 0}
-                                                    %
-                                                </span>
-                                            </div>
+                                           
                                         </div>
                                     </Card.Body>
                                 </Card>
