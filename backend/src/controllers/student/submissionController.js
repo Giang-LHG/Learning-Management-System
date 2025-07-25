@@ -255,9 +255,12 @@ const latestAssignmentTerm = assignmentTerms.length
   ? assignmentTerms[assignmentTerms.length - 1]
   : null;
   if (
-    asg.type === 'quiz' &&
-    now > new Date(asg.dueDate||s.term !== latestAssignmentTerm ) &&
-    (s.grade.score === null || s.grade.score === undefined)
+   asg.type === 'quiz' &&
+  (
+    s.term !== latestAssignmentTerm ||    // Nếu khác term => chấm luôn
+    now > new Date(asg.dueDate)           // Nếu cùng term => chờ hết hạn
+  ) &&
+  (s.grade.score === null || s.grade.score === undefined)
   ) {
     const answersMap = new Map(
       (s.answers || []).map(a => [a.questionId.toString(), a.selectedOption])
