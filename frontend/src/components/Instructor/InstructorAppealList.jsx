@@ -22,6 +22,7 @@ const token = localStorage.getItem('token');
   }
 });
       if (res.data.success) {
+      
         setAppeals(res.data.data);
       }
     } catch (error) {
@@ -35,7 +36,7 @@ const token = localStorage.getItem('token');
   useEffect(() => {
     fetchAppeals();
   }, [fetchAppeals]);
-
+console.log("Appeals:", appeals);
   const handleReviewClick = (submissionId, appealId) => {
     navigate(`/instructor/appeal/review/${submissionId}/${appealId}`);
   };
