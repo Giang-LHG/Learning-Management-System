@@ -32,6 +32,7 @@ router.post('/', [
     check('password', 'Password must be at least 6 characters').isLength({ min: 6 }),
     check('role', 'Role is required').not().isEmpty(),
     check('profile.fullName', 'Full name is required').not().isEmpty(),
+    check('isActive').optional().isBoolean().withMessage('isActive must be boolean'),
     // Custom validate cho từng role
     check('profile').custom((value, { req }) => {
       const role = req.body.role;

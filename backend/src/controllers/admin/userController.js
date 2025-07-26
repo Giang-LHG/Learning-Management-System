@@ -216,7 +216,7 @@ exports.createUser = async (req, res) => {
       });
     }
 
-    const { username, email, password, role, profile } = req.body;
+    const { username, email, password, role, profile, isActive } = req.body;
 
     // Kiểm tra email hoặc username đã tồn tại
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
@@ -234,6 +234,7 @@ exports.createUser = async (req, res) => {
       email,
       passwordHash,
       role,
+      isActive: typeof isActive === "boolean" ? isActive : true,
       profile: this.sanitizeProfileByRole(role, profile)
     });
 
